@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
+import { ProgressBar } from "./ProgressBar";
 import { cn } from "../lib/utils";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useOutputDir } from "../hooks/useOutputDir";
+import { useProcessingProgress } from "../hooks/useProcessingProgress";
 import type { BatchProgress, OutputFormat, ProcessingResult } from "../types";
 
 const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
@@ -22,6 +24,7 @@ const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
 export function ConvertTab() {
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
   const { outputDir, selectOutputDir } = useOutputDir();
+  const { progress, resetProgress } = useProcessingProgress();
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
@@ -48,6 +51,7 @@ export function ConvertTab() {
 
     setLoading(true);
     setResults([]);
+    resetProgress();
 
     try {
       const result = await invoke<BatchProgress>("convert_images", {
@@ -73,8 +77,9 @@ export function ConvertTab() {
       toast.error(`Conversion failed: ${err}`);
     } finally {
       setLoading(false);
+      resetProgress();
     }
-  }, [files, outputFormat, outputDir]);
+  }, [files, outputFormat, outputDir, resetProgress]);
 
   return (
     <div className="space-y-5">
@@ -142,6 +147,10 @@ export function ConvertTab() {
         )}
         {loading ? "Converting..." : `Convert to ${outputFormat.toUpperCase()}`}
       </button>
+
+      {loading && progress && (
+        <ProgressBar completed={progress.completed} total={progress.total} />
+      )}
 
       <ResultsBanner results={results} total={files.length} />
     </div>

@@ -6,6 +6,46 @@ use pdf_ops::PdfExtractionResult;
 use std::path::Path;
 use tauri::Manager;
 
+fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
+    let lib_name = if cfg!(target_os = "windows") {
+        "pdfium.dll"
+    } else if cfg!(target_os = "macos") {
+        "libpdfium.dylib"
+    } else {
+        "libpdfium.so"
+    };
+
+    let candidates: Vec<std::path::PathBuf> = vec![
+        app_handle
+            .path()
+            .resource_dir()
+            .ok()
+            .map(|d| d.join(lib_name)),
+        std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.join(lib_name))),
+        Some(std::path::PathBuf::from(format!("resources/{}", lib_name))),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+
+    for candidate in &candidates {
+        if candidate.exists() {
+            return Ok(candidate.to_string_lossy().to_string());
+        }
+    }
+
+    Err(format!(
+        "Pdfium library not found. Searched: {}",
+        candidates
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    ))
+}
+
 fn validate_path(path: &str) -> Result<(), String> {
     let p = Path::new(path);
     if path.contains("..") {
@@ -19,6 +59,7 @@ fn validate_path(path: &str) -> Result<(), String> {
 
 #[tauri::command]
 async fn compress_webp(
+    app_handle: tauri::AppHandle,
     input_paths: Vec<String>,
     quality: f32,
     output_dir: String,
@@ -28,7 +69,7 @@ async fn compress_webp(
         validate_path(p)?;
     }
     let result =
-        tokio::task::spawn_blocking(move || image_ops::compress_to_webp(input_paths, quality, output_dir))
+        tokio::task::spawn_blocking(move || image_ops::compress_to_webp(input_paths, quality, output_dir, app_handle))
             .await
             .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
@@ -36,6 +77,7 @@ async fn compress_webp(
 
 #[tauri::command]
 async fn convert_images(
+    app_handle: tauri::AppHandle,
     input_paths: Vec<String>,
     output_format: String,
     output_dir: String,
@@ -45,7 +87,7 @@ async fn convert_images(
         validate_path(p)?;
     }
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::convert_images(input_paths, output_format, output_dir)
+        image_ops::convert_images(input_paths, output_format, output_dir, app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -54,13 +96,17 @@ async fn convert_images(
 
 #[tauri::command]
 async fn extract_pdf_images(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     output_dir: String,
 ) -> Result<PdfExtractionResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
+
+    let pdfium_lib_path = resolve_pdfium_path(&app_handle)?;
+
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::extract_images_from_pdf(&pdf_path, &output_dir)
+        pdf_ops::extract_images_from_pdf(&pdf_path, &output_dir, &pdfium_lib_path)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;

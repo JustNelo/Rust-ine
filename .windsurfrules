@@ -1,0 +1,37 @@
+# RUST-INE PROJECT RULES & CONTEXT
+
+You are the Lead Developer for "Rust-ine", a high-performance Tauri v2 desktop app for image compression and PDF extraction.
+
+## 1. TECH STACK
+- **Core:** Tauri v2 (Use `tauri::command`, `tauri::State`).
+- **Backend:** Rust (2021 edition). Key crates: `image` (processing), `rayon` (parallelism), `pdfium-render` (PDF).
+- **Frontend:** React + TypeScript + Vite.
+- **Styling:** TailwindCSS + shadcn/ui + Lucide-React icons.
+
+## 2. CODE QUALITY & ARCHITECTURE (DRY / SOLID)
+- **DRY (Don't Repeat Yourself):**
+  - Never duplicate logic. Extract repeated code into utility functions (Rust) or Custom Hooks (React).
+  - Centralize constant values and types.
+- **SRP (Single Responsibility):**
+  - Rust: Separate `image_ops.rs` (processing) from `main.rs` (commands).
+  - React: UI components should purely render. Move logic/state to hooks (e.g., `useFileProcessor`).
+- **Clean Code:**
+  - Variable names must be descriptive (`compressed_image_buffer` NOT `buf`).
+  - Add comments explaining *WHY* complex logic exists, not *WHAT* it does.
+
+## 3. RUST BACKEND RULES (CRITICAL)
+- **Safety:** NEVER use `.unwrap()` or `.expect()`. Use `match`, `if let`, or propagate errors with `?`.
+- **Concurrency:**
+  - Use `rayon` (`par_iter`) for CPU-intensive tasks (image compression loops).
+  - Use `tokio` for async I/O.
+  - Never block the Tauri main thread.
+- **Error Handling:** Return `Result<T, String>` to frontend. Errors must be user-friendly.
+
+## 4. FRONTEND RULES (REACT)
+- **Performance:** Memoize heavy computations (`useMemo`). Use `useCallback` for props passed to children.
+- **Type Safety:** Strict TypeScript. No `any`. Define interfaces for all IPC payloads.
+- **UX:** Always implement loading states (`isLoading`) and Error Toasts for async actions.
+
+## 5. SECURITY
+- **Input Validation:** Sanitize all file paths to prevent directory traversal.
+- **Permissions:** Ensure file system scope is respected in `tauri.conf.json`.

@@ -34,6 +34,22 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "shortDescription": "Image compression, conversion and PDF extraction tool",
+    "longDescription": "Rust-ine is a desktop application for batch image compression to WebP, format conversion between PNG, JPG, WebP, BMP, ICO and TIFF, and embedded image extraction from PDF files. Built with Tauri v2 and powered by parallel Rust processing.",
+    "copyright": "Copyright 2026 Leon Gallet",
+    "category": "Utility",
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico",
+        "installMode": "currentUser"
+      }
+    },
+    "linux": {
+      "deb": {
+        "section": "graphics"
+      }
+    }
   }
 }

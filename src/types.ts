@@ -5,6 +5,10 @@ export interface ProcessingResult {
   error: string | null;
   input_size: number;
   output_size: number;
+  input_width: number;
+  input_height: number;
+  output_width: number;
+  output_height: number;
 }
 
 export interface BatchProgress {
@@ -30,6 +34,20 @@ export interface ImagesToPdfResult {
   output_path: string;
   page_count: number;
   errors: string[];
+}
+
+export interface MetadataEntry {
+  tag: string;
+  value: string;
+}
+
+export interface ImageMetadata {
+  path: string;
+  width: number;
+  height: number;
+  format: string;
+  file_size: number;
+  exif: MetadataEntry[];
 }
 
 export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "pdf" | "images-to-pdf";

@@ -23,6 +23,10 @@ pub struct ProcessingResult {
     pub error: Option<String>,
     pub input_size: u64,
     pub output_size: u64,
+    pub input_width: u32,
+    pub input_height: u32,
+    pub output_width: u32,
+    pub output_height: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -46,6 +50,10 @@ impl BatchProgress {
                     error: Some(error.clone()),
                     input_size: 0,
                     output_size: 0,
+                    input_width: 0,
+                    input_height: 0,
+                    output_width: 0,
+                    output_height: 0,
                 })
                 .collect(),
         }
@@ -126,6 +134,10 @@ pub fn compress_to_webp(
                         error: None,
                         input_size,
                         output_size,
+                        input_width: 0,
+                        input_height: 0,
+                        output_width: 0,
+                        output_height: 0,
                     }
                 }
                 Err(e) => ProcessingResult {
@@ -135,6 +147,10 @@ pub fn compress_to_webp(
                     error: Some(e),
                     input_size,
                     output_size: 0,
+                    input_width: 0,
+                    input_height: 0,
+                    output_width: 0,
+                    output_height: 0,
                 },
             }
         })
@@ -238,6 +254,10 @@ pub fn convert_images(
                         error: None,
                         input_size,
                         output_size,
+                        input_width: 0,
+                        input_height: 0,
+                        output_width: 0,
+                        output_height: 0,
                     }
                 }
                 Err(e) => ProcessingResult {
@@ -247,6 +267,10 @@ pub fn convert_images(
                     error: Some(e),
                     input_size,
                     output_size: 0,
+                    input_width: 0,
+                    input_height: 0,
+                    output_width: 0,
+                    output_height: 0,
                 },
             }
         })
@@ -299,8 +323,13 @@ fn save_in_original_format(img: &DynamicImage, input_path: &str, output_path: &P
     }
 }
 
-fn build_result(input_path: &str, result: Result<String, String>) -> ProcessingResult {
+fn build_result(
+    input_path: &str,
+    result: Result<String, String>,
+    dims: Option<(u32, u32, u32, u32)>,
+) -> ProcessingResult {
     let input_size = file_size(input_path);
+    let (iw, ih, ow, oh) = dims.unwrap_or((0, 0, 0, 0));
     match result {
         Ok(output_path) => {
             let output_size = file_size(&output_path);
@@ -311,6 +340,10 @@ fn build_result(input_path: &str, result: Result<String, String>) -> ProcessingR
                 error: None,
                 input_size,
                 output_size,
+                input_width: iw,
+                input_height: ih,
+                output_width: ow,
+                output_height: oh,
             }
         }
         Err(e) => ProcessingResult {
@@ -320,6 +353,10 @@ fn build_result(input_path: &str, result: Result<String, String>) -> ProcessingR
             error: Some(e),
             input_size,
             output_size: 0,
+            input_width: iw,
+            input_height: ih,
+            output_width: 0,
+            output_height: 0,
         },
     }
 }
@@ -355,7 +392,7 @@ pub fn resize_images(
     let results: Vec<ProcessingResult> = input_paths
         .par_iter()
         .map(|input_path| {
-            let result = (|| -> Result<String, String> {
+            let result = (|| -> Result<(String, u32, u32, u32, u32), String> {
                 let img = load_image(input_path)?;
                 let (orig_w, orig_h) = (img.width(), img.height());
 
@@ -390,14 +427,18 @@ pub fn resize_images(
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("output");
-                let output_path = out_dir.join(format!("{}.{}", stem, ext));
+                let output_path = out_dir.join(format!("{}_resized.{}", stem, ext));
 
                 save_in_original_format(&resized, input_path, &output_path)?;
-                Ok(output_path.to_string_lossy().to_string())
+                Ok((output_path.to_string_lossy().to_string(), orig_w, orig_h, new_w, new_h))
             })();
 
             emit_progress(&app_handle, &processed, total);
-            build_result(input_path, result)
+            let (path_result, dims) = match &result {
+                Ok((path, iw, ih, ow, oh)) => (Ok(path.clone()), Some((*iw, *ih, *ow, *oh))),
+                Err(e) => (Err(e.clone()), None),
+            };
+            build_result(input_path, path_result, dims)
         })
         .collect();
 
@@ -424,22 +465,27 @@ pub fn strip_metadata(
     let results: Vec<ProcessingResult> = input_paths
         .par_iter()
         .map(|input_path| {
-            let result = (|| -> Result<String, String> {
+            let result = (|| -> Result<(String, u32, u32), String> {
                 let img = load_image(input_path)?;
+                let (w, h) = (img.width(), img.height());
 
                 let ext = get_extension(input_path);
                 let stem = Path::new(input_path)
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("output");
-                let output_path = out_dir.join(format!("{}.{}", stem, ext));
+                let output_path = out_dir.join(format!("{}_stripped.{}", stem, ext));
 
                 save_in_original_format(&img, input_path, &output_path)?;
-                Ok(output_path.to_string_lossy().to_string())
+                Ok((output_path.to_string_lossy().to_string(), w, h))
             })();
 
             emit_progress(&app_handle, &processed, total);
-            build_result(input_path, result)
+            let (path_result, dims) = match &result {
+                Ok((path, w, h)) => (Ok(path.clone()), Some((*w, *h, *w, *h))),
+                Err(e) => (Err(e.clone()), None),
+            };
+            build_result(input_path, path_result, dims)
         })
         .collect();
 
@@ -512,7 +558,7 @@ pub fn add_watermark(
     let results: Vec<ProcessingResult> = input_paths
         .par_iter()
         .map(|input_path| {
-            let result = (|| -> Result<String, String> {
+            let result = (|| -> Result<(String, u32, u32), String> {
                 let img = load_image(input_path)?;
                 let (img_w, img_h) = (img.width(), img.height());
                 let mut base = img.to_rgba8();
@@ -569,14 +615,18 @@ pub fn add_watermark(
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("output");
-                let output_path = out_dir.join(format!("{}.{}", stem, ext));
+                let output_path = out_dir.join(format!("{}_watermarked.{}", stem, ext));
 
                 save_in_original_format(&result_img, input_path, &output_path)?;
-                Ok(output_path.to_string_lossy().to_string())
+                Ok((output_path.to_string_lossy().to_string(), img_w, img_h))
             })();
 
             emit_progress(&app_handle, &processed, total);
-            build_result(input_path, result)
+            let (path_result, dims) = match &result {
+                Ok((path, w, h)) => (Ok(path.clone()), Some((*w, *h, *w, *h))),
+                Err(e) => (Err(e.clone()), None),
+            };
+            build_result(input_path, path_result, dims)
         })
         .collect();
 

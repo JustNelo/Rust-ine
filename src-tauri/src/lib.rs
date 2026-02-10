@@ -1,7 +1,9 @@
 mod image_ops;
+mod metadata_ops;
 mod pdf_ops;
 
 use image_ops::BatchProgress;
+use metadata_ops::ImageMetadata;
 use pdf_ops::{ImagesToPdfResult, PdfExtractionResult};
 use std::path::Path;
 use tauri::Manager;
@@ -192,6 +194,18 @@ async fn images_to_pdf(
     Ok(result)
 }
 
+#[tauri::command]
+async fn read_metadata(
+    file_path: String,
+) -> Result<ImageMetadata, String> {
+    validate_path(&file_path)?;
+    tokio::task::spawn_blocking(move || {
+        metadata_ops::read_image_metadata(&file_path)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -205,7 +219,8 @@ pub fn run() {
             resize_images,
             strip_metadata,
             add_watermark,
-            images_to_pdf
+            images_to_pdf,
+            read_metadata
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");

@@ -1,6 +1,16 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, FolderOpen, ShieldOff } from "lucide-react";
+import {
+  Loader2,
+  FolderOpen,
+  ShieldOff,
+  Camera,
+  MapPin,
+  Info,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+} from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
@@ -9,7 +19,174 @@ import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useOutputDir } from "../hooks/useOutputDir";
 import { useProcessingProgress } from "../hooks/useProcessingProgress";
-import type { BatchProgress, ProcessingResult } from "../types";
+import type { BatchProgress, ProcessingResult, ImageMetadata } from "../types";
+
+function formatSize(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const index = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1
+  );
+  const value = bytes / Math.pow(1024, index);
+  return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+}
+
+function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
+  const [expanded, setExpanded] = useState(true);
+  const fileName = metadata.path.split(/[\\/]/).pop() || "";
+
+  const gpsEntries = metadata.exif.filter((e) =>
+    e.tag.startsWith("GPS")
+  );
+  const cameraEntries = metadata.exif.filter(
+    (e) =>
+      ["Camera Make", "Camera Model", "Lens Model", "Software"].includes(e.tag)
+  );
+  const shootingEntries = metadata.exif.filter(
+    (e) =>
+      [
+        "Exposure Time",
+        "F-Number",
+        "ISO Speed",
+        "Focal Length",
+        "Focal Length (35mm)",
+        "Flash",
+        "Metering Mode",
+        "White Balance",
+        "Exposure Mode",
+      ].includes(e.tag)
+  );
+  const otherEntries = metadata.exif.filter(
+    (e) =>
+      !gpsEntries.includes(e) &&
+      !cameraEntries.includes(e) &&
+      !shootingEntries.includes(e)
+  );
+
+  return (
+    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center justify-between px-3 py-2 hover:bg-surface-hover transition-colors cursor-pointer"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <Eye className="h-3.5 w-3.5 text-accent shrink-0" />
+          <span className="text-xs font-medium text-text-primary truncate">
+            {fileName}
+          </span>
+          <span className="text-[10px] text-text-muted shrink-0">
+            {metadata.width}×{metadata.height} · {metadata.format} ·{" "}
+            {formatSize(metadata.file_size)}
+          </span>
+          {metadata.exif.length > 0 ? (
+            <span className="text-[10px] font-medium text-warning shrink-0">
+              {metadata.exif.length} metadata fields
+            </span>
+          ) : (
+            <span className="text-[10px] font-medium text-success shrink-0">
+              No EXIF metadata
+            </span>
+          )}
+        </div>
+        {metadata.exif.length > 0 &&
+          (expanded ? (
+            <ChevronUp className="h-3.5 w-3.5 text-text-muted shrink-0" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 text-text-muted shrink-0" />
+          ))}
+      </button>
+
+      {expanded && metadata.exif.length > 0 && (
+        <div className="border-t border-border px-3 py-2 space-y-3">
+          {cameraEntries.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Camera className="h-3 w-3 text-text-muted" />
+                <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
+                  Camera
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                {cameraEntries.map((e) => (
+                  <div key={e.tag} className="flex justify-between gap-2">
+                    <span className="text-[10px] text-text-muted">{e.tag}</span>
+                    <span className="text-[10px] text-text-primary font-mono text-right truncate">
+                      {e.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {shootingEntries.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Info className="h-3 w-3 text-text-muted" />
+                <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
+                  Shooting
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                {shootingEntries.map((e) => (
+                  <div key={e.tag} className="flex justify-between gap-2">
+                    <span className="text-[10px] text-text-muted">{e.tag}</span>
+                    <span className="text-[10px] text-text-primary font-mono text-right truncate">
+                      {e.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {gpsEntries.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <MapPin className="h-3 w-3 text-error" />
+                <span className="text-[10px] font-semibold text-error uppercase tracking-wider">
+                  GPS Location
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-y-0.5">
+                {gpsEntries.map((e) => (
+                  <div key={e.tag} className="flex justify-between gap-2">
+                    <span className="text-[10px] text-text-muted">{e.tag}</span>
+                    <span className="text-[10px] text-error/80 font-mono text-right truncate">
+                      {e.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {otherEntries.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Info className="h-3 w-3 text-text-muted" />
+                <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
+                  Other
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                {otherEntries.map((e) => (
+                  <div key={e.tag} className="flex justify-between gap-2">
+                    <span className="text-[10px] text-text-muted">{e.tag}</span>
+                    <span className="text-[10px] text-text-primary font-mono text-right truncate">
+                      {e.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ExifStripTab() {
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
@@ -17,6 +194,8 @@ export function ExifStripTab() {
   const { progress, resetProgress } = useProcessingProgress();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [metadataList, setMetadataList] = useState<ImageMetadata[]>([]);
+  const [loadingMeta, setLoadingMeta] = useState(false);
 
   const handleFilesSelected = useCallback(
     (paths: string[]) => {
@@ -29,7 +208,49 @@ export function ExifStripTab() {
   const handleClearFiles = useCallback(() => {
     clearFiles();
     setResults([]);
+    setMetadataList([]);
   }, [clearFiles]);
+
+  useEffect(() => {
+    if (files.length === 0) {
+      setMetadataList([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingMeta(true);
+
+    (async () => {
+      const results: ImageMetadata[] = [];
+      for (const file of files) {
+        if (cancelled) break;
+        try {
+          const meta = await invoke<ImageMetadata>("read_metadata", {
+            filePath: file,
+          });
+          results.push(meta);
+        } catch {
+          // skip files that can't be read
+        }
+      }
+      if (!cancelled) {
+        setMetadataList(results);
+        setLoadingMeta(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [files]);
+
+  const totalExifFields = metadataList.reduce(
+    (acc, m) => acc + m.exif.length,
+    0
+  );
+  const hasGps = metadataList.some((m) =>
+    m.exif.some((e) => e.tag.startsWith("GPS"))
+  );
 
   const handleStrip = useCallback(async () => {
     if (files.length === 0) {
@@ -80,6 +301,47 @@ export function ExifStripTab() {
       />
 
       <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+
+      {files.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-text-secondary">
+              Metadata Inspector
+            </span>
+            {loadingMeta ? (
+              <span className="flex items-center gap-1.5 text-[10px] text-text-muted">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Scanning...
+              </span>
+            ) : (
+              <div className="flex items-center gap-3">
+                {totalExifFields > 0 && (
+                  <span className="text-[10px] text-warning font-medium">
+                    {totalExifFields} field(s) found
+                  </span>
+                )}
+                {hasGps && (
+                  <span className="flex items-center gap-1 text-[10px] text-error font-medium">
+                    <MapPin className="h-3 w-3" />
+                    GPS data detected
+                  </span>
+                )}
+                {totalExifFields === 0 && (
+                  <span className="text-[10px] text-success font-medium">
+                    Clean — no metadata
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            {metadataList.map((meta) => (
+              <MetadataPanel key={meta.path} metadata={meta} />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <button

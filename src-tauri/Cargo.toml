@@ -1,0 +1,25 @@
+[package]
+name = "rustine"
+version = "1.0.0"
+description = "Rust-ine - Desktop image compression & PDF extraction tool"
+authors = ["Léon Gallet"]
+edition = "2021"
+
+[lib]
+name = "rustine_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2.6.0"
+tauri-plugin-fs = "2.4.5"
+serde = { version = "1", features = ["derive"] }
+image = "0.25.9"
+rayon = "1.11.0"
+lopdf = "0.39.0"
+webp = "0.3.1"
+tokio = { version = "1.49.0", features = ["full"] }

@@ -22,4 +22,14 @@ export interface PdfExtractionResult {
 
 export type OutputFormat = "png" | "jpg" | "webp" | "bmp" | "ico" | "tiff";
 
-export type TabId = "compress" | "convert" | "pdf";
+export type ResizeMode = "exact" | "width" | "height" | "percentage";
+
+export type WatermarkPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | "tiled";
+
+export interface ImagesToPdfResult {
+  output_path: string;
+  page_count: number;
+  errors: string[];
+}
+
+export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "pdf" | "images-to-pdf";

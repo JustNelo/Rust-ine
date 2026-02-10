@@ -1,19 +1,35 @@
 import { useState } from "react";
 import { Toaster } from "sonner";
-import { Zap, ArrowRightLeft, FileDown } from "lucide-react";
+import {
+  Zap,
+  ArrowRightLeft,
+  FileDown,
+  Scaling,
+  ShieldOff,
+  Stamp,
+  FileUp,
+} from "lucide-react";
 import { cn } from "./lib/utils";
 import appIcon from "./assets/icon.png";
 import { TitleBar } from "./components/TitleBar";
 import { CompressTab } from "./components/CompressTab";
 import { ConvertTab } from "./components/ConvertTab";
+import { ResizeTab } from "./components/ResizeTab";
+import { WatermarkTab } from "./components/WatermarkTab";
+import { ExifStripTab } from "./components/ExifStripTab";
 import { PdfTab } from "./components/PdfTab";
+import { ImagesToPdfTab } from "./components/ImagesToPdfTab";
 import type { TabId } from "./types";
 import "./App.css";
 
 const TABS: { id: TabId; label: string; icon: typeof Zap }[] = [
   { id: "compress", label: "WebP Compress", icon: Zap },
   { id: "convert", label: "Convert", icon: ArrowRightLeft },
+  { id: "resize", label: "Resize", icon: Scaling },
+  { id: "watermark", label: "Watermark", icon: Stamp },
+  { id: "strip", label: "EXIF Strip", icon: ShieldOff },
   { id: "pdf", label: "PDF Extract", icon: FileDown },
+  { id: "images-to-pdf", label: "Images to PDF", icon: FileUp },
 ];
 
 function App() {
@@ -82,14 +98,26 @@ function App() {
                   "Compress images to WebP format with adjustable quality."}
                 {activeTab === "convert" &&
                   "Convert images between PNG, JPG, WebP, BMP, ICO and TIFF."}
+                {activeTab === "resize" &&
+                  "Batch resize images by percentage, width, height or exact dimensions."}
+                {activeTab === "watermark" &&
+                  "Add a text watermark to images with customizable position and opacity."}
+                {activeTab === "strip" &&
+                  "Remove EXIF, GPS and other metadata from images for privacy."}
                 {activeTab === "pdf" &&
                   "Extract all embedded images from one or more PDF files."}
+                {activeTab === "images-to-pdf" &&
+                  "Combine multiple images into a single PDF document."}
               </p>
             </div>
 
             {activeTab === "compress" && <CompressTab />}
             {activeTab === "convert" && <ConvertTab />}
+            {activeTab === "resize" && <ResizeTab />}
+            {activeTab === "watermark" && <WatermarkTab />}
+            {activeTab === "strip" && <ExifStripTab />}
             {activeTab === "pdf" && <PdfTab />}
+            {activeTab === "images-to-pdf" && <ImagesToPdfTab />}
           </div>
         </main>
       </div>

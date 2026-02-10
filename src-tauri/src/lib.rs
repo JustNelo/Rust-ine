@@ -2,7 +2,7 @@ mod image_ops;
 mod pdf_ops;
 
 use image_ops::BatchProgress;
-use pdf_ops::PdfExtractionResult;
+use pdf_ops::{ImagesToPdfResult, PdfExtractionResult};
 use std::path::Path;
 use tauri::Manager;
 
@@ -113,6 +113,85 @@ async fn extract_pdf_images(
     Ok(result)
 }
 
+#[tauri::command]
+async fn resize_images(
+    app_handle: tauri::AppHandle,
+    input_paths: Vec<String>,
+    mode: String,
+    width: u32,
+    height: u32,
+    percentage: u32,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    for p in &input_paths {
+        validate_path(p)?;
+    }
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::resize_images(input_paths, mode, width, height, percentage, output_dir, app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn strip_metadata(
+    app_handle: tauri::AppHandle,
+    input_paths: Vec<String>,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    for p in &input_paths {
+        validate_path(p)?;
+    }
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::strip_metadata(input_paths, output_dir, app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn add_watermark(
+    app_handle: tauri::AppHandle,
+    input_paths: Vec<String>,
+    text: String,
+    position: String,
+    opacity: f32,
+    font_size: f32,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    for p in &input_paths {
+        validate_path(p)?;
+    }
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::add_watermark(input_paths, text, position, opacity, font_size, output_dir, app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn images_to_pdf(
+    input_paths: Vec<String>,
+    output_path: String,
+) -> Result<ImagesToPdfResult, String> {
+    validate_path(&output_path)?;
+    for p in &input_paths {
+        validate_path(p)?;
+    }
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::images_to_pdf(input_paths, &output_path)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -122,7 +201,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             compress_webp,
             convert_images,
-            extract_pdf_images
+            extract_pdf_images,
+            resize_images,
+            strip_metadata,
+            add_watermark,
+            images_to_pdf
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");

@@ -3,7 +3,15 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use tauri::Emitter;
 use webp::Encoder;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ProgressPayload {
+    completed: usize,
+    total: usize,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProcessingResult {
@@ -11,6 +19,8 @@ pub struct ProcessingResult {
     pub output_path: String,
     pub success: bool,
     pub error: Option<String>,
+    pub input_size: u64,
+    pub output_size: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -32,10 +42,16 @@ impl BatchProgress {
                     output_path: String::new(),
                     success: false,
                     error: Some(error.clone()),
+                    input_size: 0,
+                    output_size: 0,
                 })
                 .collect(),
         }
     }
+}
+
+fn file_size(path: &str) -> u64 {
+    fs::metadata(path).map(|m| m.len()).unwrap_or(0)
 }
 
 fn load_image(path: &str) -> Result<DynamicImage, String> {
@@ -53,13 +69,20 @@ fn ensure_output_dir(dir: &Path) -> Result<(), String> {
     Ok(())
 }
 
-pub fn compress_to_webp(input_paths: Vec<String>, quality: f32, output_dir: String) -> BatchProgress {
+pub fn compress_to_webp(
+    input_paths: Vec<String>,
+    quality: f32,
+    output_dir: String,
+    app_handle: tauri::AppHandle,
+) -> BatchProgress {
     let total = input_paths.len();
     let out_dir = PathBuf::from(&output_dir);
 
     if let Err(e) = ensure_output_dir(&out_dir) {
         return BatchProgress::all_failed(&input_paths, e);
     }
+
+    let processed = AtomicUsize::new(0);
 
     let results: Vec<ProcessingResult> = input_paths
         .par_iter()
@@ -84,18 +107,32 @@ pub fn compress_to_webp(input_paths: Vec<String>, quality: f32, output_dir: Stri
                 Ok(output_path.to_string_lossy().to_string())
             })();
 
+            let done = processed.fetch_add(1, Ordering::Relaxed) + 1;
+            let _ = app_handle.emit("processing-progress", ProgressPayload {
+                completed: done,
+                total,
+            });
+
+            let input_size = file_size(input_path);
             match result {
-                Ok(output_path) => ProcessingResult {
-                    input_path: input_path.clone(),
-                    output_path,
-                    success: true,
-                    error: None,
-                },
+                Ok(output_path) => {
+                    let output_size = file_size(&output_path);
+                    ProcessingResult {
+                        input_path: input_path.clone(),
+                        output_path,
+                        success: true,
+                        error: None,
+                        input_size,
+                        output_size,
+                    }
+                }
                 Err(e) => ProcessingResult {
                     input_path: input_path.clone(),
                     output_path: String::new(),
                     success: false,
                     error: Some(e),
+                    input_size,
+                    output_size: 0,
                 },
             }
         })
@@ -113,6 +150,7 @@ pub fn convert_images(
     input_paths: Vec<String>,
     output_format: String,
     output_dir: String,
+    app_handle: tauri::AppHandle,
 ) -> BatchProgress {
     let total = input_paths.len();
     let out_dir = PathBuf::from(&output_dir);
@@ -122,6 +160,7 @@ pub fn convert_images(
     }
 
     let target_format = output_format.to_lowercase();
+    let processed = AtomicUsize::new(0);
 
     let results: Vec<ProcessingResult> = input_paths
         .par_iter()
@@ -180,18 +219,32 @@ pub fn convert_images(
                 }
             })();
 
+            let done = processed.fetch_add(1, Ordering::Relaxed) + 1;
+            let _ = app_handle.emit("processing-progress", ProgressPayload {
+                completed: done,
+                total,
+            });
+
+            let input_size = file_size(input_path);
             match result {
-                Ok(output_path) => ProcessingResult {
-                    input_path: input_path.clone(),
-                    output_path,
-                    success: true,
-                    error: None,
-                },
+                Ok(output_path) => {
+                    let output_size = file_size(&output_path);
+                    ProcessingResult {
+                        input_path: input_path.clone(),
+                        output_path,
+                        success: true,
+                        error: None,
+                        input_size,
+                        output_size,
+                    }
+                }
                 Err(e) => ProcessingResult {
                     input_path: input_path.clone(),
                     output_path: String::new(),
                     success: false,
                     error: Some(e),
+                    input_size,
+                    output_size: 0,
                 },
             }
         })

@@ -3,6 +3,8 @@ export interface ProcessingResult {
   output_path: string;
   success: boolean;
   error: string | null;
+  input_size: number;
+  output_size: number;
 }
 
 export interface BatchProgress {

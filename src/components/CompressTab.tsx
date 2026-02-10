@@ -5,13 +5,17 @@ import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
+import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useOutputDir } from "../hooks/useOutputDir";
+import { useProcessingProgress } from "../hooks/useProcessingProgress";
 import type { BatchProgress, ProcessingResult } from "../types";
 
 export function CompressTab() {
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
   const { outputDir, selectOutputDir } = useOutputDir();
+  const { progress, resetProgress } = useProcessingProgress();
+  const [quality, setQuality] = useState(80);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
 
@@ -37,11 +41,12 @@ export function CompressTab() {
 
     setLoading(true);
     setResults([]);
+    resetProgress();
 
     try {
       const result = await invoke<BatchProgress>("compress_webp", {
         inputPaths: files,
-        quality: 100.0,
+        quality: quality,
         outputDir: outputDir,
       });
 
@@ -60,8 +65,9 @@ export function CompressTab() {
       toast.error(`Compression failed: ${err}`);
     } finally {
       setLoading(false);
+      resetProgress();
     }
-  }, [files, outputDir]);
+  }, [files, quality, outputDir, resetProgress]);
 
   return (
     <div className="space-y-5">
@@ -77,6 +83,27 @@ export function CompressTab() {
         onRemove={removeFile}
         onClear={handleClearFiles}
       />
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-text-secondary">
+            Quality
+          </label>
+          <span className="text-xs font-mono text-text-muted">{quality}%</span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={100}
+          value={quality}
+          onChange={(e) => setQuality(Number(e.target.value))}
+          className="w-full accent-accent h-1.5 cursor-pointer"
+        />
+        <div className="flex justify-between text-[10px] text-text-muted">
+          <span>Smaller file</span>
+          <span>Higher quality</span>
+        </div>
+      </div>
 
       <div className="flex items-center gap-2">
         <button
@@ -105,6 +132,10 @@ export function CompressTab() {
         )}
         {loading ? "Compressing..." : "Compress to WebP"}
       </button>
+
+      {loading && progress && (
+        <ProgressBar completed={progress.completed} total={progress.total} />
+      )}
 
       <ResultsBanner results={results} total={files.length} />
     </div>

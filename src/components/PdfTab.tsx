@@ -4,33 +4,41 @@ import { Loader2, FolderOpen, FileDown, CheckCircle, XCircle } from "lucide-reac
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
+import { ProgressBar } from "./ProgressBar";
+import { useFileSelection } from "../hooks/useFileSelection";
 import { useOutputDir } from "../hooks/useOutputDir";
 import type { PdfExtractionResult } from "../types";
 
+interface AggregatedPdfResult {
+  total_extracted: number;
+  errors: string[];
+}
+
 export function PdfTab() {
-  const [files, setFiles] = useState<string[]>([]);
+  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
   const { outputDir, selectOutputDir } = useOutputDir();
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<PdfExtractionResult | null>(null);
+  const [pdfProgress, setPdfProgress] = useState<{ completed: number; total: number } | null>(null);
+  const [result, setResult] = useState<AggregatedPdfResult | null>(null);
 
   const handleFilesSelected = useCallback((paths: string[]) => {
-    setFiles(paths.slice(0, 1));
+    addFiles(paths);
     setResult(null);
-  }, []);
-
-  const handleRemoveFile = useCallback((_index: number) => {
-    setFiles([]);
-    setResult(null);
-  }, []);
+  }, [addFiles]);
 
   const handleClearFiles = useCallback(() => {
-    setFiles([]);
+    clearFiles();
     setResult(null);
-  }, []);
+  }, [clearFiles]);
+
+  const handleRemoveFile = useCallback((index: number) => {
+    removeFile(index);
+    setResult(null);
+  }, [removeFile]);
 
   const handleExtract = useCallback(async () => {
     if (files.length === 0) {
-      toast.error("Please select a PDF file.");
+      toast.error("Please select at least one PDF file.");
       return;
     }
     if (!outputDir) {
@@ -40,40 +48,49 @@ export function PdfTab() {
 
     setLoading(true);
     setResult(null);
+    setPdfProgress({ completed: 0, total: files.length });
 
-    try {
-      const res = await invoke<PdfExtractionResult>("extract_pdf_images", {
-        pdfPath: files[0],
-        outputDir: outputDir,
-      });
+    const aggregated: AggregatedPdfResult = { total_extracted: 0, errors: [] };
 
-      setResult(res);
-
-      if (res.extracted_count > 0 && res.errors.length === 0) {
-        toast.success(`${res.extracted_count} image(s) extracted from PDF!`);
-      } else if (res.extracted_count > 0) {
-        toast.warning(
-          `${res.extracted_count} image(s) extracted with ${res.errors.length} error(s).`
-        );
-      } else if (res.errors.length > 0) {
-        toast.error("Failed to extract images from PDF.");
-      } else {
-        toast.info("No images found in this PDF.");
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const res = await invoke<PdfExtractionResult>("extract_pdf_images", {
+          pdfPath: files[i],
+          outputDir: outputDir,
+        });
+        aggregated.total_extracted += res.extracted_count;
+        aggregated.errors.push(...res.errors);
+      } catch (err) {
+        const filename = files[i].split(/[\\/]/).pop() || files[i];
+        aggregated.errors.push(`${filename}: ${err}`);
       }
-    } catch (err) {
-      toast.error(`Extraction failed: ${err}`);
-    } finally {
-      setLoading(false);
+      setPdfProgress({ completed: i + 1, total: files.length });
     }
+
+    setResult(aggregated);
+
+    if (aggregated.total_extracted > 0 && aggregated.errors.length === 0) {
+      toast.success(`${aggregated.total_extracted} image(s) extracted from ${files.length} PDF(s)!`);
+    } else if (aggregated.total_extracted > 0) {
+      toast.warning(
+        `${aggregated.total_extracted} image(s) extracted with ${aggregated.errors.length} error(s).`
+      );
+    } else if (aggregated.errors.length > 0) {
+      toast.error("Failed to extract images from PDF(s).");
+    } else {
+      toast.info("No images found in the selected PDF(s).");
+    }
+
+    setLoading(false);
+    setPdfProgress(null);
   }, [files, outputDir]);
 
   return (
     <div className="space-y-5">
       <DropZone
         accept="pdf"
-        multiple={false}
-        label="Drop a PDF file here"
-        sublabel="Images embedded in the PDF will be extracted"
+        label="Drop PDF files here"
+        sublabel="Images embedded in the PDFs will be extracted"
         onFilesSelected={handleFilesSelected}
       />
 
@@ -112,6 +129,10 @@ export function PdfTab() {
         {loading ? "Extracting..." : "Extract Images"}
       </button>
 
+      {loading && pdfProgress && (
+        <ProgressBar completed={pdfProgress.completed} total={pdfProgress.total} />
+      )}
+
       {result && (
         <div className="mt-4 rounded-lg border border-border bg-surface p-3 space-y-2">
           <div className="flex items-center gap-2">
@@ -121,7 +142,7 @@ export function PdfTab() {
               <XCircle className="h-4 w-4 text-warning" />
             )}
             <span className="text-xs font-medium text-text-primary">
-              {result.extracted_count} image(s) extracted
+              {result.total_extracted} image(s) extracted
             </span>
           </div>
           {result.errors.length > 0 && (

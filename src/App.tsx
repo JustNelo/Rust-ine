@@ -79,11 +79,11 @@ function App() {
               </h2>
               <p className="text-xs text-text-muted mt-1">
                 {activeTab === "compress" &&
-                  "Compress images to WebP format with maximum quality."}
+                  "Compress images to WebP format with adjustable quality."}
                 {activeTab === "convert" &&
                   "Convert images between PNG, JPG, WebP, BMP, ICO and TIFF."}
                 {activeTab === "pdf" &&
-                  "Extract all embedded images from a PDF file."}
+                  "Extract all embedded images from one or more PDF files."}
               </p>
             </div>
 

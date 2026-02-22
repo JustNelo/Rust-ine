@@ -1,11 +1,15 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { save } from "@tauri-apps/plugin-dialog";
 import { open } from "@tauri-apps/plugin-dialog";
-import { Loader2, FileUp, CheckCircle, XCircle, Plus, Trash2 } from "lucide-react";
-import { DropZone } from "./DropZone";
+import { Loader2, FileUp, CheckCircle, XCircle, Plus, Trash2, Upload } from "lucide-react";
 import { PdfPageGrid } from "./PdfPageGrid";
 import { usePdfBuilder } from "../hooks/usePdfBuilder";
 import type { MergePdfOptions } from "../types";
+
+const ACCEPTED_EXTENSIONS = new Set([
+  "png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf",
+]);
 
 export function PdfBuilderTab() {
   const {
@@ -20,18 +24,28 @@ export function PdfBuilderTab() {
     buildPdf,
   } = usePdfBuilder();
 
-  const [pageFormat, setPageFormat] = useState("a4");
-  const [orientation, setOrientation] = useState("portrait");
-  const [margin, setMargin] = useState(20);
-  const [imageQuality, setImageQuality] = useState(85);
   const [outputName, setOutputName] = useState("document.pdf");
 
-  const handleFilesSelected = useCallback(
-    (paths: string[]) => {
-      addFiles(paths);
-    },
-    [addFiles]
-  );
+  // Window-level drag-drop listener — active even when DropZone is hidden
+  const filterPaths = useMemo(() => {
+    return (paths: string[]) =>
+      paths.filter((p) => {
+        const ext = p.split(".").pop()?.toLowerCase() || "";
+        return ACCEPTED_EXTENSIONS.has(ext);
+      });
+  }, []);
+
+  // Always-active window-level drag-drop listener
+  useEffect(() => {
+    const appWindow = getCurrentWindow();
+    const unlisten = appWindow.onDragDropEvent((event) => {
+      if (event.payload.type === "drop") {
+        const filtered = filterPaths(event.payload.paths);
+        if (filtered.length > 0) addFiles(filtered);
+      }
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, [filterPaths, addFiles]);
 
   const handleAddMore = useCallback(async () => {
     try {
@@ -57,34 +71,41 @@ export function PdfBuilderTab() {
   }, [addFiles]);
 
   const handleBuild = useCallback(async () => {
+    const safeName = outputName.endsWith(".pdf") ? outputName : `${outputName}.pdf`;
     const outputPath = await save({
       title: "Save PDF as...",
-      defaultPath: outputName,
+      defaultPath: safeName,
       filters: [{ name: "PDF", extensions: ["pdf"] }],
     });
 
     if (!outputPath) return;
 
     const options: MergePdfOptions = {
-      page_format: pageFormat,
-      orientation,
-      margin_px: margin,
-      image_quality: imageQuality,
+      page_format: "fit",
+      orientation: "portrait",
+      margin_px: 0,
+      image_quality: 90,
       output_path: outputPath,
     };
 
     await buildPdf(options);
-  }, [outputName, pageFormat, orientation, margin, imageQuality, buildPdf]);
+  }, [buildPdf, outputName]);
 
   return (
     <div className="space-y-5">
       {pages.length === 0 ? (
-        <DropZone
-          accept="png,jpg,jpeg,bmp,ico,tiff,tif,webp,pdf"
-          label="Drop images or PDFs here"
-          sublabel="Each image becomes a page. PDF pages are extracted individually."
-          onFilesSelected={handleFilesSelected}
-        />
+        <div
+          onClick={handleAddMore}
+          className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border-hover bg-[rgba(255,255,255,0.03)] p-8 cursor-pointer transition-all duration-200 hover:bg-surface-card hover:border-[rgba(255,255,255,0.25)] hover:shadow-[0_0_20px_rgba(255,255,255,0.06)]"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-card text-text-secondary">
+            <Upload className="h-6 w-6" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-text-primary">Drop images or PDFs here</p>
+            <p className="mt-1 text-xs text-text-muted">Each image becomes a page. PDF pages are extracted individually.</p>
+          </div>
+        </div>
       ) : (
         <div className="flex items-center gap-2">
           <button
@@ -114,133 +135,30 @@ export function PdfBuilderTab() {
         onRemove={removePage}
       />
 
+      {/* Output filename + Build button */}
       {pages.length > 0 && (
-        <>
-
-          {/* Options */}
-          <div className="space-y-3 rounded-2xl border border-glass-border bg-surface-card p-3">
-            {/* Page format */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-text-secondary">
-                Page format
-              </label>
-              <div className="flex gap-2">
-                {[
-                  { value: "a4", label: "A4" },
-                  { value: "letter", label: "Letter" },
-                  { value: "fit", label: "Fit to image" },
-                ].map((fmt) => (
-                  <button
-                    key={fmt.value}
-                    onClick={() => setPageFormat(fmt.value)}
-                    className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
-                      pageFormat === fmt.value
-                        ? "border-glass-border bg-accent-muted text-white"
-                        : "border-border bg-surface text-text-secondary hover:bg-surface-hover"
-                    }`}
-                  >
-                    {fmt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Orientation */}
-            {pageFormat !== "fit" && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-text-secondary">
-                  Orientation
-                </label>
-                <div className="flex gap-2">
-                  {[
-                    { value: "portrait", label: "Portrait" },
-                    { value: "landscape", label: "Landscape" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setOrientation(opt.value)}
-                      className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
-                        orientation === opt.value
-                          ? "border-glass-border bg-accent-muted text-white"
-                          : "border-border bg-surface text-text-secondary hover:bg-surface-hover"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={outputName}
+            onChange={(e) => setOutputName(e.target.value)}
+            placeholder="document.pdf"
+            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
+          />
+          <button
+            onClick={handleBuild}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileUp className="h-4 w-4" />
             )}
-
-            {/* Margin slider */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-text-secondary">
-                  Margin
-                </label>
-                <span className="text-xs font-mono text-text-muted">
-                  {margin}px
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={40}
-                value={margin}
-                onChange={(e) => setMargin(Number(e.target.value))}
-                className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(255,255,255,0.3)]"
-              />
-            </div>
-
-            {/* Image quality slider */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-text-secondary">
-                  Image quality
-                </label>
-                <span className="text-xs font-mono text-text-muted">
-                  {imageQuality}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min={60}
-                max={100}
-                value={imageQuality}
-                onChange={(e) => setImageQuality(Number(e.target.value))}
-                className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(255,255,255,0.3)]"
-              />
-            </div>
-
-            {/* Output filename */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-text-secondary">
-                Output filename
-              </label>
-              <input
-                type="text"
-                value={outputName}
-                onChange={(e) => setOutputName(e.target.value)}
-                className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
-              />
-            </div>
-          </div>
-        </>
+            {loading ? "Building..." : "Build PDF"}
+          </button>
+        </div>
       )}
-
-      {/* Build button */}
-      <button
-        onClick={handleBuild}
-        disabled={loading || pages.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <FileUp className="h-4 w-4" />
-        )}
-        {loading ? "Building PDF..." : "Build PDF"}
-      </button>
 
       {/* Result */}
       {result && (

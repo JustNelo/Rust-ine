@@ -77,7 +77,7 @@ export function PdfPageGrid({
           items={pages.map((p) => p.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="grid grid-cols-3 gap-3 max-h-112 overflow-y-auto pr-1">
+          <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto pr-1">
             {pages.map((page) => (
               <PdfPageCard
                 key={page.id}

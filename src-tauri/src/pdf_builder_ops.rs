@@ -45,16 +45,18 @@ pub struct MergePdfResult {
 // --- Thumbnail generation ---
 
 fn encode_image_to_b64_jpeg(img: &image::DynamicImage, max_width: u32) -> Result<String, String> {
-    let resized = if img.width() > max_width {
-        img.resize(max_width, max_width * 2, image::imageops::FilterType::Triangle)
+    let owned_resized;
+    let to_encode: &image::DynamicImage = if img.width() > max_width {
+        owned_resized = img.resize(max_width, max_width * 2, image::imageops::FilterType::Triangle);
+        &owned_resized
     } else {
-        img.clone()
+        img
     };
 
     let mut jpeg_buf: Vec<u8> = Vec::new();
     let mut cursor = Cursor::new(&mut jpeg_buf);
     let encoder = JpegEncoder::new_with_quality(&mut cursor, 70);
-    resized
+    to_encode
         .write_with_encoder(encoder)
         .map_err(|e| format!("JPEG encode failed: {}", e))?;
 
@@ -311,15 +313,17 @@ fn add_image_page(
     Ok(doc.add_object(page))
 }
 
-fn copy_pdf_page(
+// Copies a single page from an already-loaded source PDF into the destination.
+// The visited map is shared across all pages from the same source document,
+// so shared resources (fonts, images, etc.) are only cloned once.
+fn copy_pdf_page_from_loaded(
     dest_doc: &mut LopdfDocument,
     pages_id: lopdf::ObjectId,
+    source_doc: &LopdfDocument,
     source_path: &str,
     page_number: usize,
+    visited: &mut HashMap<lopdf::ObjectId, lopdf::ObjectId>,
 ) -> Result<lopdf::ObjectId, String> {
-    let source_doc = LopdfDocument::load(source_path)
-        .map_err(|e| format!("Cannot load PDF '{}': {}", source_path, e))?;
-
     let source_pages = source_doc.get_pages();
     let page_num_u32 = page_number as u32;
 
@@ -334,11 +338,12 @@ fn copy_pdf_page(
             )
         })?;
 
-    // Visited map breaks circular references (Page -> Parent -> Kids -> Page)
-    let mut visited: HashMap<lopdf::ObjectId, lopdf::ObjectId> = HashMap::new();
+    // Always create a fresh page object even if this page was cloned before
+    // (e.g. same PDF added twice). Sub-resources (fonts, images) stay shared.
+    visited.remove(source_page_id);
 
     // Clone the entire object tree for this page into the destination document
-    let cloned_page_id = deep_clone_object(dest_doc, &source_doc, *source_page_id, &mut visited)?;
+    let cloned_page_id = deep_clone_object(dest_doc, source_doc, *source_page_id, visited)?;
 
     // Update the Parent reference to point to our pages catalog
     if let Ok(Object::Dictionary(ref mut dict)) = dest_doc.get_object_mut(cloned_page_id) {
@@ -426,6 +431,33 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
     let pages_id = doc.new_object_id();
     let mut page_ids: Vec<Object> = Vec::new();
 
+    // Cache: load each source PDF only once, share visited map per source
+    // so shared resources (fonts, images) are cloned only once per source file.
+    let mut pdf_cache: HashMap<String, LopdfDocument> = HashMap::new();
+    let mut visited_cache: HashMap<String, HashMap<lopdf::ObjectId, lopdf::ObjectId>> =
+        HashMap::new();
+
+    // Pre-load all unique PDF source files
+    for item in &items {
+        if item.source_type == "pdf" && !pdf_cache.contains_key(&item.source_path) {
+            match LopdfDocument::load(&item.source_path) {
+                Ok(source_doc) => {
+                    pdf_cache.insert(item.source_path.clone(), source_doc);
+                    visited_cache.insert(item.source_path.clone(), HashMap::new());
+                }
+                Err(e) => {
+                    let filename = Path::new(&item.source_path)
+                        .file_name()
+                        .and_then(|f| f.to_str())
+                        .unwrap_or(&item.source_path);
+                    result
+                        .errors
+                        .push(format!("{}: Cannot load PDF: {}", filename, e));
+                }
+            }
+        }
+    }
+
     for item in &items {
         match item.source_type.as_str() {
             "image" => {
@@ -445,21 +477,34 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
             }
             "pdf" => {
                 let page_num = item.page_number.unwrap_or(1);
-                match copy_pdf_page(&mut doc, pages_id, &item.source_path, page_num) {
-                    Ok(page_id) => {
-                        page_ids.push(Object::Reference(page_id));
-                        result.page_count += 1;
-                    }
-                    Err(e) => {
-                        let filename = Path::new(&item.source_path)
-                            .file_name()
-                            .and_then(|f| f.to_str())
-                            .unwrap_or(&item.source_path);
-                        result
-                            .errors
-                            .push(format!("{} (page {}): {}", filename, page_num, e));
+                if let Some(source_doc) = pdf_cache.get(&item.source_path) {
+                    let visited = visited_cache
+                        .get_mut(&item.source_path)
+                        .expect("visited_cache must exist for cached pdf");
+                    match copy_pdf_page_from_loaded(
+                        &mut doc,
+                        pages_id,
+                        source_doc,
+                        &item.source_path,
+                        page_num,
+                        visited,
+                    ) {
+                        Ok(page_id) => {
+                            page_ids.push(Object::Reference(page_id));
+                            result.page_count += 1;
+                        }
+                        Err(e) => {
+                            let filename = Path::new(&item.source_path)
+                                .file_name()
+                                .and_then(|f| f.to_str())
+                                .unwrap_or(&item.source_path);
+                            result
+                                .errors
+                                .push(format!("{} (page {}): {}", filename, page_num, e));
+                        }
                     }
                 }
+                // If not in cache, the load error was already recorded above
             }
             other => {
                 result

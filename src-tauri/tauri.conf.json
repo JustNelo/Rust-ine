@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Rust-ine",
-        "width": 1100,
-        "height": 750,
+        "width": 1280,
+        "height": 860,
         "minWidth": 900,
         "minHeight": 600,
         "center": true,

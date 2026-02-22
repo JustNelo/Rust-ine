@@ -132,10 +132,12 @@ export function usePdfBuilder() {
 
         if (res.page_count > 0 && res.errors.length === 0) {
           toast.success(`PDF created with ${res.page_count} page(s)!`);
+          setPages([]);
         } else if (res.page_count > 0) {
           toast.warning(
             `PDF created with ${res.page_count} page(s), ${res.errors.length} error(s).`
           );
+          setPages([]);
         } else {
           toast.error("Failed to create PDF.");
         }

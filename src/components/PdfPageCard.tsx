@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { X, FileText, Image } from "lucide-react";
+import { useT } from "../i18n/i18n";
 import type { BuilderPage } from "../hooks/usePdfBuilder";
 
 interface PdfPageCardProps {
@@ -9,6 +10,7 @@ interface PdfPageCardProps {
 }
 
 export function PdfPageCard({ page, onRemove }: PdfPageCardProps) {
+  const { t } = useT();
   const {
     attributes,
     listeners,
@@ -81,7 +83,7 @@ export function PdfPageCard({ page, onRemove }: PdfPageCardProps) {
       <div className="bg-black/50 px-2 py-1.5 backdrop-blur-sm">
         <p className="text-[10px] text-white/90 truncate font-medium">{page.fileName}</p>
         {page.sourceType === "pdf" && page.pageNumber > 0 && (
-          <p className="text-[9px] text-white/50">Page {page.pageNumber}</p>
+          <p className="text-[9px] text-white/50">{t("label.page_n", { n: page.pageNumber })}</p>
         )}
       </div>
     </div>

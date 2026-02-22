@@ -1,12 +1,13 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 import { Loader2, FileDown, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
-import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useT } from "../i18n/i18n";
 import type { PdfExtractionResult } from "../types";
 
 interface AggregatedPdfResult {
@@ -15,10 +16,10 @@ interface AggregatedPdfResult {
 }
 
 export function PdfTab() {
+  const { t } = useT();
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir } = useWorkspace();
+  const { getOutputDir, openOutputDir } = useWorkspace();
   const [loading, setLoading] = useState(false);
-  const [pdfProgress, setPdfProgress] = useState<{ completed: number; total: number } | null>(null);
   const [result, setResult] = useState<AggregatedPdfResult | null>(null);
 
   const handleFilesSelected = useCallback((paths: string[]) => {
@@ -38,22 +39,22 @@ export function PdfTab() {
 
   const handleExtract = useCallback(async () => {
     if (files.length === 0) {
-      toast.error("Please select at least one PDF file.");
+      toast.error(t("toast.select_pdf"));
       return;
     }
     const outputDir = await getOutputDir("pdf");
     if (!outputDir) {
-      toast.error("Please set a workspace folder in Settings.");
+      toast.error(t("toast.workspace_missing"));
       return;
     }
 
     setLoading(true);
     setResult(null);
-    setPdfProgress({ completed: 0, total: files.length });
 
     const aggregated: AggregatedPdfResult = { total_extracted: 0, errors: [] };
+    const total = files.length;
 
-    for (let i = 0; i < files.length; i++) {
+    for (let i = 0; i < total; i++) {
       try {
         const res = await invoke<PdfExtractionResult>("extract_pdf_images", {
           pdfPath: files[i],
@@ -65,33 +66,33 @@ export function PdfTab() {
         const filename = files[i].split(/[\\/]/).pop() || files[i];
         aggregated.errors.push(`${filename}: ${err}`);
       }
-      setPdfProgress({ completed: i + 1, total: files.length });
+      await emit("processing-progress", { completed: i + 1, total });
     }
 
     setResult(aggregated);
 
     if (aggregated.total_extracted > 0 && aggregated.errors.length === 0) {
-      toast.success(`${aggregated.total_extracted} image(s) extracted from ${files.length} PDF(s)!`);
+      toast.success(t("toast.extract_success", { n: aggregated.total_extracted }));
+      await openOutputDir("pdf");
     } else if (aggregated.total_extracted > 0) {
-      toast.warning(
-        `${aggregated.total_extracted} image(s) extracted with ${aggregated.errors.length} error(s).`
-      );
+      toast.warning(t("toast.partial", { completed: aggregated.total_extracted, total: total }));
+      await openOutputDir("pdf");
     } else if (aggregated.errors.length > 0) {
-      toast.error("Failed to extract images from PDF(s).");
+      toast.error(t("toast.all_failed"));
     } else {
-      toast.info("No images found in the selected PDF(s).");
+      toast.info(t("result.no_images"));
     }
 
     setLoading(false);
-    setPdfProgress(null);
-  }, [files, getOutputDir]);
+    await emit("processing-progress", { completed: total, total });
+  }, [files, getOutputDir, openOutputDir]);
 
   return (
     <div className="space-y-5">
       <DropZone
         accept="pdf"
-        label="Drop PDF files here"
-        sublabel="Images embedded in the PDFs will be extracted"
+        label={t("dropzone.pdf")}
+        sublabel={t("dropzone.sublabel_pdf")}
         onFilesSelected={handleFilesSelected}
       />
 
@@ -112,12 +113,8 @@ export function PdfTab() {
         ) : (
           <FileDown className="h-4 w-4" />
         )}
-        {loading ? "Extracting..." : "Extract Images"}
+        {loading ? t("status.extracting") : t("action.extract")}
       </button>
-
-      {loading && pdfProgress && (
-        <ProgressBar completed={pdfProgress.completed} total={pdfProgress.total} />
-      )}
 
       {result && (
         <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-3 space-y-2">
@@ -128,7 +125,7 @@ export function PdfTab() {
               <XCircle className="h-4 w-4 text-warning" />
             )}
             <span className="text-xs font-medium text-text-primary">
-              {result.total_extracted} image(s) extracted
+              {t("result.extracted", { n: result.total_extracted })}
             </span>
           </div>
           {result.errors.length > 0 && (

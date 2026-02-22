@@ -98,7 +98,7 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
               {t("settings.about")} — Rust-ine {t("app.version")}
             </p>
             <p className="text-[10px] text-text-muted mt-0.5">
-              Built with Tauri + React + Rust
+              {t("settings.built_with")}
             </p>
           </div>
         </div>

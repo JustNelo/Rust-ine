@@ -100,7 +100,7 @@ pub fn compress_to_webp(
                     .and_then(|s| s.to_str())
                     .unwrap_or("output");
 
-                let output_path = out_dir.join(format!("{}.webp", stem));
+                let output_path = out_dir.join(format!("{}-compressed.webp", stem));
                 fs::write(&output_path, &*webp_data)
                     .map_err(|e| format!("Cannot write WebP file: {}", e))?;
 
@@ -158,38 +158,38 @@ pub fn convert_images(
                         let (w, h) = rgba.dimensions();
                         let encoder = Encoder::from_rgba(&rgba, w, h);
                         let webp_data = encoder.encode(100.0);
-                        let output_path = out_dir.join(format!("{}.webp", stem));
+                        let output_path = out_dir.join(format!("{}-converted.webp", stem));
                         fs::write(&output_path, &*webp_data)
                             .map_err(|e| format!("Cannot write WebP: {}", e))?;
                         Ok(output_path.to_string_lossy().to_string())
                     }
                     "png" => {
-                        let output_path = out_dir.join(format!("{}.png", stem));
+                        let output_path = out_dir.join(format!("{}-converted.png", stem));
                         img.save_with_format(&output_path, ImageFormat::Png)
                             .map_err(|e| format!("Cannot save PNG: {}", e))?;
                         Ok(output_path.to_string_lossy().to_string())
                     }
                     "jpg" | "jpeg" => {
-                        let output_path = out_dir.join(format!("{}.jpg", stem));
+                        let output_path = out_dir.join(format!("{}-converted.jpg", stem));
                         img.save_with_format(&output_path, ImageFormat::Jpeg)
                             .map_err(|e| format!("Cannot save JPEG: {}", e))?;
                         Ok(output_path.to_string_lossy().to_string())
                     }
                     "bmp" => {
-                        let output_path = out_dir.join(format!("{}.bmp", stem));
+                        let output_path = out_dir.join(format!("{}-converted.bmp", stem));
                         img.save_with_format(&output_path, ImageFormat::Bmp)
                             .map_err(|e| format!("Cannot save BMP: {}", e))?;
                         Ok(output_path.to_string_lossy().to_string())
                     }
                     "ico" => {
                         let resized = img.resize(256, 256, image::imageops::FilterType::Lanczos3);
-                        let output_path = out_dir.join(format!("{}.ico", stem));
+                        let output_path = out_dir.join(format!("{}-converted.ico", stem));
                         resized.save_with_format(&output_path, ImageFormat::Ico)
                             .map_err(|e| format!("Cannot save ICO: {}", e))?;
                         Ok(output_path.to_string_lossy().to_string())
                     }
                     "tiff" | "tif" => {
-                        let output_path = out_dir.join(format!("{}.tiff", stem));
+                        let output_path = out_dir.join(format!("{}-converted.tiff", stem));
                         img.save_with_format(&output_path, ImageFormat::Tiff)
                             .map_err(|e| format!("Cannot save TIFF: {}", e))?;
                         Ok(output_path.to_string_lossy().to_string())
@@ -351,7 +351,7 @@ pub fn resize_images(
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("output");
-                let output_path = out_dir.join(format!("{}_resized.{}", stem, ext));
+                let output_path = out_dir.join(format!("{}-resized.{}", stem, ext));
 
                 save_in_original_format(&resized, input_path, &output_path)?;
                 Ok((output_path.to_string_lossy().to_string(), orig_w, orig_h, new_w, new_h))
@@ -398,7 +398,7 @@ pub fn strip_metadata(
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("output");
-                let output_path = out_dir.join(format!("{}_stripped.{}", stem, ext));
+                let output_path = out_dir.join(format!("{}-stripped.{}", stem, ext));
 
                 save_in_original_format(&img, input_path, &output_path)?;
                 Ok((output_path.to_string_lossy().to_string(), w, h))
@@ -539,7 +539,7 @@ pub fn add_watermark(
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("output");
-                let output_path = out_dir.join(format!("{}_watermarked.{}", stem, ext));
+                let output_path = out_dir.join(format!("{}-watermarked.{}", stem, ext));
 
                 save_in_original_format(&result_img, input_path, &output_path)?;
                 Ok((output_path.to_string_lossy().to_string(), img_w, img_h))

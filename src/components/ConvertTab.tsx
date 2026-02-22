@@ -5,11 +5,10 @@ import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
-import { ProgressBar } from "./ProgressBar";
 import { cn } from "../lib/utils";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
-import { useProcessingProgress } from "../hooks/useProcessingProgress";
+import { useT } from "../i18n/i18n";
 import type { BatchProgress, OutputFormat, ProcessingResult } from "../types";
 
 const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
@@ -22,9 +21,9 @@ const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
 ];
 
 export function ConvertTab() {
+  const { t } = useT();
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir } = useWorkspace();
-  const { progress, resetProgress } = useProcessingProgress();
+  const { getOutputDir, openOutputDir } = useWorkspace();
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
@@ -41,18 +40,17 @@ export function ConvertTab() {
 
   const handleConvert = useCallback(async () => {
     if (files.length === 0) {
-      toast.error("Please select at least one image.");
+      toast.error(t("toast.select_images"));
       return;
     }
     const outputDir = await getOutputDir("convert");
     if (!outputDir) {
-      toast.error("Please set a workspace folder in Settings.");
+      toast.error(t("toast.workspace_missing"));
       return;
     }
 
     setLoading(true);
     setResults([]);
-    resetProgress();
 
     try {
       const result = await invoke<BatchProgress>("convert_images", {
@@ -64,30 +62,27 @@ export function ConvertTab() {
       setResults(result.results);
 
       if (result.completed === result.total) {
-        toast.success(
-          `${result.completed} image(s) converted to ${outputFormat.toUpperCase()}!`
-        );
+        toast.success(t("toast.convert_success", { n: result.completed, format: outputFormat.toUpperCase() }));
+        await openOutputDir("convert");
       } else if (result.completed > 0) {
-        toast.warning(
-          `${result.completed}/${result.total} converted. Some files failed.`
-        );
+        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
+        await openOutputDir("convert");
       } else {
-        toast.error("All files failed to convert.");
+        toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`Conversion failed: ${err}`);
+      toast.error(`${t("status.converting")} ${err}`);
     } finally {
       setLoading(false);
-      resetProgress();
     }
-  }, [files, outputFormat, getOutputDir, resetProgress]);
+  }, [files, outputFormat, getOutputDir, openOutputDir]);
 
   return (
     <div className="space-y-5">
       <DropZone
         accept="png,jpg,jpeg,bmp,ico,tiff,tif,webp,gif"
-        label="Drop images here to convert"
-        sublabel="PNG, JPG, BMP, ICO, TIFF, WebP, GIF supported"
+        label={t("dropzone.images_convert")}
+        sublabel={t("dropzone.sublabel_convert")}
         onFilesSelected={handleFilesSelected}
       />
 
@@ -100,7 +95,7 @@ export function ConvertTab() {
       <div className="space-y-3">
         <div className="space-y-2">
           <label className="text-xs font-medium text-text-secondary">
-            Output format
+            {t("label.output_format")}
           </label>
           <div className="flex gap-2">
             {FORMAT_OPTIONS.map((fmt) => (
@@ -132,12 +127,8 @@ export function ConvertTab() {
         ) : (
           <ArrowRightLeft className="h-4 w-4" />
         )}
-        {loading ? "Converting..." : files.length > 0 ? `Convert ${files.length} image${files.length > 1 ? "s" : ""} to ${outputFormat.toUpperCase()}` : `Convert to ${outputFormat.toUpperCase()}`}
+        {loading ? t("status.converting") : files.length > 0 ? t("action.convert_n", { n: files.length, format: outputFormat.toUpperCase() }) : t("action.convert", { format: outputFormat.toUpperCase() })}
       </button>
-
-      {loading && progress && (
-        <ProgressBar completed={progress.completed} total={progress.total} />
-      )}
 
       <ResultsBanner results={results} total={files.length} />
     </div>

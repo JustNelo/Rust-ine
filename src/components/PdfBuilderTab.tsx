@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { save } from "@tauri-apps/plugin-dialog";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Loader2, FileUp, CheckCircle, XCircle, Plus, Trash2, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { PdfPageGrid } from "./PdfPageGrid";
 import { usePdfBuilder } from "../hooks/usePdfBuilder";
+import { useWorkspace } from "../hooks/useWorkspace";
+import { useT } from "../i18n/i18n";
 import type { MergePdfOptions } from "../types";
 
 const ACCEPTED_EXTENSIONS = new Set([
@@ -12,6 +14,8 @@ const ACCEPTED_EXTENSIONS = new Set([
 ]);
 
 export function PdfBuilderTab() {
+  const { t } = useT();
+  const { getOutputDir, openOutputDir } = useWorkspace();
   const {
     pages,
     loading,
@@ -71,14 +75,15 @@ export function PdfBuilderTab() {
   }, [addFiles]);
 
   const handleBuild = useCallback(async () => {
-    const safeName = outputName.endsWith(".pdf") ? outputName : `${outputName}.pdf`;
-    const outputPath = await save({
-      title: "Save PDF as...",
-      defaultPath: safeName,
-      filters: [{ name: "PDF", extensions: ["pdf"] }],
-    });
+    const outputDir = await getOutputDir("pdf-builder");
+    if (!outputDir) {
+      toast.error(t("toast.workspace_missing"));
+      return;
+    }
 
-    if (!outputPath) return;
+    const safeName = outputName.endsWith(".pdf") ? outputName : `${outputName}.pdf`;
+    const sep = outputDir.includes("/") ? "/" : "\\";
+    const outputPath = `${outputDir}${sep}${safeName}`;
 
     const options: MergePdfOptions = {
       page_format: "fit",
@@ -89,7 +94,8 @@ export function PdfBuilderTab() {
     };
 
     await buildPdf(options);
-  }, [buildPdf, outputName]);
+    await openOutputDir("pdf-builder");
+  }, [buildPdf, outputName, getOutputDir, openOutputDir, t]);
 
   return (
     <div className="space-y-5">
@@ -102,8 +108,8 @@ export function PdfBuilderTab() {
             <Upload className="h-6 w-6" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-text-primary">Drop images or PDFs here</p>
-            <p className="mt-1 text-xs text-text-muted">Each image becomes a page. PDF pages are extracted individually.</p>
+            <p className="text-sm font-medium text-text-primary">{t("dropzone.pdf_builder")}</p>
+            <p className="mt-1 text-xs text-text-muted">{t("dropzone.sublabel_pdf_builder")}</p>
           </div>
         </div>
       ) : (
@@ -113,17 +119,17 @@ export function PdfBuilderTab() {
             className="flex items-center gap-2 rounded-xl border border-glass-border bg-surface-card px-4 py-2.5 text-xs font-medium text-text-secondary hover:bg-surface-hover hover:text-white transition-all cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            Add files
+            {t("label.add_files")}
           </button>
           <span className="text-[10px] text-text-muted">
-            or drop files anywhere in the window
+            {t("label.or_drop_anywhere")}
           </span>
           <button
             onClick={clearPages}
             className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-white hover:bg-surface-hover transition-all cursor-pointer"
           >
             <Trash2 className="h-3 w-3" />
-            Clear all
+            {t("label.clear_all")}
           </button>
         </div>
       )}
@@ -142,7 +148,7 @@ export function PdfBuilderTab() {
             type="text"
             value={outputName}
             onChange={(e) => setOutputName(e.target.value)}
-            placeholder="document.pdf"
+            placeholder={t("label.placeholder_filename")}
             className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
           />
           <button
@@ -155,7 +161,7 @@ export function PdfBuilderTab() {
             ) : (
               <FileUp className="h-4 w-4" />
             )}
-            {loading ? "Building..." : "Build PDF"}
+            {loading ? t("status.building") : t("action.build_pdf")}
           </button>
         </div>
       )}
@@ -170,7 +176,7 @@ export function PdfBuilderTab() {
               <XCircle className="h-4 w-4 text-warning" />
             )}
             <span className="text-xs font-medium text-text-primary">
-              {result.page_count} page(s) in final PDF
+              {t("toast.build_success", { n: result.page_count })}
             </span>
           </div>
           {result.errors.length > 0 && (

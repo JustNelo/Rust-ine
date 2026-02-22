@@ -5,25 +5,24 @@ import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
-import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
-import { useProcessingProgress } from "../hooks/useProcessingProgress";
+import { useT } from "../i18n/i18n";
 import type { BatchProgress, ProcessingResult, WatermarkPosition } from "../types";
 
-const POSITION_OPTIONS: { value: WatermarkPosition; label: string }[] = [
-  { value: "center", label: "Center" },
-  { value: "bottom-right", label: "Bottom Right" },
-  { value: "bottom-left", label: "Bottom Left" },
-  { value: "top-right", label: "Top Right" },
-  { value: "top-left", label: "Top Left" },
-  { value: "tiled", label: "Tiled" },
+const POSITION_KEYS: { value: WatermarkPosition; labelKey: string }[] = [
+  { value: "center", labelKey: "label.center" },
+  { value: "bottom-right", labelKey: "label.bottom_right" },
+  { value: "bottom-left", labelKey: "label.bottom_left" },
+  { value: "top-right", labelKey: "label.top_right" },
+  { value: "top-left", labelKey: "label.top_left" },
+  { value: "tiled", labelKey: "label.tiled" },
 ];
 
 export function WatermarkTab() {
+  const { t } = useT();
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir } = useWorkspace();
-  const { progress, resetProgress } = useProcessingProgress();
+  const { getOutputDir, openOutputDir } = useWorkspace();
   const [text, setText] = useState("");
   const [position, setPosition] = useState<WatermarkPosition>("center");
   const [opacity, setOpacity] = useState(30);
@@ -46,22 +45,21 @@ export function WatermarkTab() {
 
   const handleWatermark = useCallback(async () => {
     if (files.length === 0) {
-      toast.error("Please select at least one image.");
+      toast.error(t("toast.select_images"));
       return;
     }
     if (!text.trim()) {
-      toast.error("Please enter watermark text.");
+      toast.error(t("toast.watermark_text_missing"));
       return;
     }
     const outputDir = await getOutputDir("watermark");
     if (!outputDir) {
-      toast.error("Please set a workspace folder in Settings.");
+      toast.error(t("toast.workspace_missing"));
       return;
     }
 
     setLoading(true);
     setResults([]);
-    resetProgress();
 
     try {
       const result = await invoke<BatchProgress>("add_watermark", {
@@ -76,28 +74,27 @@ export function WatermarkTab() {
       setResults(result.results);
 
       if (result.completed === result.total) {
-        toast.success(`Watermark added to ${result.completed} image(s)!`);
+        toast.success(t("toast.watermark_success", { n: result.completed }));
+        await openOutputDir("watermark");
       } else if (result.completed > 0) {
-        toast.warning(
-          `${result.completed}/${result.total} processed. Some files failed.`
-        );
+        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
+        await openOutputDir("watermark");
       } else {
-        toast.error("All files failed to process.");
+        toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`Watermark failed: ${err}`);
+      toast.error(`${t("status.watermarking")} ${err}`);
     } finally {
       setLoading(false);
-      resetProgress();
     }
-  }, [files, text, position, opacity, fontSize, getOutputDir, resetProgress]);
+  }, [files, text, position, opacity, fontSize, getOutputDir, openOutputDir]);
 
   return (
     <div className="space-y-5">
       <DropZone
         accept="png,jpg,jpeg,bmp,tiff,tif,webp"
-        label="Drop images here to watermark"
-        sublabel="A text watermark will be overlaid on each image"
+        label={t("dropzone.images_watermark")}
+        sublabel={t("dropzone.sublabel_watermark")}
         onFilesSelected={handleFilesSelected}
       />
 
@@ -106,23 +103,23 @@ export function WatermarkTab() {
       <div className="space-y-3">
         <div>
           <label className="text-xs font-medium text-text-secondary mb-1 block">
-            Watermark Text
+            {t("label.watermark_text")}
           </label>
           <input
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="e.g. CONFIDENTIAL, your name..."
+            placeholder={t("label.placeholder_watermark")}
             className="w-full rounded-md border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
           />
         </div>
 
         <div>
           <label className="text-xs font-medium text-text-secondary mb-1.5 block">
-            Position
+            {t("label.position")}
           </label>
           <div className="flex gap-2 flex-wrap">
-            {POSITION_OPTIONS.map((opt) => (
+            {POSITION_KEYS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setPosition(opt.value)}
@@ -132,7 +129,7 @@ export function WatermarkTab() {
                     : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
                 }`}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </button>
             ))}
           </div>
@@ -141,7 +138,7 @@ export function WatermarkTab() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-text-secondary">
-              Opacity
+              {t("label.opacity")}
             </label>
             <span className="text-xs font-mono text-text-muted">{opacity}%</span>
           </div>
@@ -158,7 +155,7 @@ export function WatermarkTab() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-text-secondary">
-              Font size
+              {t("label.font_size")}
             </label>
             <span className="text-xs font-mono text-text-muted">{fontSize}px</span>
           </div>
@@ -183,12 +180,8 @@ export function WatermarkTab() {
         ) : (
           <Stamp className="h-4 w-4" />
         )}
-        {loading ? "Applying..." : files.length > 0 ? `Watermark ${files.length} image${files.length > 1 ? "s" : ""}` : "Apply Watermark"}
+        {loading ? t("status.watermarking") : files.length > 0 ? t("action.watermark_n", { n: files.length }) : t("action.watermark")}
       </button>
-
-      {loading && progress && (
-        <ProgressBar completed={progress.completed} total={progress.total} />
-      )}
 
       <ResultsBanner results={results} total={files.length} />
     </div>

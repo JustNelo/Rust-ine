@@ -141,5 +141,32 @@
   "onboarding.back": "Retour",
 
   "sidebar.hint": "Glissez-déposez vos fichiers ou utilisez Ctrl+O.",
-  "sidebar.workspace": "Espace de travail"
+  "sidebar.workspace": "Espace de travail",
+
+  "label.scale": "Échelle",
+  "label.px": "px",
+  "label.or_drop_anywhere": "ou déposez des fichiers n'importe où",
+  "label.folder_structure": "Structure des dossiers :",
+  "label.preview": "Aperçu",
+  "label.remove": "Supprimer",
+  "label.page_n": "Page {n}",
+  "label.n_files_selected": "{n} fichier(s) sélectionné(s)",
+  "label.placeholder_watermark": "ex. CONFIDENTIEL, votre nom...",
+  "label.placeholder_filename": "document.pdf",
+
+  "preview.before_after": "Avant / Après",
+  "preview.original": "Original",
+  "preview.result": "Résultat",
+
+  "exif.camera": "Appareil photo",
+  "exif.shooting": "Prise de vue",
+  "exif.gps_location": "Localisation GPS",
+  "exif.other": "Autre",
+  "exif.no_metadata": "Aucune métadonnée EXIF",
+  "exif.n_fields": "{n} champs de métadonnées",
+
+  "settings.built_with": "Construit avec Tauri + React + Rust",
+
+  "toast.workspace_missing": "Veuillez définir un dossier de travail dans les Paramètres.",
+  "toast.watermark_text_missing": "Veuillez saisir un texte de filigrane."
 }

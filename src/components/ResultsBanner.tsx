@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback, memo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { CheckCircle, AlertCircle, XCircle, ArrowRight, X, ZoomIn } from "lucide-react";
 import { formatSize, isImage } from "../lib/utils";
+import { useT } from "../i18n/i18n";
 import type { ProcessingResult } from "../types";
 
 interface ResultsBannerProps {
@@ -10,6 +11,7 @@ interface ResultsBannerProps {
 }
 
 export const ResultsBanner = memo(function ResultsBanner({ results, total }: ResultsBannerProps) {
+  const { t } = useT();
   const [previewResult, setPreviewResult] = useState<ProcessingResult | null>(null);
 
   const closePreview = useCallback(() => setPreviewResult(null), []);
@@ -39,7 +41,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total }: Res
             <AlertCircle className="h-4 w-4 text-warning" />
           )}
           <span className="text-xs font-medium text-text-primary">
-            {succeeded}/{total} processed successfully
+            {t("result.processed", { succeeded, total })}
           </span>
         </div>
 
@@ -135,7 +137,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total }: Res
           >
             <div className="flex items-center justify-between px-4 py-2.5 bg-surface-card border-b border-glass-border">
               <div className="flex items-center gap-3 text-xs text-text-secondary">
-                <span className="font-medium">Before / After</span>
+                <span className="font-medium">{t("preview.before_after")}</span>
                 <span className="text-text-muted">
                   {formatSize(previewResult.input_size)}
                 </span>
@@ -165,7 +167,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total }: Res
             <div className="flex gap-0.5 p-4 max-h-[75vh] overflow-auto" style={{ background: '#0a0a0a' }}>
               <div className="flex-1 flex flex-col items-center gap-2">
                 <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-                  Original
+                  {t("preview.original")}
                 </span>
                 <div className="rounded-xl overflow-hidden border border-glass-border">
                   <img
@@ -190,7 +192,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total }: Res
 
               <div className="flex-1 flex flex-col items-center gap-2">
                 <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-                  Result
+                  {t("preview.result")}
                 </span>
                 <div className="rounded-xl overflow-hidden border border-glass-border">
                   <img

@@ -100,7 +100,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             </div>
 
             <div className="mt-5 w-full max-w-xs text-left">
-              <p className="text-[10px] text-text-muted mb-1.5 font-medium">Folder structure:</p>
+              <p className="text-[10px] text-text-muted mb-1.5 font-medium">{t("label.folder_structure")}</p>
               <div className="rounded-lg bg-surface-card border border-border px-3 py-2 text-[10px] text-text-muted font-mono space-y-0.5">
                 <p>📁 compressed/</p>
                 <p>📁 converted/</p>

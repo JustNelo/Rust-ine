@@ -15,13 +15,13 @@ import { formatSize } from "../lib/utils";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
-import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
-import { useProcessingProgress } from "../hooks/useProcessingProgress";
+import { useT } from "../i18n/i18n";
 import type { BatchProgress, ProcessingResult, ImageMetadata } from "../types";
 
 function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
+  const { t } = useT();
   const [expanded, setExpanded] = useState(true);
   const fileName = metadata.path.split(/[\\/]/).pop() || "";
 
@@ -70,11 +70,11 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
           </span>
           {metadata.exif.length > 0 ? (
             <span className="text-[10px] font-medium text-text-secondary shrink-0">
-              {metadata.exif.length} metadata fields
+              {t("exif.n_fields", { n: metadata.exif.length })}
             </span>
           ) : (
             <span className="text-[10px] font-medium text-text-muted shrink-0">
-              No EXIF metadata
+              {t("exif.no_metadata")}
             </span>
           )}
         </div>
@@ -93,7 +93,7 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Camera className="h-3 w-3 text-text-muted" />
                 <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
-                  Camera
+                  {t("exif.camera")}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
@@ -114,7 +114,7 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Info className="h-3 w-3 text-text-muted" />
                 <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
-                  Shooting
+                  {t("exif.shooting")}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
@@ -135,7 +135,7 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
               <div className="flex items-center gap-1.5 mb-1.5">
                 <MapPin className="h-3 w-3 text-text-secondary" />
                 <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
-                  GPS Location
+                  {t("exif.gps_location")}
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-y-0.5">
@@ -156,7 +156,7 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Info className="h-3 w-3 text-text-muted" />
                 <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
-                  Other
+                  {t("exif.other")}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
@@ -178,9 +178,9 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
 }
 
 export function ExifStripTab() {
+  const { t } = useT();
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir } = useWorkspace();
-  const { progress, resetProgress } = useProcessingProgress();
+  const { getOutputDir, openOutputDir } = useWorkspace();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [metadataList, setMetadataList] = useState<ImageMetadata[]>([]);
@@ -243,18 +243,17 @@ export function ExifStripTab() {
 
   const handleStrip = useCallback(async () => {
     if (files.length === 0) {
-      toast.error("Please select at least one image.");
+      toast.error(t("toast.select_images"));
       return;
     }
     const outputDir = await getOutputDir("strip");
     if (!outputDir) {
-      toast.error("Please set a workspace folder in Settings.");
+      toast.error(t("toast.workspace_missing"));
       return;
     }
 
     setLoading(true);
     setResults([]);
-    resetProgress();
 
     try {
       const result = await invoke<BatchProgress>("strip_metadata", {
@@ -265,28 +264,27 @@ export function ExifStripTab() {
       setResults(result.results);
 
       if (result.completed === result.total) {
-        toast.success(`Metadata stripped from ${result.completed} image(s)!`);
+        toast.success(t("toast.strip_success", { n: result.completed }));
+        await openOutputDir("strip");
       } else if (result.completed > 0) {
-        toast.warning(
-          `${result.completed}/${result.total} processed. Some files failed.`
-        );
+        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
+        await openOutputDir("strip");
       } else {
-        toast.error("All files failed to process.");
+        toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`Metadata strip failed: ${err}`);
+      toast.error(`${t("status.stripping")} ${err}`);
     } finally {
       setLoading(false);
-      resetProgress();
     }
-  }, [files, getOutputDir, resetProgress]);
+  }, [files, getOutputDir, openOutputDir]);
 
   return (
     <div className="space-y-5">
       <DropZone
         accept="png,jpg,jpeg,bmp,tiff,tif,webp"
-        label="Drop images here to strip metadata"
-        sublabel="EXIF, GPS, camera info and other metadata will be removed"
+        label={t("dropzone.images_strip")}
+        sublabel={t("dropzone.sublabel_strip")}
         onFilesSelected={handleFilesSelected}
       />
 
@@ -296,29 +294,29 @@ export function ExifStripTab() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-text-secondary">
-              Metadata Inspector
+              {t("label.metadata_inspector")}
             </span>
             {loadingMeta ? (
               <span className="flex items-center gap-1.5 text-[10px] text-text-muted">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Scanning...
+                {t("status.scanning")}
               </span>
             ) : (
               <div className="flex items-center gap-3">
                 {totalExifFields > 0 && (
-                  <span className="text-[10px] text-text-secondary font-medium">
-                    {totalExifFields} field(s) found
+                  <span className="text-[10px] font-medium text-text-secondary">
+                    {t("result.fields_found", { n: totalExifFields })}
                   </span>
                 )}
                 {hasGps && (
                   <span className="flex items-center gap-1 text-[10px] text-text-secondary font-medium">
                     <MapPin className="h-3 w-3" />
-                    GPS data detected
+                    {t("result.gps_detected")}
                   </span>
                 )}
                 {totalExifFields === 0 && (
                   <span className="text-[10px] text-text-muted font-medium">
-                    Clean — no metadata
+                    {t("result.clean")}
                   </span>
                 )}
               </div>
@@ -343,12 +341,8 @@ export function ExifStripTab() {
         ) : (
           <ShieldOff className="h-4 w-4" />
         )}
-        {loading ? "Stripping..." : files.length > 0 ? `Strip ${files.length} image${files.length > 1 ? "s" : ""}` : "Strip Metadata"}
+        {loading ? t("status.stripping") : files.length > 0 ? t("action.strip_n", { n: files.length }) : t("action.strip")}
       </button>
-
-      {loading && progress && (
-        <ProgressBar completed={progress.completed} total={progress.total} />
-      )}
 
       <ResultsBanner results={results} total={files.length} />
     </div>

@@ -5,16 +5,15 @@ import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
-import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
-import { useProcessingProgress } from "../hooks/useProcessingProgress";
+import { useT } from "../i18n/i18n";
 import type { BatchProgress, ProcessingResult } from "../types";
 
 export function CompressTab() {
+  const { t } = useT();
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir } = useWorkspace();
-  const { progress, resetProgress } = useProcessingProgress();
+  const { getOutputDir, openOutputDir } = useWorkspace();
   const [quality, setQuality] = useState(80);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
@@ -31,18 +30,17 @@ export function CompressTab() {
 
   const handleCompress = useCallback(async () => {
     if (files.length === 0) {
-      toast.error("Please select at least one image.");
+      toast.error(t("toast.select_images"));
       return;
     }
     const outputDir = await getOutputDir("compress");
     if (!outputDir) {
-      toast.error("Please set a workspace folder in Settings.");
+      toast.error(t("toast.workspace_missing"));
       return;
     }
 
     setLoading(true);
     setResults([]);
-    resetProgress();
 
     try {
       const result = await invoke<BatchProgress>("compress_webp", {
@@ -54,28 +52,27 @@ export function CompressTab() {
       setResults(result.results);
 
       if (result.completed === result.total) {
-        toast.success(`${result.completed} image(s) compressed to WebP!`);
+        toast.success(t("toast.compress_success", { n: result.completed }));
+        await openOutputDir("compress");
       } else if (result.completed > 0) {
-        toast.warning(
-          `${result.completed}/${result.total} compressed. Some files failed.`
-        );
+        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
+        await openOutputDir("compress");
       } else {
-        toast.error("All files failed to compress.");
+        toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`Compression failed: ${err}`);
+      toast.error(`${t("status.compressing")} ${err}`);
     } finally {
       setLoading(false);
-      resetProgress();
     }
-  }, [files, quality, getOutputDir, resetProgress]);
+  }, [files, quality, getOutputDir, openOutputDir]);
 
   return (
     <div className="space-y-5">
       <DropZone
         accept="png,jpg,jpeg,bmp,ico,tiff,tif,webp"
-        label="Drop images here to compress to WebP"
-        sublabel="PNG, JPG, BMP, ICO, TIFF supported"
+        label={t("dropzone.images_compress")}
+        sublabel={t("dropzone.sublabel_compress")}
         onFilesSelected={handleFilesSelected}
       />
 
@@ -88,7 +85,7 @@ export function CompressTab() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-text-secondary">
-            Quality
+            {t("label.quality")}
           </label>
           <span className="text-xs font-mono text-text-muted">{quality}%</span>
         </div>
@@ -101,8 +98,8 @@ export function CompressTab() {
           className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(108,108,237,0.4)]"
         />
         <div className="flex justify-between text-[10px] text-text-muted">
-          <span>Smaller file</span>
-          <span>Higher quality</span>
+          <span>{t("label.smaller_file")}</span>
+          <span>{t("label.higher_quality")}</span>
         </div>
       </div>
 
@@ -116,12 +113,8 @@ export function CompressTab() {
         ) : (
           <Zap className="h-4 w-4" />
         )}
-        {loading ? "Compressing..." : files.length > 0 ? `Compress ${files.length} image${files.length > 1 ? "s" : ""}` : "Compress to WebP"}
+        {loading ? t("status.compressing") : files.length > 0 ? t("action.compress_n", { n: files.length }) : t("action.compress")}
       </button>
-
-      {loading && progress && (
-        <ProgressBar completed={progress.completed} total={progress.total} />
-      )}
 
       <ResultsBanner results={results} total={files.length} />
     </div>

@@ -2,6 +2,7 @@ import { useState, useCallback, memo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { X, FileText, ZoomIn } from "lucide-react";
 import { isImage } from "../lib/utils";
+import { useT } from "../i18n/i18n";
 
 interface FileListProps {
   files: string[];
@@ -11,6 +12,7 @@ interface FileListProps {
 }
 
 export const FileList = memo(function FileList({ files, onRemove, onClear, type = "image" }: FileListProps) {
+  const { t } = useT();
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState("");
 
@@ -33,13 +35,13 @@ export const FileList = memo(function FileList({ files, onRemove, onClear, type 
       <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-3">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-medium text-text-secondary">
-            {files.length} file{files.length > 1 ? "s" : ""} selected
+            {t("label.n_files_selected", { n: files.length })}
           </span>
           <button
             onClick={onClear}
             className="text-xs text-text-muted hover:text-white transition-colors cursor-pointer"
           >
-            Clear all
+            {t("label.clear_all")}
           </button>
         </div>
 

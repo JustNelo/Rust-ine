@@ -5,23 +5,22 @@ import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
-import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
-import { useProcessingProgress } from "../hooks/useProcessingProgress";
+import { useT } from "../i18n/i18n";
 import type { BatchProgress, ProcessingResult, ResizeMode } from "../types";
 
-const MODE_OPTIONS: { value: ResizeMode; label: string }[] = [
-  { value: "percentage", label: "Percentage" },
-  { value: "width", label: "Fit to Width" },
-  { value: "height", label: "Fit to Height" },
-  { value: "exact", label: "Exact Dimensions" },
+const MODE_KEYS: { value: ResizeMode; labelKey: string }[] = [
+  { value: "percentage", labelKey: "label.percentage" },
+  { value: "width", labelKey: "label.by_width" },
+  { value: "height", labelKey: "label.by_height" },
+  { value: "exact", labelKey: "label.exact" },
 ];
 
 export function ResizeTab() {
+  const { t } = useT();
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir } = useWorkspace();
-  const { progress, resetProgress } = useProcessingProgress();
+  const { getOutputDir, openOutputDir } = useWorkspace();
   const [mode, setMode] = useState<ResizeMode>("percentage");
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(600);
@@ -44,18 +43,17 @@ export function ResizeTab() {
 
   const handleResize = useCallback(async () => {
     if (files.length === 0) {
-      toast.error("Please select at least one image.");
+      toast.error(t("toast.select_images"));
       return;
     }
     const outputDir = await getOutputDir("resize");
     if (!outputDir) {
-      toast.error("Please set a workspace folder in Settings.");
+      toast.error(t("toast.workspace_missing"));
       return;
     }
 
     setLoading(true);
     setResults([]);
-    resetProgress();
 
     try {
       const result = await invoke<BatchProgress>("resize_images", {
@@ -70,28 +68,27 @@ export function ResizeTab() {
       setResults(result.results);
 
       if (result.completed === result.total) {
-        toast.success(`${result.completed} image(s) resized!`);
+        toast.success(t("toast.resize_success", { n: result.completed }));
+        await openOutputDir("resize");
       } else if (result.completed > 0) {
-        toast.warning(
-          `${result.completed}/${result.total} resized. Some files failed.`
-        );
+        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
+        await openOutputDir("resize");
       } else {
-        toast.error("All files failed to resize.");
+        toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`Resize failed: ${err}`);
+      toast.error(`${t("status.resizing")} ${err}`);
     } finally {
       setLoading(false);
-      resetProgress();
     }
-  }, [files, mode, width, height, percentage, getOutputDir, resetProgress]);
+  }, [files, mode, width, height, percentage, getOutputDir, openOutputDir]);
 
   return (
     <div className="space-y-5">
       <DropZone
         accept="png,jpg,jpeg,bmp,ico,tiff,tif,webp,gif"
-        label="Drop images here to resize"
-        sublabel="PNG, JPG, BMP, ICO, TIFF, WebP, GIF supported"
+        label={t("dropzone.images_resize")}
+        sublabel={t("dropzone.sublabel_resize")}
         onFilesSelected={handleFilesSelected}
       />
 
@@ -99,7 +96,7 @@ export function ResizeTab() {
 
       <div className="space-y-3">
         <div className="flex gap-2 flex-wrap">
-          {MODE_OPTIONS.map((opt) => (
+          {MODE_KEYS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => setMode(opt.value)}
@@ -109,7 +106,7 @@ export function ResizeTab() {
                   : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
               }`}
             >
-              {opt.label}
+              {t(opt.labelKey)}
             </button>
           ))}
         </div>
@@ -118,7 +115,7 @@ export function ResizeTab() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-text-secondary">
-                Scale
+                {t("label.scale")}
               </label>
               <span className="text-xs font-mono text-text-muted">
                 {percentage}%
@@ -141,7 +138,7 @@ export function ResizeTab() {
 
         {(mode === "width" || mode === "exact") && (
           <div className="flex items-center gap-2">
-            <label className="text-xs text-text-secondary w-12">Width</label>
+            <label className="text-xs text-text-secondary w-12">{t("label.width")}</label>
             <input
               type="number"
               min={1}
@@ -149,13 +146,13 @@ export function ResizeTab() {
               onChange={(e) => setWidth(Number(e.target.value))}
               className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-text-primary focus:border-border-hover focus:outline-none"
             />
-            <span className="text-xs text-text-muted">px</span>
+            <span className="text-xs text-text-muted">{t("label.px")}</span>
           </div>
         )}
 
         {(mode === "height" || mode === "exact") && (
           <div className="flex items-center gap-2">
-            <label className="text-xs text-text-secondary w-12">Height</label>
+            <label className="text-xs text-text-secondary w-12">{t("label.height")}</label>
             <input
               type="number"
               min={1}
@@ -163,7 +160,7 @@ export function ResizeTab() {
               onChange={(e) => setHeight(Number(e.target.value))}
               className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-text-primary focus:border-border-hover focus:outline-none"
             />
-            <span className="text-xs text-text-muted">px</span>
+            <span className="text-xs text-text-muted">{t("label.px")}</span>
           </div>
         )}
       </div>
@@ -178,12 +175,8 @@ export function ResizeTab() {
         ) : (
           <Scaling className="h-4 w-4" />
         )}
-        {loading ? "Resizing..." : files.length > 0 ? `Resize ${files.length} image${files.length > 1 ? "s" : ""}` : "Resize Images"}
+        {loading ? t("status.resizing") : files.length > 0 ? t("action.resize_n", { n: files.length }) : t("action.resize")}
       </button>
-
-      {loading && progress && (
-        <ProgressBar completed={progress.completed} total={progress.total} />
-      )}
 
       <ResultsBanner results={results} total={files.length} />
     </div>

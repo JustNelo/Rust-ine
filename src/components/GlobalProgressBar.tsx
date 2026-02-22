@@ -1,6 +1,8 @@
 import { useProcessingProgress } from "../hooks/useProcessingProgress";
+import { useT } from "../i18n/i18n";
 
 export function GlobalProgressBar() {
+  const { t } = useT();
   const { progress } = useProcessingProgress();
 
   if (!progress || progress.completed >= progress.total) return null;
@@ -23,7 +25,7 @@ export function GlobalProgressBar() {
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between text-xs">
           <span className="text-text-secondary font-medium">
-            Processing {progress.completed}/{progress.total}
+            {t("status.processing", { completed: progress.completed, total: progress.total })}
           </span>
           <span className="font-mono text-text-muted">{percent}%</span>
         </div>

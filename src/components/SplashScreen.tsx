@@ -1,10 +1,12 @@
 import appIcon from "../assets/icon.png";
+import { useT } from "../i18n/i18n";
 
 interface SplashScreenProps {
   visible: boolean;
 }
 
 export function SplashScreen({ visible }: SplashScreenProps) {
+  const { t } = useT();
   return (
     <div
       className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-background transition-opacity duration-500 ${
@@ -22,10 +24,10 @@ export function SplashScreen({ visible }: SplashScreenProps) {
         </div>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-            Rust-ine
+            {t("app.name")}
           </h1>
           <p className="mt-1 text-xs text-text-muted">
-            Image & PDF Swiss Army Knife
+            {t("app.tagline")}
           </p>
         </div>
         <div className="w-32 h-1 rounded-full bg-accent-muted overflow-hidden mt-2">

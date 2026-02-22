@@ -72,5 +72,20 @@ export function useWorkspace() {
     }
   }, [workspace]);
 
-  return { workspace, selectWorkspace, getOutputDir, openInExplorer };
+  const openOutputDir = useCallback(
+    async (tabId: TabId) => {
+      if (!workspace) return;
+      const sep = workspace.includes("/") ? "/" : "\\";
+      const subFolder = SUB_FOLDERS[tabId];
+      const outputDir = `${workspace}${sep}${subFolder}`;
+      try {
+        await revealItemInDir(outputDir);
+      } catch (err) {
+        console.error("Cannot open output dir:", err);
+      }
+    },
+    [workspace]
+  );
+
+  return { workspace, selectWorkspace, getOutputDir, openInExplorer, openOutputDir };
 }

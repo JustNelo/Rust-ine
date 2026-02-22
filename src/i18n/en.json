@@ -141,5 +141,32 @@
   "onboarding.back": "Back",
 
   "sidebar.hint": "Drag & drop files or use Ctrl+O to browse.",
-  "sidebar.workspace": "Workspace"
+  "sidebar.workspace": "Workspace",
+
+  "label.scale": "Scale",
+  "label.px": "px",
+  "label.or_drop_anywhere": "or drop files anywhere in the window",
+  "label.folder_structure": "Folder structure:",
+  "label.preview": "Preview",
+  "label.remove": "Remove",
+  "label.page_n": "Page {n}",
+  "label.n_files_selected": "{n} file(s) selected",
+  "label.placeholder_watermark": "e.g. CONFIDENTIAL, your name...",
+  "label.placeholder_filename": "document.pdf",
+
+  "preview.before_after": "Before / After",
+  "preview.original": "Original",
+  "preview.result": "Result",
+
+  "exif.camera": "Camera",
+  "exif.shooting": "Shooting",
+  "exif.gps_location": "GPS Location",
+  "exif.other": "Other",
+  "exif.no_metadata": "No EXIF metadata",
+  "exif.n_fields": "{n} metadata fields",
+
+  "settings.built_with": "Built with Tauri + React + Rust",
+
+  "toast.workspace_missing": "Please set a workspace folder in Settings.",
+  "toast.watermark_text_missing": "Please enter watermark text."
 }

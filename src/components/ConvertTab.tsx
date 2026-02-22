@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, FolderOpen, ArrowRightLeft } from "lucide-react";
+import { Loader2, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
@@ -8,7 +8,7 @@ import { ResultsBanner } from "./ResultsBanner";
 import { ProgressBar } from "./ProgressBar";
 import { cn } from "../lib/utils";
 import { useFileSelection } from "../hooks/useFileSelection";
-import { useOutputDir } from "../hooks/useOutputDir";
+import { useWorkspace } from "../hooks/useWorkspace";
 import { useProcessingProgress } from "../hooks/useProcessingProgress";
 import type { BatchProgress, OutputFormat, ProcessingResult } from "../types";
 
@@ -23,7 +23,7 @@ const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
 
 export function ConvertTab() {
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { outputDir, selectOutputDir } = useOutputDir();
+  const { getOutputDir } = useWorkspace();
   const { progress, resetProgress } = useProcessingProgress();
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png");
   const [loading, setLoading] = useState(false);
@@ -44,8 +44,9 @@ export function ConvertTab() {
       toast.error("Please select at least one image.");
       return;
     }
+    const outputDir = await getOutputDir("convert");
     if (!outputDir) {
-      toast.error("Please select an output directory.");
+      toast.error("Please set a workspace folder in Settings.");
       return;
     }
 
@@ -79,7 +80,7 @@ export function ConvertTab() {
       setLoading(false);
       resetProgress();
     }
-  }, [files, outputFormat, outputDir, resetProgress]);
+  }, [files, outputFormat, getOutputDir, resetProgress]);
 
   return (
     <div className="space-y-5">
@@ -119,20 +120,6 @@ export function ConvertTab() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={selectOutputDir}
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-secondary hover:border-border-hover hover:bg-surface-hover transition-all cursor-pointer"
-          >
-            <FolderOpen className="h-3.5 w-3.5" />
-            Output folder
-          </button>
-          {outputDir && (
-            <span className="text-xs text-text-muted truncate max-w-75">
-              {outputDir}
-            </span>
-          )}
-        </div>
       </div>
 
       <button

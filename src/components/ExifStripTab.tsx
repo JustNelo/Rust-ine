@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
   Loader2,
-  FolderOpen,
   ShieldOff,
   Camera,
   MapPin,
@@ -18,7 +17,7 @@ import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
 import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
-import { useOutputDir } from "../hooks/useOutputDir";
+import { useWorkspace } from "../hooks/useWorkspace";
 import { useProcessingProgress } from "../hooks/useProcessingProgress";
 import type { BatchProgress, ProcessingResult, ImageMetadata } from "../types";
 
@@ -180,7 +179,7 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
 
 export function ExifStripTab() {
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { outputDir, selectOutputDir } = useOutputDir();
+  const { getOutputDir } = useWorkspace();
   const { progress, resetProgress } = useProcessingProgress();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
@@ -247,8 +246,9 @@ export function ExifStripTab() {
       toast.error("Please select at least one image.");
       return;
     }
+    const outputDir = await getOutputDir("strip");
     if (!outputDir) {
-      toast.error("Please select an output directory.");
+      toast.error("Please set a workspace folder in Settings.");
       return;
     }
 
@@ -279,7 +279,7 @@ export function ExifStripTab() {
       setLoading(false);
       resetProgress();
     }
-  }, [files, outputDir, resetProgress]);
+  }, [files, getOutputDir, resetProgress]);
 
   return (
     <div className="space-y-5">
@@ -332,21 +332,6 @@ export function ExifStripTab() {
           </div>
         </div>
       )}
-
-      <div className="flex items-center gap-2">
-        <button
-          onClick={selectOutputDir}
-          className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-secondary hover:border-border-hover hover:bg-surface-hover transition-all cursor-pointer"
-        >
-          <FolderOpen className="h-3.5 w-3.5" />
-          Output folder
-        </button>
-        {outputDir && (
-          <span className="text-xs text-text-muted truncate max-w-75">
-            {outputDir}
-          </span>
-        )}
-      </div>
 
       <button
         onClick={handleStrip}

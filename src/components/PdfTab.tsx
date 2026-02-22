@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, FolderOpen, FileDown, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, FileDown, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ProgressBar } from "./ProgressBar";
 import { useFileSelection } from "../hooks/useFileSelection";
-import { useOutputDir } from "../hooks/useOutputDir";
+import { useWorkspace } from "../hooks/useWorkspace";
 import type { PdfExtractionResult } from "../types";
 
 interface AggregatedPdfResult {
@@ -16,7 +16,7 @@ interface AggregatedPdfResult {
 
 export function PdfTab() {
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { outputDir, selectOutputDir } = useOutputDir();
+  const { getOutputDir } = useWorkspace();
   const [loading, setLoading] = useState(false);
   const [pdfProgress, setPdfProgress] = useState<{ completed: number; total: number } | null>(null);
   const [result, setResult] = useState<AggregatedPdfResult | null>(null);
@@ -41,8 +41,9 @@ export function PdfTab() {
       toast.error("Please select at least one PDF file.");
       return;
     }
+    const outputDir = await getOutputDir("pdf");
     if (!outputDir) {
-      toast.error("Please select an output directory.");
+      toast.error("Please set a workspace folder in Settings.");
       return;
     }
 
@@ -83,7 +84,7 @@ export function PdfTab() {
 
     setLoading(false);
     setPdfProgress(null);
-  }, [files, outputDir]);
+  }, [files, getOutputDir]);
 
   return (
     <div className="space-y-5">
@@ -100,21 +101,6 @@ export function PdfTab() {
         onClear={handleClearFiles}
         type="pdf"
       />
-
-      <div className="flex items-center gap-2">
-        <button
-          onClick={selectOutputDir}
-          className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-secondary hover:border-border-hover hover:bg-surface-hover transition-all cursor-pointer"
-        >
-          <FolderOpen className="h-3.5 w-3.5" />
-          Output folder
-        </button>
-        {outputDir && (
-          <span className="text-xs text-text-muted truncate max-w-75">
-            {outputDir}
-          </span>
-        )}
-      </div>
 
       <button
         onClick={handleExtract}

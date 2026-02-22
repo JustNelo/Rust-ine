@@ -1,11 +1,9 @@
-use image::ImageFormat;
-use lopdf::content::{Content, Operation};
-use lopdf::{dictionary, Document as LopdfDocument, Object, Stream};
+use lopdf::{dictionary, Document as LopdfDocument, Object};
 use pdfium_render::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::io::Cursor;
 use std::path::{Path, PathBuf};
+
+use crate::utils::{ensure_output_dir, embed_image_as_pdf_page, filename_or_default};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PdfExtractionResult {
@@ -13,14 +11,6 @@ pub struct PdfExtractionResult {
     pub output_dir: String,
     pub extracted_count: usize,
     pub errors: Vec<String>,
-}
-
-fn ensure_output_dir(out_dir: &Path) -> Result<(), String> {
-    if !out_dir.exists() {
-        fs::create_dir_all(out_dir)
-            .map_err(|e| format!("Cannot create output directory: {}", e))?;
-    }
-    Ok(())
 }
 
 pub fn extract_images_from_pdf(
@@ -128,93 +118,26 @@ pub fn images_to_pdf(
     let mut page_ids: Vec<Object> = Vec::new();
 
     for input_path in &input_paths {
+        // Use fit-to-image dimensions: read image to get size first
         let img = match image::open(input_path) {
-            Ok(i) => i.into_rgb8(),
+            Ok(i) => i,
             Err(e) => {
-                let filename = Path::new(input_path)
-                    .file_name()
-                    .and_then(|f| f.to_str())
-                    .unwrap_or(input_path);
-                result.errors.push(format!("{}: {}", filename, e));
+                result.errors.push(format!("{}: {}", filename_or_default(input_path), e));
                 continue;
             }
         };
+        let (width, height) = (img.width() as f32, img.height() as f32);
+        drop(img);
 
-        let (width, height) = (img.width(), img.height());
-
-        let mut jpeg_buf: Vec<u8> = Vec::new();
-        if let Err(e) = img.write_to(&mut Cursor::new(&mut jpeg_buf), ImageFormat::Jpeg) {
-            let filename = Path::new(input_path)
-                .file_name()
-                .and_then(|f| f.to_str())
-                .unwrap_or(input_path);
-            result.errors.push(format!("{}: JPEG encode failed — {}", filename, e));
-            continue;
+        match embed_image_as_pdf_page(&mut doc, pages_id, input_path, width, height, 0.0, 85) {
+            Ok(page_id) => {
+                page_ids.push(Object::Reference(page_id));
+                result.page_count += 1;
+            }
+            Err(e) => {
+                result.errors.push(format!("{}: {}", filename_or_default(input_path), e));
+            }
         }
-
-        let image_stream = Stream::new(
-            dictionary! {
-                "Type" => "XObject",
-                "Subtype" => "Image",
-                "Width" => width as i64,
-                "Height" => height as i64,
-                "ColorSpace" => "DeviceRGB",
-                "BitsPerComponent" => 8_i64,
-                "Filter" => "DCTDecode"
-            },
-            jpeg_buf,
-        );
-        let image_id = doc.add_object(image_stream);
-
-        let content_ops = Content {
-            operations: vec![
-                Operation::new("q", vec![]),
-                Operation::new(
-                    "cm",
-                    vec![
-                        Object::Real(width as f32),
-                        Object::Integer(0),
-                        Object::Integer(0),
-                        Object::Real(height as f32),
-                        Object::Integer(0),
-                        Object::Integer(0),
-                    ],
-                ),
-                Operation::new("Do", vec![Object::Name(b"Img0".to_vec())]),
-                Operation::new("Q", vec![]),
-            ],
-        };
-
-        let content_bytes = match content_ops.encode() {
-            Ok(b) => b,
-            Err(e) => {
-                result.errors.push(format!("Content encode error: {}", e));
-                continue;
-            }
-        };
-
-        let content_stream = Stream::new(dictionary! {}, content_bytes);
-        let content_id = doc.add_object(content_stream);
-
-        let page = dictionary! {
-            "Type" => "Page",
-            "Parent" => pages_id,
-            "MediaBox" => vec![
-                Object::Integer(0),
-                Object::Integer(0),
-                Object::Real(width as f32),
-                Object::Real(height as f32),
-            ],
-            "Resources" => dictionary! {
-                "XObject" => dictionary! {
-                    "Img0" => image_id
-                }
-            },
-            "Contents" => content_id
-        };
-        let page_id = doc.add_object(page);
-        page_ids.push(Object::Reference(page_id));
-        result.page_count += 1;
     }
 
     if result.page_count == 0 {

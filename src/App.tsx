@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Toaster } from "sonner";
 import {
   Zap,
@@ -8,6 +8,7 @@ import {
   ShieldOff,
   Stamp,
   FileUp,
+  Settings,
 } from "lucide-react";
 import { cn } from "./lib/utils";
 import appIcon from "./assets/icon.png";
@@ -20,7 +21,11 @@ import { ExifStripTab } from "./components/ExifStripTab";
 import { PdfTab } from "./components/PdfTab";
 import { PdfBuilderTab } from "./components/PdfBuilderTab";
 import { GlobalProgressBar } from "./components/GlobalProgressBar";
+import { SplashScreen } from "./components/SplashScreen";
+import { SettingsPanel } from "./components/SettingsPanel";
+import { OnboardingModal } from "./components/OnboardingModal";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
+import { useT } from "./i18n/i18n";
 import type { TabId } from "./types";
 import "./App.css";
 
@@ -34,18 +39,52 @@ const TAB_EXTENSIONS: Record<TabId, string[]> = {
   "pdf-builder": ["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf"],
 };
 
-const TABS: { id: TabId; label: string; icon: typeof Zap }[] = [
-  { id: "compress", label: "WebP Compress", icon: Zap },
-  { id: "convert", label: "Convert", icon: ArrowRightLeft },
-  { id: "resize", label: "Resize", icon: Scaling },
-  { id: "watermark", label: "Watermark", icon: Stamp },
-  { id: "strip", label: "EXIF Strip", icon: ShieldOff },
-  { id: "pdf", label: "PDF Extract", icon: FileDown },
-  { id: "pdf-builder", label: "PDF Builder", icon: FileUp },
+const IMAGE_TABS: { id: TabId; labelKey: string; icon: typeof Zap }[] = [
+  { id: "compress", labelKey: "tab.compress", icon: Zap },
+  { id: "convert", labelKey: "tab.convert", icon: ArrowRightLeft },
+  { id: "resize", labelKey: "tab.resize", icon: Scaling },
+  { id: "watermark", labelKey: "tab.watermark", icon: Stamp },
+  { id: "strip", labelKey: "tab.strip", icon: ShieldOff },
 ];
 
+const PDF_TABS: { id: TabId; labelKey: string; icon: typeof Zap }[] = [
+  { id: "pdf", labelKey: "tab.pdf", icon: FileDown },
+  { id: "pdf-builder", labelKey: "tab.pdf_builder", icon: FileUp },
+];
+
+const TAB_DESC_KEYS: Record<TabId, string> = {
+  compress: "tab.compress.desc",
+  convert: "tab.convert.desc",
+  resize: "tab.resize.desc",
+  watermark: "tab.watermark.desc",
+  strip: "tab.strip.desc",
+  pdf: "tab.pdf.desc",
+  "pdf-builder": "tab.pdf_builder.desc",
+};
+
+const TAB_LABEL_KEYS: Record<TabId, string> = {
+  compress: "tab.compress",
+  convert: "tab.convert",
+  resize: "tab.resize",
+  watermark: "tab.watermark",
+  strip: "tab.strip",
+  pdf: "tab.pdf",
+  "pdf-builder": "tab.pdf_builder",
+};
+
 function App() {
+  const { t } = useT();
   const [activeTab, setActiveTab] = useState<TabId>("compress");
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return localStorage.getItem("rustine_onboarded") !== "1"; } catch { return true; }
+  });
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const activeExtensions = useMemo(() => TAB_EXTENSIONS[activeTab], [activeTab]);
 
@@ -67,21 +106,24 @@ function App() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="flex w-56 shrink-0 flex-col border-r border-border" style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-          <div className="flex items-center gap-2.5 px-5 py-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-              <img src={appIcon} alt="Rust-ine" className="h-5 w-5" />
+        <aside className="flex w-56 shrink-0 flex-col border-r border-border" style={{ background: 'rgba(108,108,237,0.04)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+          <div className="flex items-center gap-3 px-5 py-4">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-accent/20 shadow-[0_0_12px_rgba(108,108,237,0.25)]">
+              <img src={appIcon} alt="Rust-ine" className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-sm font-medium text-text-primary tracking-tight">
-                Rust-ine
+              <h1 className="text-sm font-semibold text-text-primary tracking-tight">
+                {t("app.name")}
               </h1>
-              <p className="text-[10px] text-text-muted">Image & PDF tools</p>
+              <p className="text-[10px] text-text-muted">{t("app.tagline")}</p>
             </div>
           </div>
 
-          <nav className="flex flex-col gap-1 px-3 mt-1">
-            {TABS.map((tab) => {
+          <nav className="flex flex-col gap-0.5 px-3 mt-1 flex-1">
+            <span className="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-widest text-text-muted">
+              {t("section.image_tools")}
+            </span>
+            {IMAGE_TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
@@ -91,49 +133,66 @@ function App() {
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer",
                     isActive
-                      ? "bg-accent-muted text-white border-l-2 border-white"
-                      : "text-text-secondary hover:bg-surface-hover hover:text-text-primary border-l-2 border-transparent"
+                      ? "bg-accent/15 text-white border-l-[3px] border-accent"
+                      : "text-text-secondary hover:bg-surface-hover hover:text-text-primary border-l-[3px] border-transparent"
                   )}
                 >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
+                  <Icon className={cn("h-4 w-4", isActive && "text-accent")} />
+                  {t(tab.labelKey)}
+                </button>
+              );
+            })}
+
+            <span className="px-3 pt-4 pb-1.5 text-[9px] font-bold uppercase tracking-widest text-text-muted">
+              {t("section.pdf_tools")}
+            </span>
+            {PDF_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer",
+                    isActive
+                      ? "bg-accent/15 text-white border-l-[3px] border-accent"
+                      : "text-text-secondary hover:bg-surface-hover hover:text-text-primary border-l-[3px] border-transparent"
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4", isActive && "text-accent")} />
+                  {t(tab.labelKey)}
                 </button>
               );
             })}
           </nav>
 
-          <div className="mt-auto px-4 py-4">
-            <div className="rounded-2xl border border-border bg-surface-card px-3 py-2.5">
+          <div className="px-3 py-3 space-y-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all cursor-pointer"
+            >
+              <Settings className="h-4 w-4" />
+              {t("settings.title")}
+            </button>
+            <div className="rounded-xl border border-glass-border bg-surface-card/50 px-3 py-2">
               <p className="text-[10px] text-text-muted leading-relaxed">
-                Drag & drop files or click the drop zone to browse.
-                Processing uses parallel Rust threads.
+                {t("sidebar.hint")}
               </p>
+              <p className="text-[9px] text-text-muted/60 mt-1">{t("app.version")}</p>
             </div>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-6" style={{ background: '#0a0a0a' }}>
+        <main className="flex-1 overflow-y-auto p-6" style={{ background: '#09090F' }}>
           <div className="mx-auto max-w-xl">
             <div className="mb-6">
-              <h2 className="text-lg font-medium text-text-primary">
-                {TABS.find((t) => t.id === activeTab)?.label}
+              <h2 className="text-lg font-semibold text-text-primary">
+                {t(TAB_LABEL_KEYS[activeTab])}
               </h2>
               <p className="text-xs text-text-muted mt-1">
-                {activeTab === "compress" &&
-                  "Compress images to WebP format with adjustable quality."}
-                {activeTab === "convert" &&
-                  "Convert images between PNG, JPG, WebP, BMP, ICO and TIFF."}
-                {activeTab === "resize" &&
-                  "Batch resize images by percentage, width, height or exact dimensions."}
-                {activeTab === "watermark" &&
-                  "Add a text watermark to images with customizable position and opacity."}
-                {activeTab === "strip" &&
-                  "Remove EXIF, GPS and other metadata from images for privacy."}
-                {activeTab === "pdf" &&
-                  "Extract all embedded images from one or more PDF files."}
-                {activeTab === "pdf-builder" &&
-                  "Combine images and PDF pages into a single document."}
+                {t(TAB_DESC_KEYS[activeTab])}
               </p>
             </div>
 
@@ -148,21 +207,25 @@ function App() {
         </main>
       </div>
 
+      <SplashScreen visible={isLoading} />
       <GlobalProgressBar />
+
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} onResetOnboarding={() => { setShowSettings(false); setShowOnboarding(true); }} />}
+      {showOnboarding && <OnboardingModal onComplete={() => { setShowOnboarding(false); try { localStorage.setItem("rustine_onboarded", "1"); } catch {} }} />}
 
       <Toaster
         position="bottom-right"
         theme="dark"
         toastOptions={{
           style: {
-            background: 'rgba(255,255,255,0.06)',
+            background: 'rgba(108,108,237,0.08)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid rgba(108,108,237,0.15)',
             borderRadius: '12px',
-            color: 'rgba(255,255,255,0.9)',
+            color: 'rgba(255,255,255,0.92)',
             fontSize: '12px',
-            boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+            boxShadow: '0 0 20px rgba(108,108,237,0.1)',
           },
         }}
       />

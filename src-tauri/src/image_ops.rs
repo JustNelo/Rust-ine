@@ -9,6 +9,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use tauri::Emitter;
 use webp::Encoder;
 
+use crate::utils::{ensure_output_dir, file_size, get_extension};
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ProgressPayload {
     completed: usize,
@@ -60,23 +62,11 @@ impl BatchProgress {
     }
 }
 
-fn file_size(path: &str) -> u64 {
-    fs::metadata(path).map(|m| m.len()).unwrap_or(0)
-}
-
 fn load_image(path: &str) -> Result<DynamicImage, String> {
     ImageReader::open(path)
         .map_err(|e| format!("Cannot open file '{}': {}", path, e))?
         .decode()
         .map_err(|e| format!("Cannot decode image '{}': {}", path, e))
-}
-
-fn ensure_output_dir(dir: &Path) -> Result<(), String> {
-    if !dir.exists() {
-        fs::create_dir_all(dir)
-            .map_err(|e| format!("Cannot create output directory: {}", e))?;
-    }
-    Ok(())
 }
 
 pub fn compress_to_webp(
@@ -123,36 +113,7 @@ pub fn compress_to_webp(
                 total,
             });
 
-            let input_size = file_size(input_path);
-            match result {
-                Ok(output_path) => {
-                    let output_size = file_size(&output_path);
-                    ProcessingResult {
-                        input_path: input_path.clone(),
-                        output_path,
-                        success: true,
-                        error: None,
-                        input_size,
-                        output_size,
-                        input_width: 0,
-                        input_height: 0,
-                        output_width: 0,
-                        output_height: 0,
-                    }
-                }
-                Err(e) => ProcessingResult {
-                    input_path: input_path.clone(),
-                    output_path: String::new(),
-                    success: false,
-                    error: Some(e),
-                    input_size,
-                    output_size: 0,
-                    input_width: 0,
-                    input_height: 0,
-                    output_width: 0,
-                    output_height: 0,
-                },
-            }
+            build_result(input_path, result, None)
         })
         .collect();
 
@@ -243,36 +204,7 @@ pub fn convert_images(
                 total,
             });
 
-            let input_size = file_size(input_path);
-            match result {
-                Ok(output_path) => {
-                    let output_size = file_size(&output_path);
-                    ProcessingResult {
-                        input_path: input_path.clone(),
-                        output_path,
-                        success: true,
-                        error: None,
-                        input_size,
-                        output_size,
-                        input_width: 0,
-                        input_height: 0,
-                        output_width: 0,
-                        output_height: 0,
-                    }
-                }
-                Err(e) => ProcessingResult {
-                    input_path: input_path.clone(),
-                    output_path: String::new(),
-                    success: false,
-                    error: Some(e),
-                    input_size,
-                    output_size: 0,
-                    input_width: 0,
-                    input_height: 0,
-                    output_width: 0,
-                    output_height: 0,
-                },
-            }
+            build_result(input_path, result, None)
         })
         .collect();
 
@@ -285,14 +217,6 @@ pub fn convert_images(
 }
 
 // --- Shared helpers for new features ---
-
-fn get_extension(path: &str) -> String {
-    Path::new(path)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase())
-        .unwrap_or_else(|| "png".to_string())
-}
 
 fn save_in_original_format(img: &DynamicImage, input_path: &str, output_path: &Path) -> Result<(), String> {
     let ext = get_extension(input_path);

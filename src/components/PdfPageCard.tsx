@@ -31,7 +31,7 @@ export function PdfPageCard({ page, onRemove }: PdfPageCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative rounded-xl overflow-hidden border border-glass-border bg-[rgba(255,255,255,0.03)] aspect-3/4 flex flex-col cursor-grab active:cursor-grabbing"
+      className="group relative rounded-xl overflow-hidden border border-glass-border bg-accent/2 aspect-3/4 flex flex-col cursor-grab active:cursor-grabbing"
     >
       {/* Remove button — stops drag activation */}
       <button

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { toast } from "sonner";
@@ -37,6 +37,8 @@ export function usePdfBuilder() {
   const [loading, setLoading] = useState(false);
   const [loadingThumbnails, setLoadingThumbnails] = useState(false);
   const [result, setResult] = useState<MergePdfResult | null>(null);
+  const pagesRef = useRef(pages);
+  useEffect(() => { pagesRef.current = pages; }, [pages]);
 
   const addFiles = useCallback(async (paths: string[]) => {
     setResult(null);
@@ -108,7 +110,8 @@ export function usePdfBuilder() {
 
   const buildPdf = useCallback(
     async (options: MergePdfOptions) => {
-      if (pages.length === 0) {
+      const currentPages = pagesRef.current;
+      if (currentPages.length === 0) {
         toast.error("Please add at least one file.");
         return;
       }
@@ -116,7 +119,7 @@ export function usePdfBuilder() {
       setLoading(true);
       setResult(null);
 
-      const items: PdfBuilderItem[] = pages.map((page) => ({
+      const items: PdfBuilderItem[] = currentPages.map((page) => ({
         source_path: page.sourcePath,
         page_number: page.sourceType === "pdf" ? page.pageNumber : null,
         source_type: page.sourceType,
@@ -147,7 +150,7 @@ export function usePdfBuilder() {
         setLoading(false);
       }
     },
-    [pages]
+    []
   );
 
   return {

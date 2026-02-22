@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { X, FileText, ZoomIn } from "lucide-react";
+import { isImage } from "../lib/utils";
 
 interface FileListProps {
   files: string[];
@@ -9,16 +10,7 @@ interface FileListProps {
   type?: "image" | "pdf";
 }
 
-const IMAGE_EXTENSIONS = new Set([
-  "png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "gif", "svg",
-]);
-
-function isImage(path: string): boolean {
-  const ext = path.split(".").pop()?.toLowerCase() || "";
-  return IMAGE_EXTENSIONS.has(ext);
-}
-
-export function FileList({ files, onRemove, onClear, type = "image" }: FileListProps) {
+export const FileList = memo(function FileList({ files, onRemove, onClear, type = "image" }: FileListProps) {
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState("");
 
@@ -59,7 +51,7 @@ export function FileList({ files, onRemove, onClear, type = "image" }: FileListP
               return (
                 <div
                   key={`${file}-${index}`}
-                  className="group relative rounded-xl overflow-hidden border border-glass-border bg-[rgba(255,255,255,0.03)] aspect-square"
+                  className="group relative rounded-xl overflow-hidden border border-glass-border bg-accent/2 aspect-square"
                 >
                   {canPreview ? (
                     <img
@@ -169,4 +161,4 @@ export function FileList({ files, onRemove, onClear, type = "image" }: FileListP
       )}
     </>
   );
-}
+});

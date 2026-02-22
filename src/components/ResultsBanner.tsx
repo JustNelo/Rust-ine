@@ -1,6 +1,7 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, memo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { CheckCircle, AlertCircle, XCircle, ArrowRight, X, ZoomIn } from "lucide-react";
+import { formatSize, isImage } from "../lib/utils";
 import type { ProcessingResult } from "../types";
 
 interface ResultsBannerProps {
@@ -8,24 +9,7 @@ interface ResultsBannerProps {
   total: number;
 }
 
-function formatSize(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / Math.pow(1024, index);
-  return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
-}
-
-const IMAGE_EXTENSIONS = new Set([
-  "png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "gif", "svg",
-]);
-
-function isImage(path: string): boolean {
-  const ext = path.split(".").pop()?.toLowerCase() || "";
-  return IMAGE_EXTENSIONS.has(ext);
-}
-
-export function ResultsBanner({ results, total }: ResultsBannerProps) {
+export const ResultsBanner = memo(function ResultsBanner({ results, total }: ResultsBannerProps) {
   const [previewResult, setPreviewResult] = useState<ProcessingResult | null>(null);
 
   const closePreview = useCallback(() => setPreviewResult(null), []);
@@ -85,7 +69,7 @@ export function ResultsBanner({ results, total }: ResultsBannerProps) {
               return (
                 <div
                   key={i}
-                  className="group relative rounded-xl overflow-hidden border border-glass-border bg-[rgba(255,255,255,0.03)] aspect-square cursor-pointer"
+                  className="group relative rounded-xl overflow-hidden border border-glass-border bg-accent/2 aspect-square cursor-pointer"
                   onClick={() => canPreview && setPreviewResult(r)}
                 >
                   {canPreview ? (
@@ -235,4 +219,4 @@ export function ResultsBanner({ results, total }: ResultsBannerProps) {
       )}
     </>
   );
-}
+});

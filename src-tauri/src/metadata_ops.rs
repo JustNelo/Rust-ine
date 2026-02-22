@@ -51,12 +51,13 @@ const EXIF_TAGS: &[(Tag, &str)] = &[
 ];
 
 pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
-    let img = image::ImageReader::open(path)
-        .map_err(|e| format!("Cannot open file: {}", e))?
-        .decode()
-        .map_err(|e| format!("Cannot decode image: {}", e))?;
+    let reader = image::ImageReader::open(path)
+        .map_err(|e| format!("Cannot open file: {}", e))?;
 
-    let (width, height) = (img.width(), img.height());
+    // Read dimensions from header only — avoids decoding the full image
+    let (width, height) = reader
+        .into_dimensions()
+        .map_err(|e| format!("Cannot read image dimensions: {}", e))?;
 
     let ext = Path::new(path)
         .extension()

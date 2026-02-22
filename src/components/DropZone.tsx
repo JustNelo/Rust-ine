@@ -81,14 +81,14 @@ export function DropZone({
       className={cn(
         "relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all duration-200",
         isDragging
-          ? "border-[rgba(255,255,255,0.3)] bg-surface-card scale-[1.01] shadow-[0_0_20px_rgba(255,255,255,0.08)]"
-          : "border-border-hover bg-[rgba(255,255,255,0.03)] hover:bg-surface-card hover:border-[rgba(255,255,255,0.25)] hover:shadow-[0_0_20px_rgba(255,255,255,0.06)]"
+          ? "border-accent/40 bg-accent/5 scale-[1.01] shadow-[0_0_24px_rgba(108,108,237,0.15)]"
+          : "border-accent/20 bg-accent/2 hover:bg-accent/5 hover:border-accent/30 hover:shadow-[0_0_20px_rgba(108,108,237,0.08)]"
       )}
     >
       <div
         className={cn(
           "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
-          isDragging ? "bg-accent-muted text-white" : "bg-surface-card text-text-secondary"
+          isDragging ? "bg-accent/20 text-accent" : "bg-accent/10 text-accent/70"
         )}
       >
         <Upload className="h-6 w-6" />

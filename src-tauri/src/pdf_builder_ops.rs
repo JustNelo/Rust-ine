@@ -1,5 +1,4 @@
 use image::codecs::jpeg::JpegEncoder;
-use lopdf::content::{Content, Operation};
 use lopdf::{dictionary, Document as LopdfDocument, Object, Stream};
 use pdfium_render::prelude::*;
 use rayon::prelude::*;
@@ -7,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::Path;
+
+use crate::utils::{embed_image_as_pdf_page, filename_or_default};
 
 // --- Structs ---
 
@@ -81,14 +82,10 @@ pub fn generate_image_thumbnail(path: &str) -> Result<PageThumbnail, String> {
     })
 }
 
-pub fn generate_pdf_page_thumbnails(
+fn generate_pdf_page_thumbnails(
     pdf_path: &str,
-    pdfium_lib_path: &str,
+    pdfium: &Pdfium,
 ) -> Result<Vec<PageThumbnail>, String> {
-    let bindings = Pdfium::bind_to_library(pdfium_lib_path)
-        .map_err(|e| format!("Cannot load Pdfium library: {}", e))?;
-    let pdfium = Pdfium::new(bindings);
-
     let document = pdfium
         .load_pdf_from_file(pdf_path, None)
         .map_err(|e| format!("Cannot open PDF '{}': {}", pdf_path, e))?;
@@ -163,7 +160,6 @@ pub fn generate_thumbnails_batch(
     file_paths: Vec<String>,
     pdfium_lib_path: &str,
 ) -> Vec<PageThumbnail> {
-    // Separate images and PDFs
     let mut image_paths: Vec<String> = Vec::new();
     let mut pdf_paths: Vec<String> = Vec::new();
 
@@ -187,11 +183,19 @@ pub fn generate_thumbnails_batch(
         .filter_map(|path| generate_image_thumbnail(path).ok())
         .collect();
 
-    // Generate PDF thumbnails sequentially (pdfium binding per call)
-    for pdf_path in &pdf_paths {
-        match generate_pdf_page_thumbnails(pdf_path, pdfium_lib_path) {
-            Ok(thumbs) => all_thumbnails.extend(thumbs),
-            Err(e) => eprintln!("Warning: PDF thumbnail generation failed for {}: {}", pdf_path, e),
+    // Create one Pdfium binding for all PDFs
+    if !pdf_paths.is_empty() {
+        match Pdfium::bind_to_library(pdfium_lib_path) {
+            Ok(bindings) => {
+                let pdfium = Pdfium::new(bindings);
+                for pdf_path in &pdf_paths {
+                    match generate_pdf_page_thumbnails(pdf_path, &pdfium) {
+                        Ok(thumbs) => all_thumbnails.extend(thumbs),
+                        Err(e) => eprintln!("Warning: PDF thumbnail generation failed for {}: {}", pdf_path, e),
+                    }
+                }
+            }
+            Err(e) => eprintln!("Warning: Cannot load Pdfium library: {}", e),
         }
     }
 
@@ -221,17 +225,9 @@ fn add_image_page(
     options: &MergePdfOptions,
 ) -> Result<lopdf::ObjectId, String> {
     let img = image::open(image_path)
-        .map_err(|e| format!("Cannot open image '{}': {}", image_path, e))?
-        .into_rgb8();
-
+        .map_err(|e| format!("Cannot open image '{}': {}", image_path, e))?;
     let (img_w, img_h) = (img.width(), img.height());
-
-    let quality = options.image_quality.clamp(1, 100) as u8;
-    let mut jpeg_buf: Vec<u8> = Vec::new();
-    let mut cursor = Cursor::new(&mut jpeg_buf);
-    let encoder = JpegEncoder::new_with_quality(&mut cursor, quality);
-    img.write_with_encoder(encoder)
-        .map_err(|e| format!("JPEG encode failed: {}", e))?;
+    drop(img);
 
     let (page_w, page_h) = if options.page_format == "fit" {
         (img_w as f32, img_h as f32)
@@ -239,78 +235,10 @@ fn add_image_page(
         get_page_dimensions(&options.page_format, &options.orientation)
     };
 
+    let quality = options.image_quality.clamp(1, 100) as u8;
     let margin = options.margin_px as f32;
-    let available_w = page_w - 2.0 * margin;
-    let available_h = page_h - 2.0 * margin;
 
-    // Scale image to fit within available area while preserving aspect ratio
-    let scale_x = available_w / img_w as f32;
-    let scale_y = available_h / img_h as f32;
-    let scale = scale_x.min(scale_y).min(1.0);
-
-    let draw_w = img_w as f32 * scale;
-    let draw_h = img_h as f32 * scale;
-    let draw_x = margin + (available_w - draw_w) / 2.0;
-    let draw_y = margin + (available_h - draw_h) / 2.0;
-
-    let image_stream = Stream::new(
-        dictionary! {
-            "Type" => "XObject",
-            "Subtype" => "Image",
-            "Width" => img_w as i64,
-            "Height" => img_h as i64,
-            "ColorSpace" => "DeviceRGB",
-            "BitsPerComponent" => 8_i64,
-            "Filter" => "DCTDecode"
-        },
-        jpeg_buf,
-    );
-    let image_id = doc.add_object(image_stream);
-
-    let content_ops = Content {
-        operations: vec![
-            Operation::new("q", vec![]),
-            Operation::new(
-                "cm",
-                vec![
-                    Object::Real(draw_w),
-                    Object::Integer(0),
-                    Object::Integer(0),
-                    Object::Real(draw_h),
-                    Object::Real(draw_x),
-                    Object::Real(draw_y),
-                ],
-            ),
-            Operation::new("Do", vec![Object::Name(b"Img0".to_vec())]),
-            Operation::new("Q", vec![]),
-        ],
-    };
-
-    let content_bytes = content_ops
-        .encode()
-        .map_err(|e| format!("Content encode error: {}", e))?;
-
-    let content_stream = Stream::new(dictionary! {}, content_bytes);
-    let content_id = doc.add_object(content_stream);
-
-    let page = dictionary! {
-        "Type" => "Page",
-        "Parent" => pages_id,
-        "MediaBox" => vec![
-            Object::Integer(0),
-            Object::Integer(0),
-            Object::Real(page_w),
-            Object::Real(page_h),
-        ],
-        "Resources" => dictionary! {
-            "XObject" => dictionary! {
-                "Img0" => image_id
-            }
-        },
-        "Contents" => content_id
-    };
-
-    Ok(doc.add_object(page))
+    embed_image_as_pdf_page(doc, pages_id, image_path, page_w, page_h, margin, quality)
 }
 
 // Copies a single page from an already-loaded source PDF into the destination.
@@ -446,13 +374,9 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
                     visited_cache.insert(item.source_path.clone(), HashMap::new());
                 }
                 Err(e) => {
-                    let filename = Path::new(&item.source_path)
-                        .file_name()
-                        .and_then(|f| f.to_str())
-                        .unwrap_or(&item.source_path);
                     result
                         .errors
-                        .push(format!("{}: Cannot load PDF: {}", filename, e));
+                        .push(format!("{}: Cannot load PDF: {}", filename_or_default(&item.source_path), e));
                 }
             }
         }
@@ -467,20 +391,20 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
                         result.page_count += 1;
                     }
                     Err(e) => {
-                        let filename = Path::new(&item.source_path)
-                            .file_name()
-                            .and_then(|f| f.to_str())
-                            .unwrap_or(&item.source_path);
-                        result.errors.push(format!("{}: {}", filename, e));
+                        result.errors.push(format!("{}: {}", filename_or_default(&item.source_path), e));
                     }
                 }
             }
             "pdf" => {
                 let page_num = item.page_number.unwrap_or(1);
                 if let Some(source_doc) = pdf_cache.get(&item.source_path) {
-                    let visited = visited_cache
-                        .get_mut(&item.source_path)
-                        .expect("visited_cache must exist for cached pdf");
+                    let visited = match visited_cache.get_mut(&item.source_path) {
+                        Some(v) => v,
+                        None => {
+                            result.errors.push(format!("{}: visited cache missing", filename_or_default(&item.source_path)));
+                            continue;
+                        }
+                    };
                     match copy_pdf_page_from_loaded(
                         &mut doc,
                         pages_id,
@@ -494,13 +418,9 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
                             result.page_count += 1;
                         }
                         Err(e) => {
-                            let filename = Path::new(&item.source_path)
-                                .file_name()
-                                .and_then(|f| f.to_str())
-                                .unwrap_or(&item.source_path);
                             result
                                 .errors
-                                .push(format!("{} (page {}): {}", filename, page_num, e));
+                                .push(format!("{} (page {}): {}", filename_or_default(&item.source_path), page_num, e));
                         }
                     }
                 }

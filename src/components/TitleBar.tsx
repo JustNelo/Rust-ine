@@ -33,7 +33,7 @@ export function TitleBar() {
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
       className="flex h-9 shrink-0 items-center justify-between border-b border-border select-none"
-      style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+      style={{ background: 'rgba(108,108,237,0.04)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
     >
       <div className="flex items-center gap-2 px-3 pointer-events-none">
         <img src={icon} alt="Icon" className="h-4 w-4" />

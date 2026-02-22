@@ -2,12 +2,13 @@ mod image_ops;
 mod metadata_ops;
 mod pdf_builder_ops;
 mod pdf_ops;
+mod utils;
 
 use image_ops::BatchProgress;
 use metadata_ops::ImageMetadata;
 use pdf_builder_ops::{MergePdfOptions, MergePdfResult, PageThumbnail, PdfBuilderItem};
 use pdf_ops::{ImagesToPdfResult, PdfExtractionResult};
-use std::path::Path;
+use std::path::{Path, Component};
 use tauri::Manager;
 
 fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
@@ -52,11 +53,18 @@ fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> 
 
 fn validate_path(path: &str) -> Result<(), String> {
     let p = Path::new(path);
-    if path.contains("..") {
+    if p.components().any(|c| matches!(c, Component::ParentDir)) {
         return Err(format!("Path traversal detected: {}", path));
     }
     if !p.is_absolute() {
         return Err(format!("Only absolute paths are allowed: {}", path));
+    }
+    Ok(())
+}
+
+fn validate_paths(paths: &[String]) -> Result<(), String> {
+    for p in paths {
+        validate_path(p)?;
     }
     Ok(())
 }
@@ -69,9 +77,7 @@ async fn compress_webp(
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
-    for p in &input_paths {
-        validate_path(p)?;
-    }
+    validate_paths(&input_paths)?;
     let result =
         tokio::task::spawn_blocking(move || image_ops::compress_to_webp(input_paths, quality, output_dir, app_handle))
             .await
@@ -87,9 +93,7 @@ async fn convert_images(
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
-    for p in &input_paths {
-        validate_path(p)?;
-    }
+    validate_paths(&input_paths)?;
     let result = tokio::task::spawn_blocking(move || {
         image_ops::convert_images(input_paths, output_format, output_dir, app_handle)
     })
@@ -128,9 +132,7 @@ async fn resize_images(
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
-    for p in &input_paths {
-        validate_path(p)?;
-    }
+    validate_paths(&input_paths)?;
     let result = tokio::task::spawn_blocking(move || {
         image_ops::resize_images(input_paths, mode, width, height, percentage, output_dir, app_handle)
     })
@@ -146,9 +148,7 @@ async fn strip_metadata(
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
-    for p in &input_paths {
-        validate_path(p)?;
-    }
+    validate_paths(&input_paths)?;
     let result = tokio::task::spawn_blocking(move || {
         image_ops::strip_metadata(input_paths, output_dir, app_handle)
     })
@@ -168,9 +168,7 @@ async fn add_watermark(
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
-    for p in &input_paths {
-        validate_path(p)?;
-    }
+    validate_paths(&input_paths)?;
     let result = tokio::task::spawn_blocking(move || {
         image_ops::add_watermark(input_paths, text, position, opacity, font_size, output_dir, app_handle)
     })
@@ -185,9 +183,7 @@ async fn images_to_pdf(
     output_path: String,
 ) -> Result<ImagesToPdfResult, String> {
     validate_path(&output_path)?;
-    for p in &input_paths {
-        validate_path(p)?;
-    }
+    validate_paths(&input_paths)?;
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::images_to_pdf(input_paths, &output_path)
     })
@@ -213,9 +209,7 @@ async fn generate_pdf_thumbnails(
     app_handle: tauri::AppHandle,
     file_paths: Vec<String>,
 ) -> Result<Vec<PageThumbnail>, String> {
-    for p in &file_paths {
-        validate_path(p)?;
-    }
+    validate_paths(&file_paths)?;
     let pdfium_lib_path = resolve_pdfium_path(&app_handle)?;
     let result = tokio::task::spawn_blocking(move || {
         pdf_builder_ops::generate_thumbnails_batch(file_paths, &pdfium_lib_path)
@@ -231,9 +225,8 @@ async fn merge_to_pdf(
     options: MergePdfOptions,
 ) -> Result<MergePdfResult, String> {
     validate_path(&options.output_path)?;
-    for item in &items {
-        validate_path(&item.source_path)?;
-    }
+    let item_paths: Vec<String> = items.iter().map(|i| i.source_path.clone()).collect();
+    validate_paths(&item_paths)?;
     let result = tokio::task::spawn_blocking(move || {
         pdf_builder_ops::merge_to_pdf(items, options)
     })
@@ -262,12 +255,13 @@ pub fn run() {
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");
-            let img = image::load_from_memory(png_bytes).expect("failed to decode icon");
-            let rgba = img.to_rgba8();
-            let (w, h) = (rgba.width(), rgba.height());
-            let icon = tauri::image::Image::new_owned(rgba.into_raw(), w, h);
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_icon(icon);
+            if let Ok(img) = image::load_from_memory(png_bytes) {
+                let rgba = img.to_rgba8();
+                let (w, h) = (rgba.width(), rgba.height());
+                let icon = tauri::image::Image::new_owned(rgba.into_raw(), w, h);
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_icon(icon);
+                }
             }
             Ok(())
         })

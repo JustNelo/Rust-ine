@@ -12,6 +12,7 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatSize } from "../lib/utils";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
@@ -20,17 +21,6 @@ import { useFileSelection } from "../hooks/useFileSelection";
 import { useOutputDir } from "../hooks/useOutputDir";
 import { useProcessingProgress } from "../hooks/useProcessingProgress";
 import type { BatchProgress, ProcessingResult, ImageMetadata } from "../types";
-
-function formatSize(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1
-  );
-  const value = bytes / Math.pow(1024, index);
-  return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
-}
 
 function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
   const [expanded, setExpanded] = useState(true);
@@ -361,14 +351,14 @@ export function ExifStripTab() {
       <button
         onClick={handleStrip}
         disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <ShieldOff className="h-4 w-4" />
         )}
-        {loading ? "Stripping..." : "Strip Metadata"}
+        {loading ? "Stripping..." : files.length > 0 ? `Strip ${files.length} image${files.length > 1 ? "s" : ""}` : "Strip Metadata"}
       </button>
 
       {loading && progress && (

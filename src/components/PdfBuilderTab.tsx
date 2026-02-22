@@ -96,9 +96,9 @@ export function PdfBuilderTab() {
       {pages.length === 0 ? (
         <div
           onClick={handleAddMore}
-          className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border-hover bg-[rgba(255,255,255,0.03)] p-8 cursor-pointer transition-all duration-200 hover:bg-surface-card hover:border-[rgba(255,255,255,0.25)] hover:shadow-[0_0_20px_rgba(255,255,255,0.06)]"
+          className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-accent/20 bg-accent/2 p-8 cursor-pointer transition-all duration-200 hover:bg-accent/5 hover:border-accent/30 hover:shadow-[0_0_20px_rgba(108,108,237,0.08)]"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-card text-text-secondary">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent/70">
             <Upload className="h-6 w-6" />
           </div>
           <div className="text-center">
@@ -148,7 +148,7 @@ export function PdfBuilderTab() {
           <button
             onClick={handleBuild}
             disabled={loading}
-            className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
+            className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

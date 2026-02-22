@@ -12,9 +12,9 @@ export function ProgressBar({ completed, total }: ProgressBarProps) {
         <span>Processing {completed}/{total}</span>
         <span className="font-mono text-text-muted">{percent}%</span>
       </div>
-      <div className="h-1.5 w-full rounded-full bg-surface-hover overflow-hidden">
+      <div className="h-1.5 w-full rounded-full bg-accent-muted overflow-hidden">
         <div
-          className="h-full rounded-full bg-accent transition-all duration-200"
+          className="h-full rounded-full bg-white/80 transition-all duration-200"
           style={{ width: `${percent}%` }}
         />
       </div>

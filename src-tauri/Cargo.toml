@@ -27,3 +27,4 @@ pdfium-render = { version = "0.8", default-features = false, features = ["image_
 webp = "0.3.1"
 tokio = { version = "1.49.0", features = ["full"] }
 kamadak-exif = "0.5"
+base64 = "0.22"

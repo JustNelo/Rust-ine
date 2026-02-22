@@ -1,9 +1,11 @@
 mod image_ops;
 mod metadata_ops;
+mod pdf_builder_ops;
 mod pdf_ops;
 
 use image_ops::BatchProgress;
 use metadata_ops::ImageMetadata;
+use pdf_builder_ops::{MergePdfOptions, MergePdfResult, PageThumbnail, PdfBuilderItem};
 use pdf_ops::{ImagesToPdfResult, PdfExtractionResult};
 use std::path::Path;
 use tauri::Manager;
@@ -206,6 +208,40 @@ async fn read_metadata(
     .map_err(|e| format!("Task failed: {}", e))?
 }
 
+#[tauri::command]
+async fn generate_pdf_thumbnails(
+    app_handle: tauri::AppHandle,
+    file_paths: Vec<String>,
+) -> Result<Vec<PageThumbnail>, String> {
+    for p in &file_paths {
+        validate_path(p)?;
+    }
+    let pdfium_lib_path = resolve_pdfium_path(&app_handle)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_builder_ops::generate_thumbnails_batch(file_paths, &pdfium_lib_path)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn merge_to_pdf(
+    items: Vec<PdfBuilderItem>,
+    options: MergePdfOptions,
+) -> Result<MergePdfResult, String> {
+    validate_path(&options.output_path)?;
+    for item in &items {
+        validate_path(&item.source_path)?;
+    }
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_builder_ops::merge_to_pdf(items, options)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -220,7 +256,9 @@ pub fn run() {
             strip_metadata,
             add_watermark,
             images_to_pdf,
-            read_metadata
+            read_metadata,
+            generate_pdf_thumbnails,
+            merge_to_pdf
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");

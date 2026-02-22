@@ -109,7 +109,7 @@ export function ConvertTab() {
                 className={cn(
                   "flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition-all cursor-pointer",
                   outputFormat === fmt.value
-                    ? "border-accent bg-accent-muted text-accent"
+                    ? "border-glass-border bg-accent-muted text-white"
                     : "border-border bg-surface text-text-secondary hover:border-border-hover hover:bg-surface-hover"
                 )}
               >
@@ -138,7 +138,7 @@ export function ConvertTab() {
       <button
         onClick={handleConvert}
         disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

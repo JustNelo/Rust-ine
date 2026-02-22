@@ -112,7 +112,7 @@ export function WatermarkTab() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="e.g. CONFIDENTIAL, your name..."
-            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
           />
         </div>
 
@@ -127,7 +127,7 @@ export function WatermarkTab() {
                 onClick={() => setPosition(opt.value)}
                 className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
                   position === opt.value
-                    ? "bg-accent text-white"
+                    ? "bg-accent-muted text-white border border-glass-border"
                     : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
                 }`}
               >
@@ -150,7 +150,7 @@ export function WatermarkTab() {
             max={100}
             value={opacity}
             onChange={(e) => setOpacity(Number(e.target.value))}
-            className="w-full accent-accent h-1.5 cursor-pointer"
+            className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(255,255,255,0.3)]"
           />
         </div>
 
@@ -167,7 +167,7 @@ export function WatermarkTab() {
             max={200}
             value={fontSize}
             onChange={(e) => setFontSize(Number(e.target.value))}
-            className="w-full accent-accent h-1.5 cursor-pointer"
+            className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(255,255,255,0.3)]"
           />
         </div>
       </div>
@@ -190,7 +190,7 @@ export function WatermarkTab() {
       <button
         onClick={handleWatermark}
         disabled={loading || files.length === 0 || !text.trim()}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

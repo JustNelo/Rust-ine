@@ -119,7 +119,7 @@ export function PdfTab() {
       <button
         onClick={handleExtract}
         disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -134,7 +134,7 @@ export function PdfTab() {
       )}
 
       {result && (
-        <div className="mt-4 rounded-lg border border-border bg-surface p-3 space-y-2">
+        <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-3 space-y-2">
           <div className="flex items-center gap-2">
             {result.errors.length === 0 ? (
               <CheckCircle className="h-4 w-4 text-success" />

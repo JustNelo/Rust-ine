@@ -65,13 +65,13 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
   );
 
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="rounded-2xl border border-glass-border bg-surface-card overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center justify-between px-3 py-2 hover:bg-surface-hover transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <Eye className="h-3.5 w-3.5 text-accent shrink-0" />
+          <Eye className="h-3.5 w-3.5 text-text-secondary shrink-0" />
           <span className="text-xs font-medium text-text-primary truncate">
             {fileName}
           </span>
@@ -80,11 +80,11 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
             {formatSize(metadata.file_size)}
           </span>
           {metadata.exif.length > 0 ? (
-            <span className="text-[10px] font-medium text-warning shrink-0">
+            <span className="text-[10px] font-medium text-text-secondary shrink-0">
               {metadata.exif.length} metadata fields
             </span>
           ) : (
-            <span className="text-[10px] font-medium text-success shrink-0">
+            <span className="text-[10px] font-medium text-text-muted shrink-0">
               No EXIF metadata
             </span>
           )}
@@ -98,7 +98,7 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
       </button>
 
       {expanded && metadata.exif.length > 0 && (
-        <div className="border-t border-border px-3 py-2 space-y-3">
+        <div className="border-t border-glass-border px-3 py-2 space-y-3">
           {cameraEntries.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
@@ -144,8 +144,8 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
           {gpsEntries.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <MapPin className="h-3 w-3 text-error" />
-                <span className="text-[10px] font-semibold text-error uppercase tracking-wider">
+                <MapPin className="h-3 w-3 text-text-secondary" />
+                <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
                   GPS Location
                 </span>
               </div>
@@ -153,7 +153,7 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {gpsEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-text-muted">{e.tag}</span>
-                    <span className="text-[10px] text-error/80 font-mono text-right truncate">
+                    <span className="text-[10px] text-text-secondary font-mono text-right truncate">
                       {e.value}
                     </span>
                   </div>
@@ -316,18 +316,18 @@ export function ExifStripTab() {
             ) : (
               <div className="flex items-center gap-3">
                 {totalExifFields > 0 && (
-                  <span className="text-[10px] text-warning font-medium">
+                  <span className="text-[10px] text-text-secondary font-medium">
                     {totalExifFields} field(s) found
                   </span>
                 )}
                 {hasGps && (
-                  <span className="flex items-center gap-1 text-[10px] text-error font-medium">
+                  <span className="flex items-center gap-1 text-[10px] text-text-secondary font-medium">
                     <MapPin className="h-3 w-3" />
                     GPS data detected
                   </span>
                 )}
                 {totalExifFields === 0 && (
-                  <span className="text-[10px] text-success font-medium">
+                  <span className="text-[10px] text-text-muted font-medium">
                     Clean — no metadata
                   </span>
                 )}
@@ -361,7 +361,7 @@ export function ExifStripTab() {
       <button
         onClick={handleStrip}
         disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

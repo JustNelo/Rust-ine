@@ -97,7 +97,7 @@ export function CompressTab() {
           max={100}
           value={quality}
           onChange={(e) => setQuality(Number(e.target.value))}
-          className="w-full accent-accent h-1.5 cursor-pointer"
+          className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(255,255,255,0.3)]"
         />
         <div className="flex justify-between text-[10px] text-text-muted">
           <span>Smaller file</span>
@@ -123,7 +123,7 @@ export function CompressTab() {
       <button
         onClick={handleCompress}
         disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)]"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

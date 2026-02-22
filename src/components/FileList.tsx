@@ -38,14 +38,14 @@ export function FileList({ files, onRemove, onClear, type = "image" }: FileListP
 
   return (
     <>
-      <div className="mt-4 rounded-lg border border-border bg-surface p-3">
+      <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-3">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-medium text-text-secondary">
             {files.length} file{files.length > 1 ? "s" : ""} selected
           </span>
           <button
             onClick={onClear}
-            className="text-xs text-text-muted hover:text-error transition-colors cursor-pointer"
+            className="text-xs text-text-muted hover:text-white transition-colors cursor-pointer"
           >
             Clear all
           </button>
@@ -59,7 +59,7 @@ export function FileList({ files, onRemove, onClear, type = "image" }: FileListP
               return (
                 <div
                   key={`${file}-${index}`}
-                  className="group relative rounded-lg overflow-hidden border border-border bg-background aspect-square"
+                  className="group relative rounded-xl overflow-hidden border border-glass-border bg-[rgba(255,255,255,0.03)] aspect-square"
                 >
                   {canPreview ? (
                     <img
@@ -126,7 +126,7 @@ export function FileList({ files, onRemove, onClear, type = "image" }: FileListP
                       e.stopPropagation();
                       onRemove(index);
                     }}
-                    className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-error transition-all cursor-pointer"
+                    className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-white transition-all cursor-pointer"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -143,10 +143,10 @@ export function FileList({ files, onRemove, onClear, type = "image" }: FileListP
           onClick={closePreview}
         >
           <div
-            className="relative max-w-[85vw] max-h-[85vh] rounded-xl overflow-hidden border border-border bg-surface shadow-2xl"
+            className="relative max-w-[85vw] max-h-[85vh] rounded-2xl overflow-hidden border border-glass-border bg-surface-card shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-2.5 bg-surface border-b border-border">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-surface-card border-b border-glass-border">
               <span className="text-xs font-medium text-text-secondary truncate max-w-md">
                 {previewName}
               </span>
@@ -157,7 +157,7 @@ export function FileList({ files, onRemove, onClear, type = "image" }: FileListP
                 <X className="h-4 w-4 text-text-muted" />
               </button>
             </div>
-            <div className="flex items-center justify-center p-4 bg-background">
+            <div className="flex items-center justify-center p-4" style={{ background: '#0a0a0a' }}>
               <img
                 src={previewSrc}
                 alt={previewName}

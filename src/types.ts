@@ -30,12 +30,6 @@ export type ResizeMode = "exact" | "width" | "height" | "percentage";
 
 export type WatermarkPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | "tiled";
 
-export interface ImagesToPdfResult {
-  output_path: string;
-  page_count: number;
-  errors: string[];
-}
-
 export interface MetadataEntry {
   tag: string;
   value: string;
@@ -50,4 +44,32 @@ export interface ImageMetadata {
   exif: MetadataEntry[];
 }
 
-export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "pdf" | "images-to-pdf";
+export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "pdf" | "pdf-builder";
+
+export interface PageThumbnail {
+  id: string;
+  source_path: string;
+  page_number: number;
+  thumbnail_b64: string;
+  source_type: "pdf" | "image";
+}
+
+export interface PdfBuilderItem {
+  source_path: string;
+  page_number: number | null;
+  source_type: "pdf" | "image";
+}
+
+export interface MergePdfOptions {
+  page_format: string;
+  orientation: string;
+  margin_px: number;
+  image_quality: number;
+  output_path: string;
+}
+
+export interface MergePdfResult {
+  output_path: string;
+  page_count: number;
+  errors: string[];
+}

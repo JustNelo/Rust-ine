@@ -45,7 +45,7 @@ export function ResultsBanner({ results, total }: ResultsBannerProps) {
 
   return (
     <>
-      <div className="mt-4 rounded-lg border border-border bg-surface p-3 space-y-3">
+      <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-3 space-y-3">
         <div className="flex items-center gap-2">
           {failed === 0 ? (
             <CheckCircle className="h-4 w-4 text-success" />
@@ -85,7 +85,7 @@ export function ResultsBanner({ results, total }: ResultsBannerProps) {
               return (
                 <div
                   key={i}
-                  className="group relative rounded-lg overflow-hidden border border-border bg-background aspect-square cursor-pointer"
+                  className="group relative rounded-xl overflow-hidden border border-glass-border bg-[rgba(255,255,255,0.03)] aspect-square cursor-pointer"
                   onClick={() => canPreview && setPreviewResult(r)}
                 >
                   {canPreview ? (
@@ -146,10 +146,10 @@ export function ResultsBanner({ results, total }: ResultsBannerProps) {
           onClick={closePreview}
         >
           <div
-            className="relative max-w-[90vw] max-h-[85vh] rounded-xl overflow-hidden border border-border bg-surface shadow-2xl"
+            className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden border border-glass-border bg-surface-card shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-2.5 bg-surface border-b border-border">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-surface-card border-b border-glass-border">
               <div className="flex items-center gap-3 text-xs text-text-secondary">
                 <span className="font-medium">Before / After</span>
                 <span className="text-text-muted">
@@ -178,12 +178,12 @@ export function ResultsBanner({ results, total }: ResultsBannerProps) {
               </button>
             </div>
 
-            <div className="flex gap-0.5 bg-background p-4 max-h-[75vh] overflow-auto">
+            <div className="flex gap-0.5 p-4 max-h-[75vh] overflow-auto" style={{ background: '#0a0a0a' }}>
               <div className="flex-1 flex flex-col items-center gap-2">
                 <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
                   Original
                 </span>
-                <div className="rounded-lg overflow-hidden border border-border">
+                <div className="rounded-xl overflow-hidden border border-glass-border">
                   <img
                     src={`${convertFileSrc(previewResult.input_path)}?t=${Date.now()}`}
                     alt="Before"
@@ -201,14 +201,14 @@ export function ResultsBanner({ results, total }: ResultsBannerProps) {
               </div>
 
               <div className="flex items-center px-2">
-                <ArrowRight className="h-5 w-5 text-accent" />
+                <ArrowRight className="h-5 w-5 text-text-muted" />
               </div>
 
               <div className="flex-1 flex flex-col items-center gap-2">
                 <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
                   Result
                 </span>
-                <div className="rounded-lg overflow-hidden border border-accent/30">
+                <div className="rounded-xl overflow-hidden border border-glass-border">
                   <img
                     src={`${convertFileSrc(previewResult.output_path)}?t=${Date.now()}`}
                     alt="After"
@@ -222,7 +222,7 @@ export function ResultsBanner({ results, total }: ResultsBannerProps) {
                   <span className={`text-[10px] font-mono ${
                     previewResult.input_width !== previewResult.output_width ||
                     previewResult.input_height !== previewResult.output_height
-                      ? "text-accent font-semibold"
+                      ? "text-white font-semibold"
                       : "text-text-muted"
                   }`}>
                     {previewResult.output_width} × {previewResult.output_height} px

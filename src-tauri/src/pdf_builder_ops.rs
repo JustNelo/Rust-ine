@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::Path;
 
-use crate::utils::{embed_image_as_pdf_page, filename_or_default};
+use crate::utils::{embed_image_as_pdf_page, ensure_output_dir, filename_or_default};
 
 // --- Structs ---
 
@@ -453,6 +453,13 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
         "Pages" => pages_id
     });
     doc.trailer.set("Root", Object::Reference(catalog_id));
+
+    if let Some(parent) = Path::new(&options.output_path).parent() {
+        if let Err(e) = ensure_output_dir(&parent.to_path_buf()) {
+            result.errors.push(e);
+            return result;
+        }
+    }
 
     if let Err(e) = doc.save(&options.output_path) {
         result.errors.push(format!("Cannot save PDF: {}", e));

@@ -265,6 +265,7 @@
   "toast.qr_success": "QR code generated!",
   "toast.qr_text_missing": "Please enter text or a URL.",
   "toast.rename_success": "{n} file(s) renamed!",
+  "toast.draw_crop": "Please draw a crop area on the image first.",
 
   "preset.1080p": "1080p",
   "preset.4k": "4K",
@@ -278,6 +279,8 @@
   "label.free": "Free",
   "label.custom_dimensions": "Custom dimensions",
   "label.anchor": "Anchor",
+  "label.crop_draw_hint": "Drag edges, corners, or move the crop area",
+  "label.reset": "Reset",
 
   "label.output_format_images": "Output format",
   "label.dpi": "DPI",

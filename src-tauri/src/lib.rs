@@ -281,12 +281,14 @@ async fn crop_images(
     anchor: String,
     width: u32,
     height: u32,
+    crop_x: Option<u32>,
+    crop_y: Option<u32>,
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::crop_images(input_paths, ratio, anchor, width, height, output_dir, app_handle)
+        image_ops::crop_images(input_paths, ratio, anchor, width, height, crop_x, crop_y, output_dir, app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;

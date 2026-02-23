@@ -265,6 +265,7 @@
   "toast.qr_success": "QR code généré !",
   "toast.qr_text_missing": "Veuillez saisir du texte ou une URL.",
   "toast.rename_success": "{n} fichier(s) renommé(s) !",
+  "toast.draw_crop": "Veuillez d'abord dessiner une zone de rognage sur l'image.",
 
   "preset.1080p": "1080p",
   "preset.4k": "4K",
@@ -275,6 +276,8 @@
   "label.presets": "Préréglages",
 
   "label.crop_ratio": "Ratio d'aspect",
+  "label.crop_draw_hint": "Glissez les bords, coins ou déplacez la zone de rognage",
+  "label.reset": "Réinitialiser",
   "label.free": "Libre",
   "label.custom_dimensions": "Dimensions personnalisées",
   "label.anchor": "Point d'ancrage",

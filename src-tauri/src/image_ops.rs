@@ -642,6 +642,8 @@ pub fn crop_images(
     anchor: String,
     target_width: u32,
     target_height: u32,
+    crop_x: Option<u32>,
+    crop_y: Option<u32>,
     output_dir: String,
     app_handle: tauri::AppHandle,
 ) -> BatchProgress {
@@ -660,6 +662,25 @@ pub fn crop_images(
             let result = (|| -> Result<(String, u32, u32, u32, u32), String> {
                 let img = load_image(input_path)?;
                 let (orig_w, orig_h) = (img.width(), img.height());
+
+                // When explicit crop_x/crop_y are provided, use them directly
+                // (free-form rectangle drawn by the user on the preview)
+                if let (Some(cx), Some(cy)) = (crop_x, crop_y) {
+                    let cw = target_width.min(orig_w.saturating_sub(cx));
+                    let ch = target_height.min(orig_h.saturating_sub(cy));
+                    if cw == 0 || ch == 0 {
+                        return Err("Crop dimensions cannot be zero".to_string());
+                    }
+                    let cropped = img.crop_imm(cx.min(orig_w), cy.min(orig_h), cw, ch);
+                    let ext = get_extension(input_path);
+                    let stem = Path::new(input_path)
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("output");
+                    let output_path = out_dir.join(format!("{}-cropped.{}", stem, ext));
+                    save_in_original_format(&cropped, input_path, &output_path)?;
+                    return Ok((output_path.to_string_lossy().to_string(), orig_w, orig_h, cw, ch));
+                }
 
                 let (crop_w, crop_h) = if ratio == "free" {
                     (target_width.min(orig_w), target_height.min(orig_h))

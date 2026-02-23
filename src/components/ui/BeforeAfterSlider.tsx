@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, memo } from "react";
+import { useRef, useCallback, useMemo, memo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { X, ArrowRight } from "lucide-react";
 import { formatSize } from "../../lib/utils";
@@ -15,31 +15,51 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   onClose,
 }: BeforeAfterSliderProps) {
   const { t } = useT();
-  const [sliderPos, setSliderPos] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
+  const clipRef = useRef<HTMLDivElement>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
 
-  const handlePointerDown = useCallback(() => {
-    dragging.current = true;
+  const updateSlider = useCallback((pct: number) => {
+    const v = `${pct}%`;
+    if (clipRef.current) clipRef.current.style.width = v;
+    if (lineRef.current) lineRef.current.style.left = v;
   }, []);
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    dragging.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    updateSlider(Math.max(2, Math.min(98, x)));
+  }, [updateSlider]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
     dragging.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
   }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragging.current || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
-    setSliderPos(Math.max(2, Math.min(98, x)));
-  }, []);
+    updateSlider(Math.max(2, Math.min(98, x)));
+  }, [updateSlider]);
 
   const sizeDiff = result.input_size > 0
     ? ((1 - result.output_size / result.input_size) * 100)
     : 0;
 
-  const beforeSrc = `${convertFileSrc(result.input_path)}?t=${Date.now()}`;
-  const afterSrc = `${convertFileSrc(result.output_path)}?t=${Date.now()}`;
+  // Stable URLs — computed once per result, never during drag
+  const beforeSrc = useMemo(
+    () => `${convertFileSrc(result.input_path)}?t=${Date.now()}`,
+    [result.input_path],
+  );
+  const afterSrc = useMemo(
+    () => `${convertFileSrc(result.output_path)}?t=${Date.now()}`,
+    [result.output_path],
+  );
 
   return (
     <div
@@ -74,38 +94,39 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
         {/* Slider area */}
         <div
           ref={containerRef}
-          className="relative select-none"
+          className="relative select-none touch-none"
           style={{ background: "#0a0a0a", cursor: "ew-resize" }}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
           onPointerMove={handlePointerMove}
         >
           {/* After image (full width) */}
           <img
             src={afterSrc}
             alt="After"
-            className="block max-w-[85vw] max-h-[70vh] object-contain"
+            className="block max-w-[85vw] max-h-[70vh] object-contain pointer-events-none"
             draggable={false}
           />
 
-          {/* Before image (clipped) */}
+          {/* Before image (clipped) — width driven by ref, no React re-render */}
           <div
+            ref={clipRef}
             className="absolute top-0 left-0 bottom-0 overflow-hidden"
-            style={{ width: `${sliderPos}%` }}
+            style={{ width: "50%" }}
           >
             <img
               src={beforeSrc}
               alt="Before"
-              className="block max-w-[85vw] max-h-[70vh] object-contain"
+              className="block max-w-[85vw] max-h-[70vh] object-contain pointer-events-none"
               draggable={false}
             />
           </div>
 
-          {/* Slider line */}
+          {/* Slider line — left driven by ref, no React re-render */}
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            style={{ left: `${sliderPos}%`, transform: "translateX(-50%)" }}
+            ref={lineRef}
+            className="absolute top-0 bottom-0 w-0.5 bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.5)] pointer-events-none"
+            style={{ left: "50%", transform: "translateX(-50%)" }}
           >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 border-2 border-white flex items-center justify-center shadow-lg">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -115,21 +136,21 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
           </div>
 
           {/* Labels */}
-          <div className="absolute top-3 left-3 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/80 backdrop-blur-sm">
+          <div className="absolute top-3 left-3 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/80 pointer-events-none">
             {t("preview.original")}
           </div>
-          <div className="absolute top-3 right-3 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/80 backdrop-blur-sm">
+          <div className="absolute top-3 right-3 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/80 pointer-events-none">
             {t("preview.result")}
           </div>
 
           {/* Dimension labels */}
           {result.input_width > 0 && (
-            <div className="absolute bottom-3 left-3 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-mono text-white/70 backdrop-blur-sm">
+            <div className="absolute bottom-3 left-3 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-mono text-white/70 pointer-events-none">
               {result.input_width}×{result.input_height}
             </div>
           )}
           {result.output_width > 0 && (
-            <div className="absolute bottom-3 right-3 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-mono text-white/70 backdrop-blur-sm">
+            <div className="absolute bottom-3 right-3 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-mono text-white/70 pointer-events-none">
               {result.output_width}×{result.output_height}
             </div>
           )}

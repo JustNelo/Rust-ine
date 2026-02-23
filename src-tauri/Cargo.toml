@@ -1,6 +1,6 @@
 [package]
 name = "rustine"
-version = "1.0.0"
+version = "2.0.0"
 description = "Rust-ine - Desktop image compression & PDF extraction tool"
 authors = ["Léon Gallet"]
 edition = "2021"
@@ -35,3 +35,4 @@ gif = "0.13"
 md5 = "0.7"
 qrcode = "0.14"
 tauri-plugin-updater = "2"
+tauri-plugin-process = "2"

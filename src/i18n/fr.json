@@ -1,7 +1,7 @@
 {
   "app.name": "Rust-ine",
   "app.tagline": "Couteau suisse image & PDF",
-  "app.version": "v1.0.0",
+  "app.version": "v2.0.0",
 
   "section.image_tools": "Outils Image",
   "section.pdf_tools": "Outils PDF",

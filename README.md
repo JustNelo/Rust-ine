@@ -1,74 +1,72 @@
 # Rust-ine
 
-Rust-ine is a lightweight desktop application for batch image compression, format conversion, and PDF image extraction. It is built with Tauri v2 and leverages a Rust backend for fast, parallel processing while providing a clean React-based interface.
+**Image & PDF Swiss Army Knife** — A fast, modern desktop app for batch image processing, PDF manipulation, and developer utilities. Built with Tauri v2 and powered by parallel Rust processing.
+
+---
+
+## Download
+
+Grab the latest installer from the [Releases page](https://github.com/JustNelo/Rust-ine/releases/latest).
+
+| Platform | File |
+| -------- | ---- |
+| Windows  | `Rust-ine_x.x.x_x64-setup.exe` (NSIS installer) |
+
+The app includes **built-in auto-updates** — you'll be notified when a new version is available.
 
 ---
 
 ## Features
 
-### WebP Compression
+### Image Tools
 
-Compress one or more images to WebP format. Files are processed in parallel using Rayon, so large batches complete quickly. The quality parameter is passed directly to the WebP encoder.
+- **WebP Compress** — Batch compress images to WebP with adjustable quality slider
+- **Convert** — Convert between PNG, JPEG, WebP, BMP, ICO, TIFF formats
+- **Resize** — Batch resize with presets (1080p, 4K, Instagram, YouTube) or custom dimensions
+- **Crop** — Interactive free-form crop with draggable rectangle, corner/edge handles, and rule-of-thirds grid
+- **Watermark** — Add text watermarks with live preview
+- **EXIF Strip** — Remove metadata from images with detailed before/after view
+- **Optimize** — Lossless PNG optimization via OxiPNG
+- **Color Palette** — Extract dominant colors from images
+- **Favicon Generator** — Generate multi-size `.ico` favicons from any image
+- **GIF / Animated WebP** — Create animations from image sequences with drag-and-drop reordering
+- **Sprite Sheet** — Combine images into a single sprite sheet
 
-### Image Format Conversion
+### PDF Tools
 
-Convert images between the following formats:
+- **PDF Extract** — Extract embedded images from PDFs (JPEG, PNG, JPEG2000, TIFF, CCITT)
+- **PDF to Images** — Render PDF pages to images at custom DPI
+- **PDF Compress** — Reduce PDF file size
+- **PDF Split** — Split PDFs by page ranges
+- **PDF Builder** — Merge images and PDFs into a new document with page reordering
+- **PDF Protect** — Password-protect PDFs with proper RC4 encryption (PDF 1.7 spec)
+- **PDF Unlock** — Remove password protection from PDFs
 
-- PNG
-- JPEG
-- WebP
-- BMP
-- ICO (automatically resized to 256x256)
-- TIFF
+### Developer Tools
 
-### PDF Image Extraction
+- **Image to Base64** — Convert images to data URI strings with one-click copy
+- **QR Code Generator** — Generate QR codes from text or URLs
+- **Bulk Rename** — Batch rename files with pattern tokens (`{name}`, `{index}`, `{date}`, `{ext}`)
 
-Extract all embedded images from a PDF file. The extractor handles the most common PDF image encodings:
+### UX
 
-- **DCTDecode** -- JPEG streams, written directly as `.jpg`
-- **FlateDecode** -- raw pixel data, reconstructed and saved as `.png`
-- **JPXDecode** -- JPEG 2000 streams, written as `.jp2`
-- **CCITTFaxDecode** -- fax-encoded images, written as `.tiff`
-- Unknown formats are detected by magic bytes and saved with the appropriate extension.
+- **Before/After Slider** — Compare original vs processed images with a smooth drag slider
+- **Results Banner** — Thumbnails, size stats, and per-file success/error feedback
+- **Dark UI** — Custom glassmorphism dark theme
+- **i18n** — English and French
+- **Auto-updater** — Check for updates from Settings
 
 ---
 
 ## Tech Stack
 
-| Layer    | Technology                                                  |
-| -------- | ----------------------------------------------------------- |
-| Runtime  | [Tauri v2](https://v2.tauri.app/) (Rust + WebView)         |
-| Backend  | Rust, Rayon, image, webp, lopdf, Tokio                     |
-| Frontend | React 19, TypeScript, Tailwind CSS v4, Vite 7              |
-| UI       | Custom dark theme, Lucide icons, Sonner toasts              |
-| Bundler  | Bun (package manager and script runner)                     |
-
----
-
-## Project Structure
-
-```
-Rust-ine/
-  src/                        # Frontend (React + TypeScript)
-    components/               # UI components (TitleBar, DropZone, FileList, ...)
-    hooks/                    # Shared React hooks (useFileSelection, useOutputDir)
-    lib/                      # Utility functions
-    types.ts                  # Shared TypeScript interfaces
-    App.tsx                   # Main application shell with sidebar navigation
-    App.css                   # Tailwind theme and global styles
-  src-tauri/                  # Backend (Rust)
-    src/
-      lib.rs                  # Tauri command handlers and path validation
-      image_ops.rs            # Image compression and conversion logic
-      pdf_ops.rs              # PDF image extraction logic
-      main.rs                 # Application entry point
-    capabilities/
-      default.json            # Tauri permission declarations
-    Cargo.toml                # Rust dependencies
-  index.html                  # HTML entry point
-  package.json                # Frontend dependencies
-  vite.config.ts              # Vite configuration
-```
+| Layer    | Technology                                                         |
+| -------- | ------------------------------------------------------------------ |
+| Runtime  | [Tauri v2](https://v2.tauri.app/) (Rust + WebView)                |
+| Backend  | Rust 2021, Rayon, image, webp, lopdf, pdfium-render, OxiPNG, Tokio |
+| Frontend | React 19, TypeScript, Tailwind CSS v4, Vite 7                     |
+| UI       | shadcn/ui patterns, Lucide icons, Sonner toasts                   |
+| Bundler  | Bun (package manager and script runner)                            |
 
 ---
 
@@ -76,7 +74,8 @@ Rust-ine/
 
 - [Rust](https://www.rust-lang.org/tools/install) (stable toolchain)
 - [Bun](https://bun.sh/) (or Node.js >= 18 with npm)
-- Platform-specific Tauri v2 dependencies -- see the [Tauri prerequisites guide](https://v2.tauri.app/start/prerequisites/)
+- Platform-specific Tauri v2 dependencies — see the [Tauri prerequisites guide](https://v2.tauri.app/start/prerequisites/)
+- `pdfium.dll` in `src-tauri/resources/` (required for PDF features on Windows)
 
 ---
 
@@ -94,8 +93,6 @@ bun install
 bun run tauri dev
 ```
 
-This starts both the Vite dev server (with HMR) and the Tauri application window.
-
 ### Build for production
 
 ```bash
@@ -106,27 +103,25 @@ The compiled binary and installer will be placed in `src-tauri/target/release/bu
 
 ---
 
-## Architecture Notes
+## Architecture
 
 ### Backend
 
-All three Tauri commands (`compress_webp`, `convert_images`, `extract_pdf_images`) are thin async wrappers that:
+Every Tauri command is a thin async wrapper that:
 
-1. Validate input paths against path traversal attacks (rejecting relative paths and `..` segments).
-2. Offload CPU-intensive work to a blocking thread via `tokio::task::spawn_blocking`.
-3. Use `rayon::par_iter` for parallel image processing within each batch.
-
-This ensures the Tauri main thread is never blocked by heavy computation.
+1. Validates input paths against traversal attacks (rejecting relative paths, `..` segments, and symlink escapes).
+2. Offloads CPU-intensive work to a blocking thread via `tokio::task::spawn_blocking`.
+3. Uses `rayon::par_iter` for parallel image processing within each batch.
 
 ### Frontend
 
-The React frontend follows a component-per-tab architecture. Shared logic is extracted into custom hooks (`useFileSelection`, `useOutputDir`) to avoid duplication. The `DropZone` component handles both native drag-and-drop events (via Tauri's `onDragDropEvent`) and click-to-browse dialogs.
+Component-per-tab architecture with shared hooks (`useFileSelection`, `useWorkspace`) and reusable UI components (`ActionButton`, `Slider`, `DropZone`, `BeforeAfterSlider`).
 
 ### Security
 
-- A restrictive Content Security Policy is enforced in `tauri.conf.json`.
-- File system paths received from the frontend are validated server-side before any I/O operation.
-- Tauri capabilities are scoped to the minimum required permissions.
+- Restrictive CSP enforced in `tauri.conf.json`
+- Server-side path validation with symlink resolution
+- Scoped Tauri capabilities (minimum required permissions)
 
 ---
 

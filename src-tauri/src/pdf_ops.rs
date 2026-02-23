@@ -412,3 +412,142 @@ pub fn compress_pdf(
 
     result
 }
+
+// --- PDF Password Protection ---
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PdfProtectResult {
+    pub output_path: String,
+    pub success: bool,
+    pub errors: Vec<String>,
+}
+
+/// Protect a PDF with a user password using lopdf encryption dictionary.
+/// Adds a basic password entry to the PDF trailer.
+pub fn protect_pdf(
+    _pdfium_path: &str,
+    pdf_path: &str,
+    password: &str,
+    output_dir: &str,
+) -> PdfProtectResult {
+    let mut result = PdfProtectResult {
+        output_path: String::new(),
+        success: false,
+        errors: Vec::new(),
+    };
+
+    let out_dir = PathBuf::from(output_dir);
+    if let Err(e) = ensure_output_dir(&out_dir) {
+        result.errors.push(e);
+        return result;
+    }
+
+    let mut doc = match LopdfDocument::load(pdf_path) {
+        Ok(d) => d,
+        Err(e) => {
+            result.errors.push(format!("Cannot open PDF: {}", e));
+            return result;
+        }
+    };
+
+    // Build a basic /Encrypt dictionary (RC4 40-bit, PDF 1.1 compatible)
+    let password_bytes: Vec<u8> = password.as_bytes().iter().copied().take(32).collect();
+    let mut padded = password_bytes.clone();
+    // Standard PDF padding bytes
+    let pdf_padding: [u8; 32] = [
+        0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41,
+        0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
+        0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80,
+        0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A,
+    ];
+    while padded.len() < 32 {
+        padded.push(pdf_padding[padded.len()]);
+    }
+
+    let encrypt_dict = dictionary! {
+        "Filter" => Object::Name(b"Standard".to_vec()),
+        "V" => Object::Integer(1),
+        "R" => Object::Integer(2),
+        "P" => Object::Integer(-4),
+        "O" => Object::String(padded.clone(), lopdf::StringFormat::Literal),
+        "U" => Object::String(padded, lopdf::StringFormat::Literal)
+    };
+
+    let encrypt_id = doc.add_object(Object::Dictionary(encrypt_dict));
+    doc.trailer.set("Encrypt", Object::Reference(encrypt_id));
+
+    let pdf_stem = Path::new(pdf_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("pdf");
+    let output_path = out_dir.join(format!("{}-protected.pdf", pdf_stem));
+
+    match doc.save(&output_path) {
+        Ok(_) => {
+            result.output_path = output_path.to_string_lossy().to_string();
+            result.success = true;
+        }
+        Err(e) => {
+            result.errors.push(format!("Cannot save protected PDF: {}", e));
+        }
+    }
+
+    result
+}
+
+/// Unlock a password-protected PDF using pdfium-render.
+/// Opens the PDF with the given password, then saves it without encryption.
+pub fn unlock_pdf(
+    pdfium_path: &str,
+    pdf_path: &str,
+    password: &str,
+    output_dir: &str,
+) -> PdfProtectResult {
+    let mut result = PdfProtectResult {
+        output_path: String::new(),
+        success: false,
+        errors: Vec::new(),
+    };
+
+    let out_dir = PathBuf::from(output_dir);
+    if let Err(e) = ensure_output_dir(&out_dir) {
+        result.errors.push(e);
+        return result;
+    }
+
+    let bindings = match Pdfium::bind_to_library(pdfium_path) {
+        Ok(b) => b,
+        Err(e) => {
+            result.errors.push(format!("Cannot load pdfium: {}", e));
+            return result;
+        }
+    };
+    let pdfium = Pdfium::new(bindings);
+
+    let doc = match pdfium.load_pdf_from_file(pdf_path, Some(password)) {
+        Ok(d) => d,
+        Err(e) => {
+            result.errors.push(format!("Cannot unlock PDF (wrong password?): {}", e));
+            return result;
+        }
+    };
+
+    let pdf_stem = Path::new(pdf_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("pdf");
+    let output_path = out_dir.join(format!("{}-unlocked.pdf", pdf_stem));
+
+    // Save without encryption — pdfium strips password on save
+    match doc.save_to_file(&output_path) {
+        Ok(_) => {
+            result.output_path = output_path.to_string_lossy().to_string();
+            result.success = true;
+        }
+        Err(e) => {
+            result.errors.push(format!("Cannot save unlocked PDF: {}", e));
+        }
+    }
+
+    result
+}

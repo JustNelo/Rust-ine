@@ -31,4 +31,5 @@ kamadak-exif = "0.5"
 base64 = "0.22"
 oxipng = "9"
 zip = { version = "2", default-features = false, features = ["deflate"] }
+gif = "0.13"
 tauri-plugin-updater = "2"

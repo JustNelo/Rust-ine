@@ -17,6 +17,9 @@ import {
   Pipette,
   Globe,
   FileArchive,
+  Film,
+  LayoutGrid,
+  Lock,
 } from "lucide-react";
 import { cn } from "./lib/utils";
 import appIcon from "./assets/icon.png";
@@ -35,6 +38,9 @@ import { PdfSplitTab } from "./components/PdfSplitTab";
 import { PaletteTab } from "./components/PaletteTab";
 import { FaviconTab } from "./components/FaviconTab";
 import { PdfCompressTab } from "./components/PdfCompressTab";
+import { AnimationTab } from "./components/AnimationTab";
+import { SpriteSheetTab } from "./components/SpriteSheetTab";
+import { PdfProtectTab } from "./components/PdfProtectTab";
 import { GlobalProgressBar } from "./components/GlobalProgressBar";
 import { SplashScreen } from "./components/SplashScreen";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -59,6 +65,9 @@ const TAB_EXTENSIONS: Record<TabId, string[]> = {
   "pdf-split": ["pdf"],
   "pdf-compress": ["pdf"],
   favicon: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
+  animation: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
+  spritesheet: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
+  "pdf-protect": ["pdf"],
 };
 
 interface TabDef {
@@ -94,12 +103,15 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: "pdf-to-images", labelKey: "tab.pdf_to_images", icon: Image },
       { id: "pdf-split", labelKey: "tab.pdf_split", icon: Scissors },
       { id: "pdf-compress", labelKey: "tab.pdf_compress", icon: FileArchive },
+      { id: "pdf-protect", labelKey: "tab.pdf_protect", icon: Lock },
     ],
   },
   {
     titleKey: "section.dev_tools",
     tabs: [
       { id: "favicon", labelKey: "tab.favicon", icon: Globe },
+      { id: "animation", labelKey: "tab.animation", icon: Film },
+      { id: "spritesheet", labelKey: "tab.spritesheet", icon: LayoutGrid },
     ],
   },
 ];
@@ -119,6 +131,9 @@ const TAB_DESC_KEYS: Record<TabId, string> = {
   "pdf-split": "tab.pdf_split.desc",
   "pdf-compress": "tab.pdf_compress.desc",
   favicon: "tab.favicon.desc",
+  animation: "tab.animation.desc",
+  spritesheet: "tab.spritesheet.desc",
+  "pdf-protect": "tab.pdf_protect.desc",
 };
 
 const TAB_LABEL_KEYS: Record<TabId, string> = {
@@ -136,6 +151,9 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
   "pdf-split": "tab.pdf_split",
   "pdf-compress": "tab.pdf_compress",
   favicon: "tab.favicon",
+  animation: "tab.animation",
+  spritesheet: "tab.spritesheet",
+  "pdf-protect": "tab.pdf_protect",
 };
 
 function App() {
@@ -279,6 +297,9 @@ function App() {
             {activeTab === "palette" && <PaletteTab />}
             {activeTab === "pdf-compress" && <PdfCompressTab />}
             {activeTab === "favicon" && <FaviconTab />}
+            {activeTab === "animation" && <AnimationTab />}
+            {activeTab === "spritesheet" && <SpriteSheetTab />}
+            {activeTab === "pdf-protect" && <PdfProtectTab />}
           </div>
         </main>
       </div>

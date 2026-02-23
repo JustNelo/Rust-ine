@@ -21,6 +21,9 @@ const SUB_FOLDERS: Partial<Record<TabId, string>> = {
   "pdf-split": "pdf-split",
   "pdf-compress": "pdf-compressed",
   favicon: "favicons",
+  animation: "animations",
+  spritesheet: "spritesheets",
+  "pdf-protect": "pdf-protected",
 };
 
 export function useWorkspace() {

@@ -1,10 +1,12 @@
 mod color_ops;
 mod favicon_ops;
+mod gif_ops;
 mod image_ops;
 mod metadata_ops;
 mod pdf_builder_ops;
 mod pdf_ops;
 mod pdf_split_ops;
+mod sprite_ops;
 mod utils;
 
 use image_ops::BatchProgress;
@@ -12,8 +14,10 @@ use metadata_ops::ImageMetadata;
 use pdf_builder_ops::{MergePdfOptions, MergePdfResult, PageThumbnail, PdfBuilderItem};
 use color_ops::PaletteResult;
 use favicon_ops::FaviconResult;
-use pdf_ops::{ImagesToPdfResult, PdfCompressResult, PdfExtractionResult, PdfToImagesResult};
+use gif_ops::AnimationResult;
+use pdf_ops::{ImagesToPdfResult, PdfCompressResult, PdfExtractionResult, PdfProtectResult, PdfToImagesResult};
 use pdf_split_ops::PdfSplitResult;
+use sprite_ops::SpriteSheetResult;
 use std::path::{Path, Component};
 use tauri::Manager;
 
@@ -356,6 +360,80 @@ async fn generate_favicons(
     Ok(result)
 }
 
+#[tauri::command]
+async fn create_gif(
+    image_paths: Vec<String>,
+    delay_ms: u16,
+    loop_count: u16,
+    output_dir: String,
+) -> Result<AnimationResult, String> {
+    for path in &image_paths {
+        validate_path(path)?;
+    }
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        gif_ops::create_gif(&image_paths, delay_ms, loop_count, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn generate_spritesheet(
+    image_paths: Vec<String>,
+    columns: u32,
+    padding: u32,
+    output_dir: String,
+) -> Result<SpriteSheetResult, String> {
+    for path in &image_paths {
+        validate_path(path)?;
+    }
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        sprite_ops::generate_spritesheet(&image_paths, columns, padding, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn protect_pdf_cmd(
+    app_handle: tauri::AppHandle,
+    pdf_path: String,
+    password: String,
+    output_dir: String,
+) -> Result<PdfProtectResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&output_dir)?;
+    let pdfium_path = resolve_pdfium_path(&app_handle)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::protect_pdf(&pdfium_path, &pdf_path, &password, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn unlock_pdf_cmd(
+    app_handle: tauri::AppHandle,
+    pdf_path: String,
+    password: String,
+    output_dir: String,
+) -> Result<PdfProtectResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&output_dir)?;
+    let pdfium_path = resolve_pdfium_path(&app_handle)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::unlock_pdf(&pdfium_path, &pdf_path, &password, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -380,7 +458,11 @@ pub fn run() {
             split_pdf,
             extract_palette,
             compress_pdf_cmd,
-            generate_favicons
+            generate_favicons,
+            create_gif,
+            generate_spritesheet,
+            protect_pdf_cmd,
+            unlock_pdf_cmd
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");

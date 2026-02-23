@@ -475,9 +475,9 @@ fn compute_o_value(owner_password: &[u8], user_password: &[u8]) -> Vec<u8> {
     rc4_encrypt(key, &user_padded)
 }
 
-/// Compute the U (user) value — Algorithm 4, PDF Reference 1.7
-/// For R=2, V=1 (40-bit RC4)
-fn compute_u_value(
+/// Compute the global encryption key — Algorithm 2, PDF Reference 1.7
+/// For R=2, V=1 (40-bit RC4): returns 5 bytes
+fn compute_encryption_key(
     user_password: &[u8],
     o_value: &[u8],
     permissions: i32,
@@ -489,15 +489,62 @@ fn compute_u_value(
     digest_input.extend_from_slice(o_value);
     digest_input.extend_from_slice(&permissions.to_le_bytes());
     digest_input.extend_from_slice(file_id);
-
     let key_hash = md5::compute(&digest_input);
-    // For R=2: use the first 5 bytes of the hash as the RC4 key
-    let key = &key_hash[..5];
-    rc4_encrypt(key, &PDF_PADDING)
+    key_hash[..5].to_vec()
+}
+
+/// Compute the per-object encryption key — Algorithm 1, PDF Reference 1.7
+/// Appends the 3-byte LE object number and 2-byte LE generation number to the
+/// global key, hashes with MD5, and truncates to min(n+5, 16) bytes.
+fn compute_object_key(global_key: &[u8], obj_num: u32, gen_num: u16) -> Vec<u8> {
+    let mut data = Vec::with_capacity(global_key.len() + 5);
+    data.extend_from_slice(global_key);
+    data.push((obj_num & 0xFF) as u8);
+    data.push(((obj_num >> 8) & 0xFF) as u8);
+    data.push(((obj_num >> 16) & 0xFF) as u8);
+    data.push((gen_num & 0xFF) as u8);
+    data.push(((gen_num >> 8) & 0xFF) as u8);
+    let hash = md5::compute(&data);
+    let key_len = (global_key.len() + 5).min(16);
+    hash[..key_len].to_vec()
+}
+
+/// Recursively RC4-encrypt all String values and Stream data inside a lopdf Object.
+fn encrypt_object(obj: &mut Object, obj_key: &[u8]) {
+    match obj {
+        Object::String(ref mut data, _) => {
+            *data = rc4_encrypt(obj_key, data);
+        }
+        Object::Array(ref mut arr) => {
+            for item in arr.iter_mut() {
+                encrypt_object(item, obj_key);
+            }
+        }
+        Object::Dictionary(ref mut dict) => {
+            encrypt_dictionary(dict, obj_key);
+        }
+        Object::Stream(ref mut stream) => {
+            // Encrypt the raw stream bytes (compression filters stay intact —
+            // the reader will first decrypt, then decompress)
+            stream.content = rc4_encrypt(obj_key, &stream.content);
+            // Also encrypt any string values living inside the stream dictionary
+            encrypt_dictionary(&mut stream.dict, obj_key);
+        }
+        _ => {}
+    }
+}
+
+/// Encrypt all values in a lopdf Dictionary (keys are Names and are never encrypted).
+fn encrypt_dictionary(dict: &mut lopdf::Dictionary, obj_key: &[u8]) {
+    for (_, value) in dict.iter_mut() {
+        encrypt_object(value, obj_key);
+    }
 }
 
 /// Protect a PDF with a user password using proper PDF Standard Security Handler.
-/// Implements Algorithm 3 + Algorithm 4 from the PDF 1.7 spec (R=2, V=1, 40-bit RC4).
+/// Implements Algorithms 1-4 from PDF 1.7 spec (R=2, V=1, 40-bit RC4).
+/// All indirect-object strings and streams are RC4-encrypted with per-object keys
+/// so that readers can actually decrypt and display the content.
 pub fn protect_pdf(
     _pdfium_path: &str,
     pdf_path: &str,
@@ -545,7 +592,6 @@ pub fn protect_pdf(
             }
         })
         .unwrap_or_else(|| {
-            // Generate a deterministic file ID from the file path
             let hash = md5::compute(pdf_path.as_bytes());
             hash.0.to_vec()
         });
@@ -553,12 +599,25 @@ pub fn protect_pdf(
     // Permissions: allow everything except extraction (-4 = 0xFFFFFFFC)
     let permissions: i32 = -4;
 
-    // Compute O value (Algorithm 3) — owner_password = user_password for simplicity
+    // Algorithm 3 — O value (owner_password = user_password for single-password mode)
     let o_value = compute_o_value(pw_bytes, pw_bytes);
 
-    // Compute U value (Algorithm 4)
-    let u_value = compute_u_value(pw_bytes, &o_value, permissions, &file_id);
+    // Algorithm 2 — global encryption key (5 bytes for 40-bit RC4)
+    let global_key = compute_encryption_key(pw_bytes, &o_value, permissions, &file_id);
 
+    // Algorithm 4 — U value = RC4(global_key, PDF_PADDING)
+    let u_value = rc4_encrypt(&global_key, &PDF_PADDING);
+
+    // ── Encrypt every indirect object in the document ──────────────────
+    let object_ids: Vec<(u32, u16)> = doc.objects.keys().cloned().collect();
+    for (obj_num, gen_num) in &object_ids {
+        let obj_key = compute_object_key(&global_key, *obj_num, *gen_num);
+        if let Some(obj) = doc.objects.get_mut(&(*obj_num, *gen_num)) {
+            encrypt_object(obj, &obj_key);
+        }
+    }
+
+    // ── Add the Encrypt dictionary AFTER encrypting (it must stay clear) ─
     let encrypt_dict = dictionary! {
         "Filter" => Object::Name(b"Standard".to_vec()),
         "V" => Object::Integer(1),

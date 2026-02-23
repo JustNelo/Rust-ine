@@ -1,3 +1,5 @@
+mod color_ops;
+mod favicon_ops;
 mod image_ops;
 mod metadata_ops;
 mod pdf_builder_ops;
@@ -8,7 +10,9 @@ mod utils;
 use image_ops::BatchProgress;
 use metadata_ops::ImageMetadata;
 use pdf_builder_ops::{MergePdfOptions, MergePdfResult, PageThumbnail, PdfBuilderItem};
-use pdf_ops::{ImagesToPdfResult, PdfExtractionResult, PdfToImagesResult};
+use color_ops::PaletteResult;
+use favicon_ops::FaviconResult;
+use pdf_ops::{ImagesToPdfResult, PdfCompressResult, PdfExtractionResult, PdfToImagesResult};
 use pdf_split_ops::PdfSplitResult;
 use std::path::{Path, Component};
 use tauri::Manager;
@@ -308,12 +312,57 @@ async fn split_pdf(
     Ok(result)
 }
 
+#[tauri::command]
+async fn extract_palette(
+    image_path: String,
+    num_colors: usize,
+) -> Result<PaletteResult, String> {
+    validate_path(&image_path)?;
+    tokio::task::spawn_blocking(move || {
+        color_ops::extract_palette(&image_path, num_colors)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?
+}
+
+#[tauri::command]
+async fn compress_pdf_cmd(
+    pdf_path: String,
+    quality: u8,
+    output_dir: String,
+) -> Result<PdfCompressResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::compress_pdf(&pdf_path, quality, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn generate_favicons(
+    image_path: String,
+    output_dir: String,
+) -> Result<FaviconResult, String> {
+    validate_path(&image_path)?;
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        favicon_ops::generate_favicons(&image_path, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             compress_webp,
             convert_images,
@@ -328,7 +377,10 @@ pub fn run() {
             generate_pdf_thumbnails,
             merge_to_pdf,
             pdf_to_images,
-            split_pdf
+            split_pdf,
+            extract_palette,
+            compress_pdf_cmd,
+            generate_favicons
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");

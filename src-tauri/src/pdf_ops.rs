@@ -262,3 +262,153 @@ pub fn pdf_to_images(
 
     result
 }
+
+// --- PDF Compression ---
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PdfCompressResult {
+    pub output_path: String,
+    pub original_size: u64,
+    pub compressed_size: u64,
+    pub errors: Vec<String>,
+}
+
+/// Compress a PDF by re-encoding embedded images at lower JPEG quality.
+/// Iterates over all stream objects, detects images, re-encodes them.
+pub fn compress_pdf(
+    pdf_path: &str,
+    quality: u8,
+    output_dir: &str,
+) -> PdfCompressResult {
+    let mut result = PdfCompressResult {
+        output_path: String::new(),
+        original_size: 0,
+        compressed_size: 0,
+        errors: Vec::new(),
+    };
+
+    let out_dir = PathBuf::from(output_dir);
+    if let Err(e) = ensure_output_dir(&out_dir) {
+        result.errors.push(e);
+        return result;
+    }
+
+    // Get original file size
+    result.original_size = std::fs::metadata(pdf_path)
+        .map(|m| m.len())
+        .unwrap_or(0);
+
+    let mut doc = match LopdfDocument::load(pdf_path) {
+        Ok(d) => d,
+        Err(e) => {
+            result.errors.push(format!("Cannot load PDF: {}", e));
+            return result;
+        }
+    };
+
+    // Collect object IDs that are image streams
+    let object_ids: Vec<lopdf::ObjectId> = doc.objects.keys().copied().collect();
+
+    for obj_id in object_ids {
+        let is_image_stream = {
+            if let Ok(stream) = doc.get_object(obj_id).and_then(|o| o.as_stream()) {
+                let subtype = stream
+                    .dict
+                    .get(b"Subtype")
+                    .ok()
+                    .and_then(|v| v.as_name().ok())
+                    .map(|n| std::str::from_utf8(n).unwrap_or("").to_string());
+                subtype.as_deref() == Some("Image")
+            } else {
+                false
+            }
+        };
+
+        if !is_image_stream {
+            continue;
+        }
+
+        // Try to decode image data from the stream and re-encode as JPEG
+        let recompressed = {
+            if let Ok(stream) = doc.get_object(obj_id).and_then(|o| o.as_stream()) {
+                let width = stream.dict.get(b"Width")
+                    .ok()
+                    .and_then(|v| v.as_i64().ok())
+                    .unwrap_or(0) as u32;
+                let height = stream.dict.get(b"Height")
+                    .ok()
+                    .and_then(|v| v.as_i64().ok())
+                    .unwrap_or(0) as u32;
+
+                if width == 0 || height == 0 {
+                    None
+                } else {
+                    // Try to decode the raw content as an image
+                    let content = &stream.content;
+                    match image::load_from_memory(content) {
+                        Ok(img) => {
+                            let mut jpeg_buf = std::io::Cursor::new(Vec::new());
+                            let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(
+                                &mut jpeg_buf,
+                                quality,
+                            );
+                            match img.write_with_encoder(encoder) {
+                                Ok(_) => Some((jpeg_buf.into_inner(), width, height)),
+                                Err(_) => None,
+                            }
+                        }
+                        Err(_) => None,
+                    }
+                }
+            } else {
+                None
+            }
+        };
+
+        if let Some((jpeg_data, width, height)) = recompressed {
+            // Only replace if compressed data is smaller
+            let original_len = doc.get_object(obj_id)
+                .ok()
+                .and_then(|o| o.as_stream().ok())
+                .map(|s| s.content.len())
+                .unwrap_or(0);
+
+            if jpeg_data.len() < original_len {
+                let new_stream = lopdf::Stream::new(
+                    lopdf::Dictionary::from_iter(vec![
+                        ("Type", Object::Name(b"XObject".to_vec())),
+                        ("Subtype", Object::Name(b"Image".to_vec())),
+                        ("Width", Object::Integer(width as i64)),
+                        ("Height", Object::Integer(height as i64)),
+                        ("ColorSpace", Object::Name(b"DeviceRGB".to_vec())),
+                        ("BitsPerComponent", Object::Integer(8)),
+                        ("Filter", Object::Name(b"DCTDecode".to_vec())),
+                        ("Length", Object::Integer(jpeg_data.len() as i64)),
+                    ]),
+                    jpeg_data,
+                );
+                doc.objects.insert(obj_id, Object::Stream(new_stream));
+            }
+        }
+    }
+
+    let pdf_stem = Path::new(pdf_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("pdf");
+    let output_path = out_dir.join(format!("{}-compressed.pdf", pdf_stem));
+
+    match doc.save(&output_path) {
+        Ok(_) => {
+            result.output_path = output_path.to_string_lossy().to_string();
+            result.compressed_size = std::fs::metadata(&output_path)
+                .map(|m| m.len())
+                .unwrap_or(0);
+        }
+        Err(e) => {
+            result.errors.push(format!("Cannot save compressed PDF: {}", e));
+        }
+    }
+
+    result
+}

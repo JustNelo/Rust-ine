@@ -14,6 +14,9 @@ import {
   Image,
   Scissors,
   ChevronDown,
+  Pipette,
+  Globe,
+  FileArchive,
 } from "lucide-react";
 import { cn } from "./lib/utils";
 import appIcon from "./assets/icon.png";
@@ -29,6 +32,9 @@ import { PdfTab } from "./components/PdfTab";
 import { PdfBuilderTab } from "./components/PdfBuilderTab";
 import { PdfToImagesTab } from "./components/PdfToImagesTab";
 import { PdfSplitTab } from "./components/PdfSplitTab";
+import { PaletteTab } from "./components/PaletteTab";
+import { FaviconTab } from "./components/FaviconTab";
+import { PdfCompressTab } from "./components/PdfCompressTab";
 import { GlobalProgressBar } from "./components/GlobalProgressBar";
 import { SplashScreen } from "./components/SplashScreen";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -48,8 +54,11 @@ const TAB_EXTENSIONS: Record<TabId, string[]> = {
   crop: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   pdf: ["pdf"],
   "pdf-builder": ["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf"],
+  palette: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   "pdf-to-images": ["pdf"],
   "pdf-split": ["pdf"],
+  "pdf-compress": ["pdf"],
+  favicon: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
 };
 
 interface TabDef {
@@ -74,6 +83,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: "optimize", labelKey: "tab.optimize", icon: Sparkles },
       { id: "watermark", labelKey: "tab.watermark", icon: Stamp },
       { id: "strip", labelKey: "tab.strip", icon: ShieldOff },
+      { id: "palette", labelKey: "tab.palette", icon: Pipette },
     ],
   },
   {
@@ -83,6 +93,13 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: "pdf-builder", labelKey: "tab.pdf_builder", icon: FileUp },
       { id: "pdf-to-images", labelKey: "tab.pdf_to_images", icon: Image },
       { id: "pdf-split", labelKey: "tab.pdf_split", icon: Scissors },
+      { id: "pdf-compress", labelKey: "tab.pdf_compress", icon: FileArchive },
+    ],
+  },
+  {
+    titleKey: "section.dev_tools",
+    tabs: [
+      { id: "favicon", labelKey: "tab.favicon", icon: Globe },
     ],
   },
 ];
@@ -97,8 +114,11 @@ const TAB_DESC_KEYS: Record<TabId, string> = {
   crop: "tab.crop.desc",
   pdf: "tab.pdf.desc",
   "pdf-builder": "tab.pdf_builder.desc",
+  palette: "tab.palette.desc",
   "pdf-to-images": "tab.pdf_to_images.desc",
   "pdf-split": "tab.pdf_split.desc",
+  "pdf-compress": "tab.pdf_compress.desc",
+  favicon: "tab.favicon.desc",
 };
 
 const TAB_LABEL_KEYS: Record<TabId, string> = {
@@ -111,8 +131,11 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
   crop: "tab.crop",
   pdf: "tab.pdf",
   "pdf-builder": "tab.pdf_builder",
+  palette: "tab.palette",
   "pdf-to-images": "tab.pdf_to_images",
   "pdf-split": "tab.pdf_split",
+  "pdf-compress": "tab.pdf_compress",
+  favicon: "tab.favicon",
 };
 
 function App() {
@@ -253,6 +276,9 @@ function App() {
             {activeTab === "pdf-builder" && <PdfBuilderTab />}
             {activeTab === "pdf-to-images" && <PdfToImagesTab />}
             {activeTab === "pdf-split" && <PdfSplitTab />}
+            {activeTab === "palette" && <PaletteTab />}
+            {activeTab === "pdf-compress" && <PdfCompressTab />}
+            {activeTab === "favicon" && <FaviconTab />}
           </div>
         </main>
       </div>

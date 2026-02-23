@@ -1,4 +1,7 @@
-import { X, FolderOpen, RotateCcw, Globe } from "lucide-react";
+import { useState, useCallback } from "react";
+import { X, FolderOpen, RotateCcw, Globe, RefreshCw, Loader2, CheckCircle } from "lucide-react";
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { useT, type Lang } from "../i18n/i18n";
 import { useWorkspace } from "../hooks/useWorkspace";
 
@@ -10,6 +13,25 @@ interface SettingsPanelProps {
 export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps) {
   const { lang, setLang, t } = useT();
   const { workspace, selectWorkspace, openInExplorer } = useWorkspace();
+  const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "downloading" | "up-to-date" | "error">("idle");
+
+  const handleCheckUpdate = useCallback(async () => {
+    setUpdateStatus("checking");
+    try {
+      const update = await check();
+      if (update) {
+        setUpdateStatus("downloading");
+        await update.downloadAndInstall();
+        await relaunch();
+      } else {
+        setUpdateStatus("up-to-date");
+        setTimeout(() => setUpdateStatus("idle"), 3000);
+      }
+    } catch {
+      setUpdateStatus("error");
+      setTimeout(() => setUpdateStatus("idle"), 3000);
+    }
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -89,6 +111,27 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
             >
               <RotateCcw className="h-3.5 w-3.5" />
               {t("settings.reset_onboarding")}
+            </button>
+          </div>
+
+          {/* Updates */}
+          <div className="pt-2 border-t border-border">
+            <button
+              onClick={handleCheckUpdate}
+              disabled={updateStatus === "checking" || updateStatus === "downloading"}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {updateStatus === "checking" || updateStatus === "downloading" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : updateStatus === "up-to-date" ? (
+                <CheckCircle className="h-3.5 w-3.5 text-success" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              {updateStatus === "checking" ? t("status.scanning")
+                : updateStatus === "downloading" ? t("updater.downloading")
+                : updateStatus === "up-to-date" ? t("updater.up_to_date")
+                : t("updater.check")}
             </button>
           </div>
 

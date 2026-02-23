@@ -16,8 +16,11 @@ const SUB_FOLDERS: Partial<Record<TabId, string>> = {
   crop: "cropped",
   pdf: "pdf-extracted",
   "pdf-builder": "pdf-built",
+  palette: "palettes",
   "pdf-to-images": "pdf-pages",
   "pdf-split": "pdf-split",
+  "pdf-compress": "pdf-compressed",
+  favicon: "favicons",
 };
 
 export function useWorkspace() {

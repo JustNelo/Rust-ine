@@ -44,7 +44,7 @@ export interface ImageMetadata {
   exif: MetadataEntry[];
 }
 
-export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "optimize" | "crop" | "pdf" | "pdf-builder" | "pdf-to-images" | "pdf-split";
+export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "optimize" | "crop" | "palette" | "pdf" | "pdf-builder" | "pdf-to-images" | "pdf-split" | "pdf-compress" | "favicon";
 
 export interface PageThumbnail {
   id: string;

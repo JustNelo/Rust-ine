@@ -557,3 +557,159 @@ pub fn add_watermark(
     let completed = results.iter().filter(|r| r.success).count();
     BatchProgress { completed, total, results }
 }
+
+// --- Lossless Optimize ---
+
+pub fn optimize_lossless(
+    input_paths: Vec<String>,
+    output_dir: String,
+    app_handle: tauri::AppHandle,
+) -> BatchProgress {
+    let total = input_paths.len();
+    let out_dir = PathBuf::from(&output_dir);
+
+    if let Err(e) = ensure_output_dir(&out_dir) {
+        return BatchProgress::all_failed(&input_paths, e);
+    }
+
+    let processed = AtomicUsize::new(0);
+
+    let results: Vec<ProcessingResult> = input_paths
+        .par_iter()
+        .map(|input_path| {
+            let result = (|| -> Result<String, String> {
+                let ext = get_extension(input_path);
+                let stem = Path::new(input_path)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("output");
+
+                match ext.as_str() {
+                    "png" => {
+                        let input_data = fs::read(input_path)
+                            .map_err(|e| format!("Cannot read '{}': {}", input_path, e))?;
+
+                        let optimized = oxipng::optimize_from_memory(
+                            &input_data,
+                            &oxipng::Options::from_preset(4),
+                        )
+                        .map_err(|e| format!("PNG optimization failed: {}", e))?;
+
+                        let output_path = out_dir.join(format!("{}-optimized.png", stem));
+                        fs::write(&output_path, &optimized)
+                            .map_err(|e| format!("Cannot write optimized PNG: {}", e))?;
+
+                        Ok(output_path.to_string_lossy().to_string())
+                    }
+                    "jpg" | "jpeg" => {
+                        // Re-encode JPEG with optimized Huffman tables at quality 100
+                        let img = load_image(input_path)?;
+                        let output_path = out_dir.join(format!("{}-optimized.jpg", stem));
+                        img.save_with_format(&output_path, ImageFormat::Jpeg)
+                            .map_err(|e| format!("Cannot save optimized JPEG: {}", e))?;
+                        Ok(output_path.to_string_lossy().to_string())
+                    }
+                    _ => Err(format!("Unsupported format for optimization: {}", ext)),
+                }
+            })();
+
+            emit_progress(&app_handle, &processed, total);
+            build_result(input_path, result, None)
+        })
+        .collect();
+
+    let completed = results.iter().filter(|r| r.success).count();
+    BatchProgress { completed, total, results }
+}
+
+// --- Crop ---
+
+fn parse_ratio(ratio: &str) -> Option<(f64, f64)> {
+    let parts: Vec<&str> = ratio.split(':').collect();
+    if parts.len() == 2 {
+        if let (Ok(w), Ok(h)) = (parts[0].parse::<f64>(), parts[1].parse::<f64>()) {
+            if w > 0.0 && h > 0.0 {
+                return Some((w, h));
+            }
+        }
+    }
+    None
+}
+
+pub fn crop_images(
+    input_paths: Vec<String>,
+    ratio: String,
+    anchor: String,
+    target_width: u32,
+    target_height: u32,
+    output_dir: String,
+    app_handle: tauri::AppHandle,
+) -> BatchProgress {
+    let total = input_paths.len();
+    let out_dir = PathBuf::from(&output_dir);
+
+    if let Err(e) = ensure_output_dir(&out_dir) {
+        return BatchProgress::all_failed(&input_paths, e);
+    }
+
+    let processed = AtomicUsize::new(0);
+
+    let results: Vec<ProcessingResult> = input_paths
+        .par_iter()
+        .map(|input_path| {
+            let result = (|| -> Result<(String, u32, u32, u32, u32), String> {
+                let img = load_image(input_path)?;
+                let (orig_w, orig_h) = (img.width(), img.height());
+
+                let (crop_w, crop_h) = if ratio == "free" {
+                    (target_width.min(orig_w), target_height.min(orig_h))
+                } else if let Some((rw, rh)) = parse_ratio(&ratio) {
+                    let scale_w = orig_w as f64 / rw;
+                    let scale_h = orig_h as f64 / rh;
+                    let scale = scale_w.min(scale_h);
+                    let cw = (rw * scale).round() as u32;
+                    let ch = (rh * scale).round() as u32;
+                    (cw.min(orig_w), ch.min(orig_h))
+                } else {
+                    return Err(format!("Invalid crop ratio: {}", ratio));
+                };
+
+                if crop_w == 0 || crop_h == 0 {
+                    return Err("Crop dimensions cannot be zero".to_string());
+                }
+
+                let (x, y) = match anchor.as_str() {
+                    "top-left" => (0, 0),
+                    "top-right" => (orig_w.saturating_sub(crop_w), 0),
+                    "bottom-left" => (0, orig_h.saturating_sub(crop_h)),
+                    "bottom-right" => (orig_w.saturating_sub(crop_w), orig_h.saturating_sub(crop_h)),
+                    _ => {
+                        ((orig_w.saturating_sub(crop_w)) / 2, (orig_h.saturating_sub(crop_h)) / 2)
+                    }
+                };
+
+                let cropped = img.crop_imm(x, y, crop_w, crop_h);
+
+                let ext = get_extension(input_path);
+                let stem = Path::new(input_path)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("output");
+                let output_path = out_dir.join(format!("{}-cropped.{}", stem, ext));
+
+                save_in_original_format(&cropped, input_path, &output_path)?;
+                Ok((output_path.to_string_lossy().to_string(), orig_w, orig_h, crop_w, crop_h))
+            })();
+
+            emit_progress(&app_handle, &processed, total);
+            let (path_result, dims) = match &result {
+                Ok((path, iw, ih, ow, oh)) => (Ok(path.clone()), Some((*iw, *ih, *ow, *oh))),
+                Err(e) => (Err(e.clone()), None),
+            };
+            build_result(input_path, path_result, dims)
+        })
+        .collect();
+
+    let completed = results.iter().filter(|r| r.success).count();
+    BatchProgress { completed, total, results }
+}

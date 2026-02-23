@@ -6,14 +6,18 @@ import type { TabId } from "../types";
 
 const STORAGE_KEY = "rustine_workspace";
 
-const SUB_FOLDERS: Record<TabId, string> = {
+const SUB_FOLDERS: Partial<Record<TabId, string>> = {
   compress: "compressed",
   convert: "converted",
   resize: "resized",
   watermark: "watermarked",
   strip: "stripped",
+  optimize: "optimized",
+  crop: "cropped",
   pdf: "pdf-extracted",
   "pdf-builder": "pdf-built",
+  "pdf-to-images": "pdf-pages",
+  "pdf-split": "pdf-split",
 };
 
 export function useWorkspace() {

@@ -165,3 +165,100 @@ pub fn images_to_pdf(
 
     result
 }
+
+// --- PDF to Images ---
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PdfToImagesResult {
+    pub pdf_path: String,
+    pub output_dir: String,
+    pub exported_count: usize,
+    pub errors: Vec<String>,
+}
+
+pub fn pdf_to_images(
+    pdf_path: &str,
+    output_dir: &str,
+    pdfium_lib_path: &str,
+    format: &str,
+    dpi: u32,
+) -> PdfToImagesResult {
+    let mut result = PdfToImagesResult {
+        pdf_path: pdf_path.to_string(),
+        output_dir: output_dir.to_string(),
+        exported_count: 0,
+        errors: Vec::new(),
+    };
+
+    let out_dir = PathBuf::from(output_dir);
+    if let Err(e) = ensure_output_dir(&out_dir) {
+        result.errors.push(e);
+        return result;
+    }
+
+    let bindings = match Pdfium::bind_to_library(pdfium_lib_path) {
+        Ok(b) => b,
+        Err(e) => {
+            result.errors.push(format!("Cannot load Pdfium library: {}", e));
+            return result;
+        }
+    };
+    let pdfium = Pdfium::new(bindings);
+
+    let document = match pdfium.load_pdf_from_file(pdf_path, None) {
+        Ok(d) => d,
+        Err(e) => {
+            result.errors.push(format!("Cannot open PDF '{}': {}", pdf_path, e));
+            return result;
+        }
+    };
+
+    let pdf_stem = Path::new(pdf_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("pdf");
+
+    // Scale factor: pdfium renders at 72 DPI by default
+    let scale = dpi as f32 / 72.0;
+
+    for (page_index, page) in document.pages().iter().enumerate() {
+        let page_w = page.width().value * scale;
+        let page_h = page.height().value * scale;
+
+        let render_config = PdfRenderConfig::new()
+            .set_target_width(page_w as i32)
+            .set_maximum_height(page_h as i32);
+
+        match page.render_with_config(&render_config) {
+            Ok(bitmap) => {
+                let dynamic_image = bitmap.as_image();
+                let ext = if format == "jpg" { "jpg" } else { "png" };
+                let out_path = out_dir.join(format!("{}_page_{}.{}", pdf_stem, page_index + 1, ext));
+
+                let save_result = if format == "jpg" {
+                    dynamic_image.to_rgb8().save(&out_path)
+                } else {
+                    dynamic_image.save(&out_path)
+                };
+
+                match save_result {
+                    Ok(_) => result.exported_count += 1,
+                    Err(e) => result.errors.push(format!(
+                        "Page {}: failed to save — {}",
+                        page_index + 1,
+                        e
+                    )),
+                }
+            }
+            Err(e) => {
+                result.errors.push(format!(
+                    "Page {}: render failed — {}",
+                    page_index + 1,
+                    e
+                ));
+            }
+        }
+    }
+
+    result
+}

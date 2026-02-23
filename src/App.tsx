@@ -9,6 +9,11 @@ import {
   Stamp,
   FileUp,
   Settings,
+  Sparkles,
+  Crop,
+  Image,
+  Scissors,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "./lib/utils";
 import appIcon from "./assets/icon.png";
@@ -18,8 +23,12 @@ import { ConvertTab } from "./components/ConvertTab";
 import { ResizeTab } from "./components/ResizeTab";
 import { WatermarkTab } from "./components/WatermarkTab";
 import { ExifStripTab } from "./components/ExifStripTab";
+import { OptimizeTab } from "./components/OptimizeTab";
+import { CropTab } from "./components/CropTab";
 import { PdfTab } from "./components/PdfTab";
 import { PdfBuilderTab } from "./components/PdfBuilderTab";
+import { PdfToImagesTab } from "./components/PdfToImagesTab";
+import { PdfSplitTab } from "./components/PdfSplitTab";
 import { GlobalProgressBar } from "./components/GlobalProgressBar";
 import { SplashScreen } from "./components/SplashScreen";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -35,21 +44,47 @@ const TAB_EXTENSIONS: Record<TabId, string[]> = {
   resize: ["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "gif"],
   watermark: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   strip: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
+  optimize: ["png", "jpg", "jpeg"],
+  crop: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   pdf: ["pdf"],
   "pdf-builder": ["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf"],
+  "pdf-to-images": ["pdf"],
+  "pdf-split": ["pdf"],
 };
 
-const IMAGE_TABS: { id: TabId; labelKey: string; icon: typeof Zap }[] = [
-  { id: "compress", labelKey: "tab.compress", icon: Zap },
-  { id: "convert", labelKey: "tab.convert", icon: ArrowRightLeft },
-  { id: "resize", labelKey: "tab.resize", icon: Scaling },
-  { id: "watermark", labelKey: "tab.watermark", icon: Stamp },
-  { id: "strip", labelKey: "tab.strip", icon: ShieldOff },
-];
+interface TabDef {
+  id: TabId;
+  labelKey: string;
+  icon: typeof Zap;
+}
 
-const PDF_TABS: { id: TabId; labelKey: string; icon: typeof Zap }[] = [
-  { id: "pdf", labelKey: "tab.pdf", icon: FileDown },
-  { id: "pdf-builder", labelKey: "tab.pdf_builder", icon: FileUp },
+interface SidebarSection {
+  titleKey: string;
+  tabs: TabDef[];
+}
+
+const SIDEBAR_SECTIONS: SidebarSection[] = [
+  {
+    titleKey: "section.image_tools",
+    tabs: [
+      { id: "compress", labelKey: "tab.compress", icon: Zap },
+      { id: "convert", labelKey: "tab.convert", icon: ArrowRightLeft },
+      { id: "resize", labelKey: "tab.resize", icon: Scaling },
+      { id: "crop", labelKey: "tab.crop", icon: Crop },
+      { id: "optimize", labelKey: "tab.optimize", icon: Sparkles },
+      { id: "watermark", labelKey: "tab.watermark", icon: Stamp },
+      { id: "strip", labelKey: "tab.strip", icon: ShieldOff },
+    ],
+  },
+  {
+    titleKey: "section.pdf_tools",
+    tabs: [
+      { id: "pdf", labelKey: "tab.pdf", icon: FileDown },
+      { id: "pdf-builder", labelKey: "tab.pdf_builder", icon: FileUp },
+      { id: "pdf-to-images", labelKey: "tab.pdf_to_images", icon: Image },
+      { id: "pdf-split", labelKey: "tab.pdf_split", icon: Scissors },
+    ],
+  },
 ];
 
 const TAB_DESC_KEYS: Record<TabId, string> = {
@@ -58,8 +93,12 @@ const TAB_DESC_KEYS: Record<TabId, string> = {
   resize: "tab.resize.desc",
   watermark: "tab.watermark.desc",
   strip: "tab.strip.desc",
+  optimize: "tab.optimize.desc",
+  crop: "tab.crop.desc",
   pdf: "tab.pdf.desc",
   "pdf-builder": "tab.pdf_builder.desc",
+  "pdf-to-images": "tab.pdf_to_images.desc",
+  "pdf-split": "tab.pdf_split.desc",
 };
 
 const TAB_LABEL_KEYS: Record<TabId, string> = {
@@ -68,8 +107,12 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
   resize: "tab.resize",
   watermark: "tab.watermark",
   strip: "tab.strip",
+  optimize: "tab.optimize",
+  crop: "tab.crop",
   pdf: "tab.pdf",
   "pdf-builder": "tab.pdf_builder",
+  "pdf-to-images": "tab.pdf_to_images",
+  "pdf-split": "tab.pdf_split",
 };
 
 function App() {
@@ -93,6 +136,12 @@ function App() {
     window.dispatchEvent(
       new CustomEvent("rustine-shortcut-files", { detail: paths })
     );
+  }, []);
+
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = useCallback((titleKey: string) => {
+    setCollapsedSections((prev) => ({ ...prev, [titleKey]: !prev[titleKey] }));
   }, []);
 
   useGlobalShortcuts({
@@ -119,50 +168,47 @@ function App() {
             </div>
           </div>
 
-          <nav className="flex flex-col gap-0.5 px-3 mt-1 flex-1">
-            <span className="px-3 pt-2 pb-1.5 text-[9px] font-bold uppercase tracking-widest text-text-muted">
-              {t("section.image_tools")}
-            </span>
-            {IMAGE_TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
+          <nav className="flex flex-col gap-0.5 px-3 mt-1 flex-1 overflow-y-auto">
+            {SIDEBAR_SECTIONS.map((section) => {
+              const isCollapsed = collapsedSections[section.titleKey] ?? false;
+              const hasActiveTab = section.tabs.some((tab) => tab.id === activeTab);
               return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer",
-                    isActive
-                      ? "bg-accent/15 text-white border-l-[3px] border-accent"
-                      : "text-text-secondary hover:bg-surface-hover hover:text-text-primary border-l-[3px] border-transparent"
-                  )}
-                >
-                  <Icon className={cn("h-4 w-4", isActive && "text-accent")} />
-                  {t(tab.labelKey)}
-                </button>
-              );
-            })}
-
-            <span className="px-3 pt-4 pb-1.5 text-[9px] font-bold uppercase tracking-widest text-text-muted">
-              {t("section.pdf_tools")}
-            </span>
-            {PDF_TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer",
-                    isActive
-                      ? "bg-accent/15 text-white border-l-[3px] border-accent"
-                      : "text-text-secondary hover:bg-surface-hover hover:text-text-primary border-l-[3px] border-transparent"
-                  )}
-                >
-                  <Icon className={cn("h-4 w-4", isActive && "text-accent")} />
-                  {t(tab.labelKey)}
-                </button>
+                <div key={section.titleKey} className="mb-1">
+                  <button
+                    onClick={() => toggleSection(section.titleKey)}
+                    className="flex w-full items-center justify-between px-3 pt-3 pb-1.5 cursor-pointer group"
+                  >
+                    <span className={cn(
+                      "text-[9px] font-bold uppercase tracking-widest transition-colors",
+                      hasActiveTab && !isCollapsed ? "text-accent/70" : "text-text-muted group-hover:text-text-secondary"
+                    )}>
+                      {t(section.titleKey)}
+                    </span>
+                    <ChevronDown className={cn(
+                      "h-3 w-3 text-text-muted transition-transform duration-200",
+                      isCollapsed && "-rotate-90"
+                    )} />
+                  </button>
+                  {!isCollapsed && section.tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer w-full",
+                          isActive
+                            ? "bg-accent/15 text-white border-l-[3px] border-accent"
+                            : "text-text-secondary hover:bg-surface-hover hover:text-text-primary border-l-[3px] border-transparent"
+                        )}
+                      >
+                        <Icon className={cn("h-3.5 w-3.5", isActive && "text-accent")} />
+                        {t(tab.labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
               );
             })}
           </nav>
@@ -199,10 +245,14 @@ function App() {
             {activeTab === "compress" && <CompressTab />}
             {activeTab === "convert" && <ConvertTab />}
             {activeTab === "resize" && <ResizeTab />}
+            {activeTab === "crop" && <CropTab />}
+            {activeTab === "optimize" && <OptimizeTab />}
             {activeTab === "watermark" && <WatermarkTab />}
             {activeTab === "strip" && <ExifStripTab />}
             {activeTab === "pdf" && <PdfTab />}
             {activeTab === "pdf-builder" && <PdfBuilderTab />}
+            {activeTab === "pdf-to-images" && <PdfToImagesTab />}
+            {activeTab === "pdf-split" && <PdfSplitTab />}
           </div>
         </main>
       </div>

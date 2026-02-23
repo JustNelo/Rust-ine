@@ -2,12 +2,14 @@ mod image_ops;
 mod metadata_ops;
 mod pdf_builder_ops;
 mod pdf_ops;
+mod pdf_split_ops;
 mod utils;
 
 use image_ops::BatchProgress;
 use metadata_ops::ImageMetadata;
 use pdf_builder_ops::{MergePdfOptions, MergePdfResult, PageThumbnail, PdfBuilderItem};
-use pdf_ops::{ImagesToPdfResult, PdfExtractionResult};
+use pdf_ops::{ImagesToPdfResult, PdfExtractionResult, PdfToImagesResult};
+use pdf_split_ops::PdfSplitResult;
 use std::path::{Path, Component};
 use tauri::Manager;
 
@@ -235,6 +237,77 @@ async fn merge_to_pdf(
     Ok(result)
 }
 
+#[tauri::command]
+async fn optimize_images(
+    app_handle: tauri::AppHandle,
+    input_paths: Vec<String>,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    validate_paths(&input_paths)?;
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::optimize_lossless(input_paths, output_dir, app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn crop_images(
+    app_handle: tauri::AppHandle,
+    input_paths: Vec<String>,
+    ratio: String,
+    anchor: String,
+    width: u32,
+    height: u32,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    validate_paths(&input_paths)?;
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::crop_images(input_paths, ratio, anchor, width, height, output_dir, app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn pdf_to_images(
+    app_handle: tauri::AppHandle,
+    pdf_path: String,
+    output_dir: String,
+    format: String,
+    dpi: u32,
+) -> Result<PdfToImagesResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&output_dir)?;
+    let pdfium_lib_path = resolve_pdfium_path(&app_handle)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::pdf_to_images(&pdf_path, &output_dir, &pdfium_lib_path, &format, dpi)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn split_pdf(
+    pdf_path: String,
+    ranges: String,
+    output_dir: String,
+) -> Result<PdfSplitResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -248,10 +321,14 @@ pub fn run() {
             resize_images,
             strip_metadata,
             add_watermark,
+            optimize_images,
+            crop_images,
             images_to_pdf,
             read_metadata,
             generate_pdf_thumbnails,
-            merge_to_pdf
+            merge_to_pdf,
+            pdf_to_images,
+            split_pdf
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");

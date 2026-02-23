@@ -17,6 +17,15 @@ const MODE_KEYS: { value: ResizeMode; labelKey: string }[] = [
   { value: "exact", labelKey: "label.exact" },
 ];
 
+const PRESETS: { labelKey: string; w: number; h: number }[] = [
+  { labelKey: "preset.1080p", w: 1920, h: 1080 },
+  { labelKey: "preset.4k", w: 3840, h: 2160 },
+  { labelKey: "preset.instagram_square", w: 1080, h: 1080 },
+  { labelKey: "preset.instagram_story", w: 1080, h: 1920 },
+  { labelKey: "preset.twitter_header", w: 1500, h: 500 },
+  { labelKey: "preset.youtube_thumb", w: 1280, h: 720 },
+];
+
 export function ResizeTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
@@ -109,6 +118,27 @@ export function ResizeTab() {
               {t(opt.labelKey)}
             </button>
           ))}
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-text-secondary mb-2 block">
+            {t("label.presets")}
+          </label>
+          <div className="flex gap-1.5 flex-wrap">
+            {PRESETS.map((preset) => (
+              <button
+                key={preset.labelKey}
+                onClick={() => {
+                  setMode("exact");
+                  setWidth(preset.w);
+                  setHeight(preset.h);
+                }}
+                className="rounded-md bg-surface border border-border px-2.5 py-1 text-[10px] font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all cursor-pointer"
+              >
+                {t(preset.labelKey)} ({preset.w}x{preset.h})
+              </button>
+            ))}
+          </div>
         </div>
 
         {mode === "percentage" && (

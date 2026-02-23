@@ -1,12 +1,26 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, Lock, Unlock, CheckCircle, XCircle } from "lucide-react";
+import { Lock, Unlock, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
+import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
+
+function getPasswordStrength(pw: string): { level: number; label: string; color: string } {
+  if (!pw) return { level: 0, label: "", color: "" };
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 1) return { level: 1, label: "Weak", color: "bg-red-500" };
+  if (score <= 3) return { level: 2, label: "Medium", color: "bg-yellow-500" };
+  return { level: 3, label: "Strong", color: "bg-green-500" };
+}
 
 interface PdfProtectResult {
   output_path: string;
@@ -24,6 +38,8 @@ export function PdfProtectTab() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PdfProtectResult | null>(null);
+
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   const handleFilesSelected = useCallback((paths: string[]) => {
     addFiles(paths.slice(0, 1));
@@ -128,28 +144,37 @@ export function PdfProtectTab() {
           placeholder="••••••••"
           className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
         />
+        {/* Password strength indicator */}
+        {password && (
+          <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex gap-1 flex-1">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className={`h-1 flex-1 rounded-full transition-all ${
+                    i <= passwordStrength.level ? passwordStrength.color : "bg-surface-hover"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className={`text-[10px] font-medium ${
+              passwordStrength.level <= 1 ? "text-red-400" :
+              passwordStrength.level <= 2 ? "text-yellow-400" : "text-green-400"
+            }`}>
+              {passwordStrength.label}
+            </span>
+          </div>
+        )}
       </div>
 
-      <button
+      <ActionButton
         onClick={handleAction}
-        disabled={loading || files.length === 0 || !password.trim()}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : mode === "protect" ? (
-          <Lock className="h-4 w-4" />
-        ) : (
-          <Unlock className="h-4 w-4" />
-        )}
-        {loading
-          ? mode === "protect"
-            ? t("status.protecting_pdf")
-            : t("status.unlocking_pdf")
-          : mode === "protect"
-            ? t("action.protect_pdf")
-            : t("action.unlock_pdf")}
-      </button>
+        disabled={files.length === 0 || !password.trim()}
+        loading={loading}
+        loadingText={mode === "protect" ? t("status.protecting_pdf") : t("status.unlocking_pdf")}
+        text={mode === "protect" ? t("action.protect_pdf") : t("action.unlock_pdf")}
+        icon={mode === "protect" ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+      />
 
       {result && (
         <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-4 space-y-2">

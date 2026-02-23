@@ -1,7 +1,8 @@
 import { useMemo, useState, useCallback, memo } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { CheckCircle, AlertCircle, XCircle, ArrowRight, X, ZoomIn } from "lucide-react";
+import { CheckCircle, AlertCircle, XCircle, ZoomIn } from "lucide-react";
 import { formatSize, isImage } from "../lib/utils";
+import { BeforeAfterSlider } from "./ui/BeforeAfterSlider";
 import { useT } from "../i18n/i18n";
 import type { ProcessingResult } from "../types";
 
@@ -127,97 +128,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total }: Res
       </div>
 
       {previewResult && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={closePreview}
-        >
-          <div
-            className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden border border-glass-border bg-surface-card shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-4 py-2.5 bg-surface-card border-b border-glass-border">
-              <div className="flex items-center gap-3 text-xs text-text-secondary">
-                <span className="font-medium">{t("preview.before_after")}</span>
-                <span className="text-text-muted">
-                  {formatSize(previewResult.input_size)}
-                </span>
-                <ArrowRight className="h-3 w-3 text-text-muted" />
-                <span className="text-text-muted">
-                  {formatSize(previewResult.output_size)}
-                </span>
-                {previewResult.input_size > 0 && (
-                  <span className={
-                    previewResult.output_size <= previewResult.input_size
-                      ? "font-medium text-success"
-                      : "font-medium text-warning"
-                  }>
-                    {previewResult.output_size <= previewResult.input_size ? "-" : "+"}
-                    {Math.abs((1 - previewResult.output_size / previewResult.input_size) * 100).toFixed(1)}%
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={closePreview}
-                className="rounded-full p-1 hover:bg-surface-hover transition-colors cursor-pointer"
-              >
-                <X className="h-4 w-4 text-text-muted" />
-              </button>
-            </div>
-
-            <div className="flex gap-0.5 p-4 max-h-[75vh] overflow-auto" style={{ background: '#0a0a0a' }}>
-              <div className="flex-1 flex flex-col items-center gap-2">
-                <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-                  {t("preview.original")}
-                </span>
-                <div className="rounded-xl overflow-hidden border border-glass-border">
-                  <img
-                    src={`${convertFileSrc(previewResult.input_path)}?t=${Date.now()}`}
-                    alt="Before"
-                    className="max-w-full max-h-[60vh] object-contain"
-                  />
-                </div>
-                <span className="text-[10px] text-text-muted">
-                  {previewResult.input_path.split(/[\\/]/).pop()}
-                </span>
-                {previewResult.input_width > 0 && (
-                  <span className="text-[10px] font-mono text-text-muted">
-                    {previewResult.input_width} × {previewResult.input_height} px
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center px-2">
-                <ArrowRight className="h-5 w-5 text-text-muted" />
-              </div>
-
-              <div className="flex-1 flex flex-col items-center gap-2">
-                <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-                  {t("preview.result")}
-                </span>
-                <div className="rounded-xl overflow-hidden border border-glass-border">
-                  <img
-                    src={`${convertFileSrc(previewResult.output_path)}?t=${Date.now()}`}
-                    alt="After"
-                    className="max-w-full max-h-[60vh] object-contain"
-                  />
-                </div>
-                <span className="text-[10px] text-text-muted">
-                  {previewResult.output_path.split(/[\\/]/).pop()}
-                </span>
-                {previewResult.output_width > 0 && (
-                  <span className={`text-[10px] font-mono ${
-                    previewResult.input_width !== previewResult.output_width ||
-                    previewResult.input_height !== previewResult.output_height
-                      ? "text-white font-semibold"
-                      : "text-text-muted"
-                  }`}>
-                    {previewResult.output_width} × {previewResult.output_height} px
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <BeforeAfterSlider result={previewResult} onClose={closePreview} />
       )}
     </>
   );

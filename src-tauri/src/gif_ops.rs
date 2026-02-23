@@ -105,7 +105,7 @@ pub fn create_gif(
         let rgba = resized.to_rgba8();
         let mut pixels = rgba.into_raw();
 
-        let mut frame = Frame::from_rgba_speed(gif_width, gif_height, &mut pixels, 10);
+        let mut frame = Frame::from_rgba_speed(gif_width, gif_height, &mut pixels, 30);
         frame.delay = delay_cs;
 
         if let Err(e) = encoder.write_frame(&frame) {

@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, Scaling } from "lucide-react";
+import { Scaling } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
+import { ActionButton } from "./ui/ActionButton";
+import { Slider } from "./ui/Slider";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
@@ -142,28 +144,15 @@ export function ResizeTab() {
         </div>
 
         {mode === "percentage" && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-text-secondary">
-                {t("label.scale")}
-              </label>
-              <span className="text-xs font-mono text-text-muted">
-                {percentage}%
-              </span>
-            </div>
-            <input
-              type="range"
-              min={1}
-              max={200}
-              value={percentage}
-              onChange={(e) => setPercentage(Number(e.target.value))}
-              className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(108,108,237,0.4)]"
-            />
-            <div className="flex justify-between text-[10px] text-text-muted">
-              <span>1%</span>
-              <span>200%</span>
-            </div>
-          </div>
+          <Slider
+            label={t("label.scale")}
+            value={percentage}
+            min={1}
+            max={200}
+            leftHint="1%"
+            rightHint="200%"
+            onChange={setPercentage}
+          />
         )}
 
         {(mode === "width" || mode === "exact") && (
@@ -195,18 +184,14 @@ export function ResizeTab() {
         )}
       </div>
 
-      <button
+      <ActionButton
         onClick={handleResize}
-        disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Scaling className="h-4 w-4" />
-        )}
-        {loading ? t("status.resizing") : files.length > 0 ? t("action.resize_n", { n: files.length }) : t("action.resize")}
-      </button>
+        disabled={files.length === 0}
+        loading={loading}
+        loadingText={t("status.resizing")}
+        text={files.length > 0 ? t("action.resize_n", { n: files.length }) : t("action.resize")}
+        icon={<Scaling className="h-4 w-4" />}
+      />
 
       <ResultsBanner results={results} total={files.length} />
     </div>

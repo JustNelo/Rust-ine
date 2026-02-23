@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Eye,
 } from "lucide-react";
+import { ActionButton } from "./ui/ActionButton";
 import { toast } from "sonner";
 import { formatSize } from "../lib/utils";
 import { DropZone } from "./DropZone";
@@ -331,18 +332,14 @@ export function ExifStripTab() {
         </div>
       )}
 
-      <button
+      <ActionButton
         onClick={handleStrip}
-        disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <ShieldOff className="h-4 w-4" />
-        )}
-        {loading ? t("status.stripping") : files.length > 0 ? t("action.strip_n", { n: files.length }) : t("action.strip")}
-      </button>
+        disabled={files.length === 0}
+        loading={loading}
+        loadingText={t("status.stripping")}
+        text={files.length > 0 ? t("action.strip_n", { n: files.length }) : t("action.strip")}
+        icon={<ShieldOff className="h-4 w-4" />}
+      />
 
       <ResultsBanner results={results} total={files.length} />
     </div>

@@ -1,10 +1,11 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
+import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
@@ -80,18 +81,14 @@ export function OptimizeTab() {
         onClear={handleClearFiles}
       />
 
-      <button
+      <ActionButton
         onClick={handleOptimize}
-        disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Sparkles className="h-4 w-4" />
-        )}
-        {loading ? t("status.optimizing") : files.length > 0 ? t("action.optimize_n", { n: files.length }) : t("action.optimize")}
-      </button>
+        disabled={files.length === 0}
+        loading={loading}
+        loadingText={t("status.optimizing")}
+        text={files.length > 0 ? t("action.optimize_n", { n: files.length }) : t("action.optimize")}
+        icon={<Sparkles className="h-4 w-4" />}
+      />
 
       <ResultsBanner results={results} total={files.length} />
     </div>

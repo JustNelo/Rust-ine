@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { Loader2, Film, CheckCircle, XCircle, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { Film, CheckCircle, XCircle, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
+import { ActionButton } from "./ui/ActionButton";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
 
@@ -122,6 +123,12 @@ export function AnimationTab() {
                 <span className="text-[10px] font-mono text-text-muted w-5 text-right shrink-0">
                   {index + 1}
                 </span>
+                <img
+                  src={convertFileSrc(path)}
+                  alt=""
+                  className="h-7 w-7 rounded object-cover shrink-0 border border-glass-border"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
                 <span className="flex-1 truncate">{getFilename(path)}</span>
                 <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
@@ -180,18 +187,14 @@ export function AnimationTab() {
         </div>
       </div>
 
-      <button
+      <ActionButton
         onClick={handleCreate}
-        disabled={loading || frames.length < 2}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Film className="h-4 w-4" />
-        )}
-        {loading ? t("status.creating_animation") : t("action.create_animation")}
-      </button>
+        disabled={frames.length < 2}
+        loading={loading}
+        loadingText={t("status.creating_animation")}
+        text={t("action.create_animation")}
+        icon={<Film className="h-4 w-4" />}
+      />
 
       {result && result.frame_count > 0 && (
         <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-4 space-y-2">
@@ -205,6 +208,16 @@ export function AnimationTab() {
               {t("result.animation_created", { frames: result.frame_count, format: "GIF" })}
             </span>
           </div>
+          {/* GIF preview */}
+          {result.output_path && (
+            <div className="rounded-xl overflow-hidden border border-glass-border bg-black flex items-center justify-center max-h-48">
+              <img
+                src={`${convertFileSrc(result.output_path)}?t=${Date.now()}`}
+                alt="Generated GIF"
+                className="max-h-48 object-contain"
+              />
+            </div>
+          )}
           {result.errors.length > 0 && (
             <div className="max-h-24 overflow-y-auto space-y-1">
               {result.errors.map((err, i) => (

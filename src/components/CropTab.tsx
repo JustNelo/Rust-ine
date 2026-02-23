@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, Crop } from "lucide-react";
+import { convertFileSrc } from "@tauri-apps/api/core";
+import { Crop } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
+import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
@@ -30,6 +32,12 @@ const ANCHORS: { value: CropAnchor; labelKey: string }[] = [
   { value: "bottom-right", labelKey: "label.bottom_right" },
 ];
 
+function parseRatio(ratio: CropRatio): { w: number; h: number } | null {
+  if (ratio === "free") return null;
+  const [w, h] = ratio.split(":").map(Number);
+  return { w, h };
+}
+
 export function CropTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles } = useFileSelection();
@@ -50,6 +58,49 @@ export function CropTab() {
     clearFiles();
     setResults([]);
   }, [clearFiles]);
+
+  // Compute the crop overlay position as CSS percentages
+  const cropOverlay = useMemo(() => {
+    const parsed = parseRatio(ratio);
+    if (!parsed) return null; // free mode — no fixed overlay
+    const { w, h } = parsed;
+    const aspectRatio = w / h;
+
+    // Assume a square container; compute the crop rect relative to it
+    // The overlay shows what portion of the image will be kept
+    const containerAspect = 1; // preview is aspect-square
+    let cropW: number, cropH: number;
+    if (aspectRatio > containerAspect) {
+      cropW = 100;
+      cropH = (containerAspect / aspectRatio) * 100;
+    } else {
+      cropH = 100;
+      cropW = (aspectRatio / containerAspect) * 100;
+    }
+
+    // Position based on anchor
+    let top = 0, left = 0;
+    switch (anchor) {
+      case "center":
+        top = (100 - cropH) / 2;
+        left = (100 - cropW) / 2;
+        break;
+      case "top-left":
+        top = 0; left = 0;
+        break;
+      case "top-right":
+        top = 0; left = 100 - cropW;
+        break;
+      case "bottom-left":
+        top = 100 - cropH; left = 0;
+        break;
+      case "bottom-right":
+        top = 100 - cropH; left = 100 - cropW;
+        break;
+    }
+
+    return { top: `${top}%`, left: `${left}%`, width: `${cropW}%`, height: `${cropH}%` };
+  }, [ratio, anchor]);
 
   const handleCrop = useCallback(async () => {
     if (files.length === 0) {
@@ -103,6 +154,26 @@ export function CropTab() {
       />
 
       <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+
+      {/* Crop preview with overlay */}
+      {files.length > 0 && (
+        <div className="relative rounded-xl overflow-hidden border border-glass-border bg-black aspect-video max-h-52">
+          <img
+            src={convertFileSrc(files[0])}
+            alt=""
+            className="w-full h-full object-contain opacity-40"
+          />
+          {cropOverlay && (
+            <div
+              className="absolute border-2 border-accent rounded-sm shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] transition-all duration-200"
+              style={cropOverlay}
+            />
+          )}
+          <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-mono text-white/70 backdrop-blur-sm">
+            {ratio === "free" ? `${cropWidth}×${cropHeight}` : ratio}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         <label className="text-xs font-medium text-text-secondary">
@@ -171,18 +242,14 @@ export function CropTab() {
         </div>
       </div>
 
-      <button
+      <ActionButton
         onClick={handleCrop}
-        disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Crop className="h-4 w-4" />
-        )}
-        {loading ? t("status.cropping") : files.length > 0 ? t("action.crop_n", { n: files.length }) : t("action.crop")}
-      </button>
+        disabled={files.length === 0}
+        loading={loading}
+        loadingText={t("status.cropping")}
+        text={files.length > 0 ? t("action.crop_n", { n: files.length }) : t("action.crop")}
+        icon={<Crop className="h-4 w-4" />}
+      />
 
       <ResultsBanner results={results} total={files.length} />
     </div>

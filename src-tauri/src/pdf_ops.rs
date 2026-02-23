@@ -422,8 +422,82 @@ pub struct PdfProtectResult {
     pub errors: Vec<String>,
 }
 
-/// Protect a PDF with a user password using lopdf encryption dictionary.
-/// Adds a basic password entry to the PDF trailer.
+/// Standard PDF padding string (Table 3.18, PDF Reference 1.7)
+const PDF_PADDING: [u8; 32] = [
+    0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41,
+    0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
+    0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80,
+    0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A,
+];
+
+/// Pad or truncate a password to exactly 32 bytes per PDF spec
+fn pad_password(password: &[u8]) -> [u8; 32] {
+    let mut padded = [0u8; 32];
+    let len = password.len().min(32);
+    padded[..len].copy_from_slice(&password[..len]);
+    if len < 32 {
+        padded[len..].copy_from_slice(&PDF_PADDING[..(32 - len)]);
+    }
+    padded
+}
+
+/// Simple RC4 implementation for PDF encryption (40-bit key, per spec)
+fn rc4_encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
+    // KSA (Key-Scheduling Algorithm)
+    let mut s: Vec<u8> = (0..=255).collect();
+    let mut j: usize = 0;
+    for i in 0..256 {
+        j = (j + s[i] as usize + key[i % key.len()] as usize) % 256;
+        s.swap(i, j);
+    }
+    // PRGA (Pseudo-Random Generation Algorithm)
+    let mut i: usize = 0;
+    j = 0;
+    let mut output = Vec::with_capacity(data.len());
+    for &byte in data {
+        i = (i + 1) % 256;
+        j = (j + s[i] as usize) % 256;
+        s.swap(i, j);
+        let k = s[(s[i] as usize + s[j] as usize) % 256];
+        output.push(byte ^ k);
+    }
+    output
+}
+
+/// Compute the O (owner) value — Algorithm 3, PDF Reference 1.7
+/// For R=2, V=1 (40-bit RC4)
+fn compute_o_value(owner_password: &[u8], user_password: &[u8]) -> Vec<u8> {
+    let owner_padded = pad_password(owner_password);
+    let key_hash = md5::compute(&owner_padded);
+    // For R=2: use the first 5 bytes of the hash as the RC4 key
+    let key = &key_hash[..5];
+    let user_padded = pad_password(user_password);
+    rc4_encrypt(key, &user_padded)
+}
+
+/// Compute the U (user) value — Algorithm 4, PDF Reference 1.7
+/// For R=2, V=1 (40-bit RC4)
+fn compute_u_value(
+    user_password: &[u8],
+    o_value: &[u8],
+    permissions: i32,
+    file_id: &[u8],
+) -> Vec<u8> {
+    let user_padded = pad_password(user_password);
+    let mut digest_input = Vec::with_capacity(68 + file_id.len());
+    digest_input.extend_from_slice(&user_padded);
+    digest_input.extend_from_slice(o_value);
+    digest_input.extend_from_slice(&permissions.to_le_bytes());
+    digest_input.extend_from_slice(file_id);
+
+    let key_hash = md5::compute(&digest_input);
+    // For R=2: use the first 5 bytes of the hash as the RC4 key
+    let key = &key_hash[..5];
+    rc4_encrypt(key, &PDF_PADDING)
+}
+
+/// Protect a PDF with a user password using proper PDF Standard Security Handler.
+/// Implements Algorithm 3 + Algorithm 4 from the PDF 1.7 spec (R=2, V=1, 40-bit RC4).
 pub fn protect_pdf(
     _pdfium_path: &str,
     pdf_path: &str,
@@ -450,31 +524,62 @@ pub fn protect_pdf(
         }
     };
 
-    // Build a basic /Encrypt dictionary (RC4 40-bit, PDF 1.1 compatible)
-    let password_bytes: Vec<u8> = password.as_bytes().iter().copied().take(32).collect();
-    let mut padded = password_bytes.clone();
-    // Standard PDF padding bytes
-    let pdf_padding: [u8; 32] = [
-        0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41,
-        0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
-        0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80,
-        0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A,
-    ];
-    while padded.len() < 32 {
-        padded.push(pdf_padding[padded.len()]);
-    }
+    let pw_bytes = password.as_bytes();
+
+    // Get or create a file ID for the document (required for encryption)
+    let file_id: Vec<u8> = doc
+        .trailer
+        .get(b"ID")
+        .ok()
+        .and_then(|id_obj| {
+            if let Object::Array(ref arr) = *id_obj {
+                arr.first().and_then(|first| {
+                    if let Object::String(ref s, _) = *first {
+                        Some(s.clone())
+                    } else {
+                        None
+                    }
+                })
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| {
+            // Generate a deterministic file ID from the file path
+            let hash = md5::compute(pdf_path.as_bytes());
+            hash.0.to_vec()
+        });
+
+    // Permissions: allow everything except extraction (-4 = 0xFFFFFFFC)
+    let permissions: i32 = -4;
+
+    // Compute O value (Algorithm 3) — owner_password = user_password for simplicity
+    let o_value = compute_o_value(pw_bytes, pw_bytes);
+
+    // Compute U value (Algorithm 4)
+    let u_value = compute_u_value(pw_bytes, &o_value, permissions, &file_id);
 
     let encrypt_dict = dictionary! {
         "Filter" => Object::Name(b"Standard".to_vec()),
         "V" => Object::Integer(1),
         "R" => Object::Integer(2),
-        "P" => Object::Integer(-4),
-        "O" => Object::String(padded.clone(), lopdf::StringFormat::Literal),
-        "U" => Object::String(padded, lopdf::StringFormat::Literal)
+        "Length" => Object::Integer(40),
+        "P" => Object::Integer(permissions as i64),
+        "O" => Object::String(o_value, lopdf::StringFormat::Literal),
+        "U" => Object::String(u_value, lopdf::StringFormat::Literal)
     };
 
     let encrypt_id = doc.add_object(Object::Dictionary(encrypt_dict));
     doc.trailer.set("Encrypt", Object::Reference(encrypt_id));
+
+    // Ensure the document has an ID array in the trailer
+    if doc.trailer.get(b"ID").is_err() {
+        let id_string = Object::String(file_id.clone(), lopdf::StringFormat::Literal);
+        doc.trailer.set(
+            "ID",
+            Object::Array(vec![id_string.clone(), id_string]),
+        );
+    }
 
     let pdf_stem = Path::new(pdf_path)
         .file_stem()

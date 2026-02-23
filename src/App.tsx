@@ -20,6 +20,9 @@ import {
   Film,
   LayoutGrid,
   Lock,
+  Code,
+  QrCode,
+  PenLine,
 } from "lucide-react";
 import { cn } from "./lib/utils";
 import appIcon from "./assets/icon.png";
@@ -41,6 +44,9 @@ import { PdfCompressTab } from "./components/PdfCompressTab";
 import { AnimationTab } from "./components/AnimationTab";
 import { SpriteSheetTab } from "./components/SpriteSheetTab";
 import { PdfProtectTab } from "./components/PdfProtectTab";
+import { Base64Tab } from "./components/Base64Tab";
+import { QrCodeTab } from "./components/QrCodeTab";
+import { BulkRenameTab } from "./components/BulkRenameTab";
 import { GlobalProgressBar } from "./components/GlobalProgressBar";
 import { SplashScreen } from "./components/SplashScreen";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -68,6 +74,9 @@ const TAB_EXTENSIONS: Record<TabId, string[]> = {
   animation: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   spritesheet: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   "pdf-protect": ["pdf"],
+  base64: ["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "svg", "tiff", "tif"],
+  qrcode: [],
+  "bulk-rename": ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp", "gif", "ico", "svg"],
 };
 
 interface TabDef {
@@ -112,6 +121,9 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: "favicon", labelKey: "tab.favicon", icon: Globe },
       { id: "animation", labelKey: "tab.animation", icon: Film },
       { id: "spritesheet", labelKey: "tab.spritesheet", icon: LayoutGrid },
+      { id: "base64", labelKey: "tab.base64", icon: Code },
+      { id: "qrcode", labelKey: "tab.qrcode", icon: QrCode },
+      { id: "bulk-rename", labelKey: "tab.bulk_rename", icon: PenLine },
     ],
   },
 ];
@@ -134,6 +146,9 @@ const TAB_DESC_KEYS: Record<TabId, string> = {
   animation: "tab.animation.desc",
   spritesheet: "tab.spritesheet.desc",
   "pdf-protect": "tab.pdf_protect.desc",
+  base64: "tab.base64.desc",
+  qrcode: "tab.qrcode.desc",
+  "bulk-rename": "tab.bulk_rename.desc",
 };
 
 const TAB_LABEL_KEYS: Record<TabId, string> = {
@@ -154,6 +169,9 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
   animation: "tab.animation",
   spritesheet: "tab.spritesheet",
   "pdf-protect": "tab.pdf_protect",
+  base64: "tab.base64",
+  qrcode: "tab.qrcode",
+  "bulk-rename": "tab.bulk_rename",
 };
 
 function App() {
@@ -300,6 +318,9 @@ function App() {
             {activeTab === "animation" && <AnimationTab />}
             {activeTab === "spritesheet" && <SpriteSheetTab />}
             {activeTab === "pdf-protect" && <PdfProtectTab />}
+            {activeTab === "base64" && <Base64Tab />}
+            {activeTab === "qrcode" && <QrCodeTab />}
+            {activeTab === "bulk-rename" && <BulkRenameTab />}
           </div>
         </main>
       </div>

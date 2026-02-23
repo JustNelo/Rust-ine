@@ -1,15 +1,25 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
+import { ActionButton } from "./ui/ActionButton";
 import { cn } from "../lib/utils";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
 import type { BatchProgress, OutputFormat, ProcessingResult } from "../types";
+
+const FORMAT_INFO: Record<string, { type: string; alpha: boolean }> = {
+  png: { type: "Lossless", alpha: true },
+  jpg: { type: "Lossy", alpha: false },
+  webp: { type: "Lossy/Lossless", alpha: true },
+  bmp: { type: "Uncompressed", alpha: false },
+  ico: { type: "Lossless", alpha: true },
+  tiff: { type: "Lossless", alpha: true },
+};
 
 const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
   { value: "png", label: "PNG" },
@@ -115,20 +125,33 @@ export function ConvertTab() {
           </div>
         </div>
 
+        {/* Format info badges */}
+        <div className="flex items-center gap-2">
+          <span className="rounded-md bg-surface border border-border px-2 py-0.5 text-[10px] font-medium text-text-muted">
+            {FORMAT_INFO[outputFormat]?.type}
+          </span>
+          {FORMAT_INFO[outputFormat]?.alpha && (
+            <span className="rounded-md bg-surface border border-border px-2 py-0.5 text-[10px] font-medium text-accent">
+              Alpha ✓
+            </span>
+          )}
+          {!FORMAT_INFO[outputFormat]?.alpha && (
+            <span className="rounded-md bg-surface border border-border px-2 py-0.5 text-[10px] font-medium text-text-muted/50">
+              No alpha
+            </span>
+          )}
+        </div>
+
       </div>
 
-      <button
+      <ActionButton
         onClick={handleConvert}
-        disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <ArrowRightLeft className="h-4 w-4" />
-        )}
-        {loading ? t("status.converting") : files.length > 0 ? t("action.convert_n", { n: files.length, format: outputFormat.toUpperCase() }) : t("action.convert", { format: outputFormat.toUpperCase() })}
-      </button>
+        disabled={files.length === 0}
+        loading={loading}
+        loadingText={t("status.converting")}
+        text={files.length > 0 ? t("action.convert_n", { n: files.length, format: outputFormat.toUpperCase() }) : t("action.convert", { format: outputFormat.toUpperCase() })}
+        icon={<ArrowRightLeft className="h-4 w-4" />}
+      />
 
       <ResultsBanner results={results} total={files.length} />
     </div>

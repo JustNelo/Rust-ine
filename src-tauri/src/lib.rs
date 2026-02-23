@@ -6,6 +6,8 @@ mod metadata_ops;
 mod pdf_builder_ops;
 mod pdf_ops;
 mod pdf_split_ops;
+mod qr_ops;
+mod rename_ops;
 mod sprite_ops;
 mod utils;
 
@@ -17,6 +19,8 @@ use favicon_ops::FaviconResult;
 use gif_ops::AnimationResult;
 use pdf_ops::{ImagesToPdfResult, PdfCompressResult, PdfExtractionResult, PdfProtectResult, PdfToImagesResult};
 use pdf_split_ops::PdfSplitResult;
+use qr_ops::QrResult;
+use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
 use std::path::{Path, Component};
 use tauri::Manager;
@@ -68,6 +72,14 @@ fn validate_path(path: &str) -> Result<(), String> {
     }
     if !p.is_absolute() {
         return Err(format!("Only absolute paths are allowed: {}", path));
+    }
+    // If the path already exists, resolve symlinks and re-validate
+    if p.exists() {
+        if let Ok(canonical) = std::fs::canonicalize(p) {
+            if canonical.components().any(|c| matches!(c, Component::ParentDir)) {
+                return Err(format!("Symlink traversal detected: {}", path));
+            }
+        }
     }
     Ok(())
 }
@@ -434,6 +446,67 @@ async fn unlock_pdf_cmd(
     Ok(result)
 }
 
+#[tauri::command]
+async fn bulk_rename_cmd(
+    input_paths: Vec<String>,
+    pattern: String,
+    start_index: u32,
+    output_dir: String,
+) -> Result<RenameResult, String> {
+    validate_paths(&input_paths)?;
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        rename_ops::bulk_rename(&input_paths, &pattern, start_index, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn generate_qr_cmd(
+    text: String,
+    size: u32,
+    output_dir: String,
+) -> Result<QrResult, String> {
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        qr_ops::generate_qr(&text, size, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn image_to_base64(image_path: String) -> Result<String, String> {
+    validate_path(&image_path)?;
+    tokio::task::spawn_blocking(move || {
+        let bytes = std::fs::read(&image_path)
+            .map_err(|e| format!("Cannot read file: {}", e))?;
+        let ext = Path::new(&image_path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase())
+            .unwrap_or_else(|| "png".to_string());
+        let mime = match ext.as_str() {
+            "png" => "image/png",
+            "jpg" | "jpeg" => "image/jpeg",
+            "gif" => "image/gif",
+            "webp" => "image/webp",
+            "bmp" => "image/bmp",
+            "ico" => "image/x-icon",
+            "svg" => "image/svg+xml",
+            "tiff" | "tif" => "image/tiff",
+            _ => "application/octet-stream",
+        };
+        let b64 = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &bytes);
+        Ok(format!("data:{};base64,{}", mime, b64))
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -462,7 +535,10 @@ pub fn run() {
             create_gif,
             generate_spritesheet,
             protect_pdf_cmd,
-            unlock_pdf_cmd
+            unlock_pdf_cmd,
+            image_to_base64,
+            generate_qr_cmd,
+            bulk_rename_cmd
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");

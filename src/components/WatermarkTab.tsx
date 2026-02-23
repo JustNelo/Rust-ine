@@ -1,10 +1,13 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, Stamp } from "lucide-react";
+import { convertFileSrc } from "@tauri-apps/api/core";
+import { Stamp } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
+import { ActionButton } from "./ui/ActionButton";
+import { Slider } from "./ui/Slider";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
@@ -100,6 +103,50 @@ export function WatermarkTab() {
 
       <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
 
+      {/* Live watermark preview */}
+      {files.length > 0 && text.trim() && (
+        <div className="relative rounded-xl overflow-hidden border border-glass-border bg-black aspect-video max-h-48">
+          <img
+            src={convertFileSrc(files[0])}
+            alt=""
+            className="w-full h-full object-contain"
+          />
+          <div
+            className="absolute flex items-center justify-center pointer-events-none"
+            style={{
+              ...(position === "center" ? { inset: 0 } : {}),
+              ...(position === "top-left" ? { top: "8%", left: "8%" } : {}),
+              ...(position === "top-right" ? { top: "8%", right: "8%" } : {}),
+              ...(position === "bottom-left" ? { bottom: "8%", left: "8%" } : {}),
+              ...(position === "bottom-right" ? { bottom: "8%", right: "8%" } : {}),
+              ...(position === "tiled" ? { inset: 0, flexWrap: "wrap", gap: "16px" } : {}),
+            }}
+          >
+            {position === "tiled" ? (
+              Array.from({ length: 9 }).map((_, i) => (
+                <span
+                  key={i}
+                  className="text-white/20 font-bold select-none"
+                  style={{ fontSize: `${Math.max(10, fontSize * 0.15)}px` }}
+                >
+                  {text}
+                </span>
+              ))
+            ) : (
+              <span
+                className="text-white font-bold select-none"
+                style={{
+                  fontSize: `${Math.max(10, fontSize * 0.2)}px`,
+                  opacity: opacity / 100,
+                }}
+              >
+                {text}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
         <div>
           <label className="text-xs font-medium text-text-secondary mb-1 block">
@@ -135,53 +182,32 @@ export function WatermarkTab() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-text-secondary">
-              {t("label.opacity")}
-            </label>
-            <span className="text-xs font-mono text-text-muted">{opacity}%</span>
-          </div>
-          <input
-            type="range"
-            min={5}
-            max={100}
-            value={opacity}
-            onChange={(e) => setOpacity(Number(e.target.value))}
-            className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(108,108,237,0.4)]"
-          />
-        </div>
+        <Slider
+          label={t("label.opacity")}
+          value={opacity}
+          min={5}
+          max={100}
+          onChange={setOpacity}
+        />
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-text-secondary">
-              {t("label.font_size")}
-            </label>
-            <span className="text-xs font-mono text-text-muted">{fontSize}px</span>
-          </div>
-          <input
-            type="range"
-            min={8}
-            max={200}
-            value={fontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
-            className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-accent-muted [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(108,108,237,0.4)]"
-          />
-        </div>
+        <Slider
+          label={t("label.font_size")}
+          value={fontSize}
+          min={8}
+          max={200}
+          unit="px"
+          onChange={setFontSize}
+        />
       </div>
 
-      <button
+      <ActionButton
         onClick={handleWatermark}
-        disabled={loading || files.length === 0 || !text.trim()}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Stamp className="h-4 w-4" />
-        )}
-        {loading ? t("status.watermarking") : files.length > 0 ? t("action.watermark_n", { n: files.length }) : t("action.watermark")}
-      </button>
+        disabled={files.length === 0 || !text.trim()}
+        loading={loading}
+        loadingText={t("status.watermarking")}
+        text={files.length > 0 ? t("action.watermark_n", { n: files.length }) : t("action.watermark")}
+        icon={<Stamp className="h-4 w-4" />}
+      />
 
       <ResultsBanner results={results} total={files.length} />
     </div>

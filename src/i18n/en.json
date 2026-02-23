@@ -24,6 +24,9 @@
   "tab.animation": "GIF / WebP Anim",
   "tab.spritesheet": "Sprite Sheet",
   "tab.pdf_protect": "PDF Protect",
+  "tab.base64": "Image to Base64",
+  "tab.qrcode": "QR Code Gen",
+  "tab.bulk_rename": "Bulk Rename",
 
   "tab.compress.desc": "Compress images to WebP format with adjustable quality.",
   "tab.convert.desc": "Convert images between PNG, JPG, WebP, BMP, ICO and TIFF.",
@@ -42,6 +45,9 @@
   "tab.animation.desc": "Create animated GIF or WebP from a sequence of images.",
   "tab.spritesheet.desc": "Combine multiple images into a single sprite sheet with a JSON atlas.",
   "tab.pdf_protect.desc": "Add a password to a PDF or remove password protection.",
+  "tab.base64.desc": "Convert an image to a copyable Base64 data URI string.",
+  "tab.qrcode.desc": "Generate a QR code PNG from any text or URL.",
+  "tab.bulk_rename.desc": "Rename multiple files using patterns like {name}_{index}.",
 
   "dropzone.images": "Drop images here",
   "dropzone.images_compress": "Drop images here to compress to WebP",
@@ -78,6 +84,10 @@
   "dropzone.sublabel_spritesheet": "Images will be packed into a grid with a JSON atlas",
   "dropzone.sublabel_pdf_protect": "Set or remove a password on a PDF file",
   "dropzone.sublabel_pdf_builder": "Each image becomes a page. PDF pages are extracted individually.",
+  "dropzone.images_base64": "Drop an image here to convert to Base64",
+  "dropzone.sublabel_base64": "Any image format supported. Result is a data: URI string.",
+  "dropzone.images_bulk_rename": "Drop images here to rename in batch",
+  "dropzone.sublabel_bulk_rename": "Use patterns: {name}, {index}, {date}, {ext}",
 
   "action.compress": "Compress to WebP",
   "action.compress_n": "Compress {n} images",
@@ -104,6 +114,9 @@
   "action.protect_pdf": "Protect PDF",
   "action.unlock_pdf": "Unlock PDF",
   "action.build_pdf": "Build PDF",
+  "action.to_base64": "Convert to Base64",
+  "action.generate_qr": "Generate QR Code",
+  "action.bulk_rename": "Rename Files",
 
   "status.compressing": "Compressing...",
   "status.converting": "Converting...",
@@ -125,6 +138,8 @@
   "status.building": "Building PDF...",
   "status.processing": "Processing {completed}/{total}",
   "status.scanning": "Scanning...",
+  "status.generating_qr": "Generating QR code...",
+  "status.renaming": "Renaming files...",
 
   "label.quality": "Quality",
   "label.output_format": "Output format",
@@ -245,6 +260,11 @@
 
   "toast.workspace_missing": "Please set a workspace folder in Settings.",
   "toast.watermark_text_missing": "Please enter watermark text.",
+  "toast.base64_success": "Base64 string generated!",
+  "toast.copied": "Copied to clipboard!",
+  "toast.qr_success": "QR code generated!",
+  "toast.qr_text_missing": "Please enter text or a URL.",
+  "toast.rename_success": "{n} file(s) renamed!",
 
   "preset.1080p": "1080p",
   "preset.4k": "4K",
@@ -289,6 +309,16 @@
   "label.pdf_password": "Password",
   "label.pdf_mode_protect": "Protect",
   "label.pdf_mode_unlock": "Unlock",
+  "label.copy": "Copy",
+  "label.qr_content": "Text or URL",
+  "label.qr_placeholder": "https://example.com or any text...",
+  "label.qr_size": "Image size",
+  "label.rename_pattern": "Naming pattern",
+  "label.rename_pattern_hint": "Available tokens: {name}, {index}, {date}, {ext}",
+  "label.start_index": "Start index",
+  "label.rename_preview": "Preview",
+  "result.base64_ready": "Base64 string ready",
+  "result.renamed": "{n} file(s) renamed",
 
   "updater.title": "Update Available",
   "updater.new_version": "A new version ({version}) is available!",

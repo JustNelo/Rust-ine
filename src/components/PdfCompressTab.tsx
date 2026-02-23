@@ -1,9 +1,12 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, FileDown, CheckCircle, XCircle } from "lucide-react";
+import { FileDown, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { formatSize } from "../lib/utils";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
+import { ActionButton } from "./ui/ActionButton";
+import { Slider } from "./ui/Slider";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
@@ -13,14 +16,6 @@ interface PdfCompressResult {
   original_size: number;
   compressed_size: number;
   errors: string[];
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
 export function PdfCompressTab() {
@@ -65,7 +60,7 @@ export function PdfCompressTab() {
       setResult(res);
 
       if (res.errors.length === 0 && res.output_path) {
-        toast.success(t("toast.pdf_compress_success", { size: formatBytes(res.compressed_size) }));
+        toast.success(t("toast.pdf_compress_success", { size: formatSize(res.compressed_size) }));
         await openOutputDir("pdf-compress");
       } else {
         toast.error(t("toast.all_failed"));
@@ -93,39 +88,24 @@ export function PdfCompressTab() {
         type="pdf"
       />
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-text-secondary">
-            {t("label.image_quality_pdf")}
-          </label>
-          <span className="text-xs font-mono text-text-muted">{quality}%</span>
-        </div>
-        <input
-          type="range"
-          min={10}
-          max={95}
-          value={quality}
-          onChange={(e) => setQuality(Number(e.target.value))}
-          className="w-full accent-accent"
-        />
-        <div className="flex justify-between text-[10px] text-text-muted">
-          <span>{t("label.smaller_file")}</span>
-          <span>{t("label.higher_quality")}</span>
-        </div>
-      </div>
+      <Slider
+        label={t("label.image_quality_pdf")}
+        value={quality}
+        min={10}
+        max={95}
+        leftHint={t("label.smaller_file")}
+        rightHint={t("label.higher_quality")}
+        onChange={setQuality}
+      />
 
-      <button
+      <ActionButton
         onClick={handleCompress}
-        disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <FileDown className="h-4 w-4" />
-        )}
-        {loading ? t("status.compressing_pdf") : t("action.pdf_compress")}
-      </button>
+        disabled={files.length === 0}
+        loading={loading}
+        loadingText={t("status.compressing_pdf")}
+        text={t("action.pdf_compress")}
+        icon={<FileDown className="h-4 w-4" />}
+      />
 
       {result && result.output_path && (
         <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-4 space-y-3">
@@ -137,8 +117,8 @@ export function PdfCompressTab() {
             )}
             <span className="text-xs font-medium text-text-primary">
               {t("result.pdf_compressed", {
-                original: formatBytes(result.original_size),
-                compressed: formatBytes(result.compressed_size),
+                original: formatSize(result.original_size),
+                compressed: formatSize(result.compressed_size),
               })}
             </span>
           </div>

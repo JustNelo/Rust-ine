@@ -51,7 +51,9 @@ import { GlobalProgressBar } from "./components/GlobalProgressBar";
 import { SplashScreen } from "./components/SplashScreen";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { OnboardingModal } from "./components/OnboardingModal";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
+import { useAutoUpdate } from "./hooks/useAutoUpdate";
 import { useT } from "./i18n/i18n";
 import type { TabId } from "./types";
 import "./App.css";
@@ -176,6 +178,7 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
 
 function App() {
   const { t } = useT();
+  const { status: updateStatus, version: updateVersion, install: installUpdate, dismiss: dismissUpdate } = useAutoUpdate();
   const [activeTab, setActiveTab] = useState<TabId>("compress");
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -211,6 +214,7 @@ function App() {
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background">
       <TitleBar />
+      <UpdateBanner status={updateStatus} version={updateVersion} onInstall={installUpdate} onDismiss={dismissUpdate} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}

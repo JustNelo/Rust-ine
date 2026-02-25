@@ -1,0 +1,61 @@
+import { useState, useEffect, useCallback } from "react";
+import { check, type Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
+
+export type UpdateStatus = "idle" | "available" | "downloading" | "error";
+
+interface AutoUpdateState {
+  status: UpdateStatus;
+  version: string;
+  install: () => Promise<void>;
+  dismiss: () => void;
+}
+
+export function useAutoUpdate(): AutoUpdateState {
+  const [status, setStatus] = useState<UpdateStatus>("idle");
+  const [version, setVersion] = useState("");
+  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkForUpdate = async () => {
+      try {
+        const update = await check();
+        if (cancelled) return;
+        if (update) {
+          setVersion(update.version);
+          setPendingUpdate(update);
+          setStatus("available");
+        }
+      } catch {
+        // Silent fail — no update banner on network error
+      }
+    };
+
+    checkForUpdate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const install = useCallback(async () => {
+    if (!pendingUpdate) return;
+    setStatus("downloading");
+    try {
+      await pendingUpdate.downloadAndInstall();
+      await relaunch();
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("available"), 3000);
+    }
+  }, [pendingUpdate]);
+
+  const dismiss = useCallback(() => {
+    setStatus("idle");
+    setPendingUpdate(null);
+  }, []);
+
+  return { status, version, install, dismiss };
+}

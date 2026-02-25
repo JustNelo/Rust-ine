@@ -42,7 +42,8 @@
     "active": true,
     "targets": "all",
     "resources": [
-      "resources/pdfium.dll"
+      "resources/pdfium.dll",
+      "resources/libpdfium.so"
     ],
     "icon": [
       "icons/32x32.png",

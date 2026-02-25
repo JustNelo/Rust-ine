@@ -1,4 +1,3 @@
-use image::GenericImageView;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -28,26 +27,23 @@ pub fn extract_palette(
 
     // Downscale for speed — 100x100 is enough for color extraction
     let thumb = img.resize(100, 100, image::imageops::FilterType::Triangle);
-    let (width, height) = thumb.dimensions();
-    let total_pixels = (width * height) as f64;
+    let rgba = thumb.to_rgba8();
+    let total_pixels = (rgba.width() * rgba.height()) as f64;
 
     // Quantize each pixel to 4-bit per channel (16 levels) to reduce noise
     let mut buckets: HashMap<(u8, u8, u8), u32> = HashMap::new();
 
-    for y in 0..height {
-        for x in 0..width {
-            let pixel = thumb.get_pixel(x, y);
-            let [r, g, b, a] = pixel.0;
-            // Skip fully transparent pixels
-            if a < 128 {
-                continue;
-            }
-            // Quantize to 16 levels per channel
-            let qr = (r >> 4) << 4;
-            let qg = (g >> 4) << 4;
-            let qb = (b >> 4) << 4;
-            *buckets.entry((qr, qg, qb)).or_insert(0) += 1;
+    for pixel in rgba.pixels() {
+        let [r, g, b, a] = pixel.0;
+        // Skip fully transparent pixels
+        if a < 128 {
+            continue;
         }
+        // Quantize to 16 levels per channel
+        let qr = (r >> 4) << 4;
+        let qg = (g >> 4) << 4;
+        let qb = (b >> 4) << 4;
+        *buckets.entry((qr, qg, qb)).or_insert(0) += 1;
     }
 
     // Sort buckets by frequency (descending)

@@ -1,9 +1,9 @@
 use lopdf::{dictionary, Document as LopdfDocument, Object};
 use pdfium_render::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use crate::utils::{ensure_output_dir, embed_image_as_pdf_page, filename_or_default};
+use crate::utils::{ensure_output_dir, embed_image_as_pdf_page, file_stem, filename_or_default};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PdfExtractionResult {
@@ -52,10 +52,7 @@ pub fn extract_images_from_pdf(
         }
     };
 
-    let pdf_stem = Path::new(pdf_path)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("pdf");
+    let pdf_stem = file_stem(pdf_path);
 
     let mut image_index: usize = 0;
 
@@ -213,10 +210,7 @@ pub fn pdf_to_images(
         }
     };
 
-    let pdf_stem = Path::new(pdf_path)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("pdf");
+    let pdf_stem = file_stem(pdf_path);
 
     // Scale factor: pdfium renders at 72 DPI by default
     let scale = dpi as f32 / 72.0;
@@ -392,10 +386,7 @@ pub fn compress_pdf(
         }
     }
 
-    let pdf_stem = Path::new(pdf_path)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("pdf");
+    let pdf_stem = file_stem(pdf_path);
     let output_path = out_dir.join(format!("{}-compressed.pdf", pdf_stem));
 
     match doc.save(&output_path) {
@@ -640,10 +631,7 @@ pub fn protect_pdf(
         );
     }
 
-    let pdf_stem = Path::new(pdf_path)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("pdf");
+    let pdf_stem = file_stem(pdf_path);
     let output_path = out_dir.join(format!("{}-protected.pdf", pdf_stem));
 
     match doc.save(&output_path) {
@@ -696,10 +684,7 @@ pub fn unlock_pdf(
         }
     };
 
-    let pdf_stem = Path::new(pdf_path)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("pdf");
+    let pdf_stem = file_stem(pdf_path);
     let output_path = out_dir.join(format!("{}-unlocked.pdf", pdf_stem));
 
     // Save without encryption — pdfium strips password on save

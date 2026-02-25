@@ -23,7 +23,11 @@ use qr_ops::QrResult;
 use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
 use std::path::{Path, Component};
+use std::sync::Arc;
 use tauri::Manager;
+
+/// Resolved pdfium library path, computed once at startup and shared via tauri::State.
+pub struct PdfiumPath(pub Arc<String>);
 
 fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
     let lib_name = if cfg!(target_os = "windows") {
@@ -126,14 +130,14 @@ async fn convert_images(
 
 #[tauri::command]
 async fn extract_pdf_images(
-    app_handle: tauri::AppHandle,
+    pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     output_dir: String,
 ) -> Result<PdfExtractionResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
 
-    let pdfium_lib_path = resolve_pdfium_path(&app_handle)?;
+    let pdfium_lib_path = pdfium.0.clone();
 
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::extract_images_from_pdf(&pdf_path, &output_dir, &pdfium_lib_path)
@@ -228,11 +232,11 @@ async fn read_metadata(
 
 #[tauri::command]
 async fn generate_pdf_thumbnails(
-    app_handle: tauri::AppHandle,
+    pdfium: tauri::State<'_, PdfiumPath>,
     file_paths: Vec<String>,
 ) -> Result<Vec<PageThumbnail>, String> {
     validate_paths(&file_paths)?;
-    let pdfium_lib_path = resolve_pdfium_path(&app_handle)?;
+    let pdfium_lib_path = pdfium.0.clone();
     let result = tokio::task::spawn_blocking(move || {
         pdf_builder_ops::generate_thumbnails_batch(file_paths, &pdfium_lib_path)
     })
@@ -297,7 +301,7 @@ async fn crop_images(
 
 #[tauri::command]
 async fn pdf_to_images(
-    app_handle: tauri::AppHandle,
+    pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     output_dir: String,
     format: String,
@@ -305,7 +309,7 @@ async fn pdf_to_images(
 ) -> Result<PdfToImagesResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let pdfium_lib_path = resolve_pdfium_path(&app_handle)?;
+    let pdfium_lib_path = pdfium.0.clone();
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::pdf_to_images(&pdf_path, &output_dir, &pdfium_lib_path, &format, dpi)
     })
@@ -414,14 +418,14 @@ async fn generate_spritesheet(
 
 #[tauri::command]
 async fn protect_pdf_cmd(
-    app_handle: tauri::AppHandle,
+    pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     password: String,
     output_dir: String,
 ) -> Result<PdfProtectResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let pdfium_path = resolve_pdfium_path(&app_handle)?;
+    let pdfium_path = pdfium.0.clone();
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::protect_pdf(&pdfium_path, &pdf_path, &password, &output_dir)
     })
@@ -432,14 +436,14 @@ async fn protect_pdf_cmd(
 
 #[tauri::command]
 async fn unlock_pdf_cmd(
-    app_handle: tauri::AppHandle,
+    pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     password: String,
     output_dir: String,
 ) -> Result<PdfProtectResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let pdfium_path = resolve_pdfium_path(&app_handle)?;
+    let pdfium_path = pdfium.0.clone();
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::unlock_pdf(&pdfium_path, &pdf_path, &password, &output_dir)
     })
@@ -490,7 +494,7 @@ async fn image_to_base64(image_path: String) -> Result<String, String> {
             .extension()
             .and_then(|e| e.to_str())
             .map(|e| e.to_lowercase())
-            .unwrap_or_else(|| "png".to_string());
+            .unwrap_or("png".to_string());
         let mime = match ext.as_str() {
             "png" => "image/png",
             "jpg" | "jpeg" => "image/jpeg",
@@ -553,8 +557,17 @@ pub fn run() {
                     let _ = window.set_icon(icon);
                 }
             }
+
+            // Resolve pdfium library path once at startup
+            let pdfium_path = resolve_pdfium_path(app.handle())
+                .unwrap_or_default();
+            app.manage(PdfiumPath(Arc::new(pdfium_path)));
+
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|e| {
+            eprintln!("Fatal: failed to start Rust-ine — {}", e);
+            std::process::exit(1);
+        });
 }

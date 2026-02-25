@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use tauri::Emitter;
 use webp::Encoder;
 
-use crate::utils::{ensure_output_dir, file_size, get_extension};
+use crate::utils::{ensure_output_dir, file_size, file_stem, get_extension};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ProgressPayload {
@@ -95,10 +95,7 @@ pub fn compress_to_webp(
                 let encoder = Encoder::from_rgba(&rgba, w, h);
                 let webp_data = encoder.encode(quality);
 
-                let stem = Path::new(input_path)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("output");
+                let stem = file_stem(input_path);
 
                 let output_path = out_dir.join(format!("{}-compressed.webp", stem));
                 fs::write(&output_path, &*webp_data)
@@ -147,10 +144,7 @@ pub fn convert_images(
             let result = (|| -> Result<String, String> {
                 let img = load_image(input_path)?;
 
-                let stem = Path::new(input_path)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("output");
+                let stem = file_stem(input_path);
 
                 match target_format.as_str() {
                     "webp" => {
@@ -347,10 +341,7 @@ pub fn resize_images(
                 let resized = img.resize_exact(new_w, new_h, image::imageops::FilterType::Lanczos3);
 
                 let ext = get_extension(input_path);
-                let stem = Path::new(input_path)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("output");
+                let stem = file_stem(input_path);
                 let output_path = out_dir.join(format!("{}-resized.{}", stem, ext));
 
                 save_in_original_format(&resized, input_path, &output_path)?;
@@ -394,10 +385,7 @@ pub fn strip_metadata(
                 let (w, h) = (img.width(), img.height());
 
                 let ext = get_extension(input_path);
-                let stem = Path::new(input_path)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("output");
+                let stem = file_stem(input_path);
                 let output_path = out_dir.join(format!("{}-stripped.{}", stem, ext));
 
                 save_in_original_format(&img, input_path, &output_path)?;
@@ -535,10 +523,7 @@ pub fn add_watermark(
 
                 let result_img = DynamicImage::ImageRgba8(base);
                 let ext = get_extension(input_path);
-                let stem = Path::new(input_path)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("output");
+                let stem = file_stem(input_path);
                 let output_path = out_dir.join(format!("{}-watermarked.{}", stem, ext));
 
                 save_in_original_format(&result_img, input_path, &output_path)?;
@@ -579,10 +564,7 @@ pub fn optimize_lossless(
         .map(|input_path| {
             let result = (|| -> Result<String, String> {
                 let ext = get_extension(input_path);
-                let stem = Path::new(input_path)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("output");
+                let stem = file_stem(input_path);
 
                 match ext.as_str() {
                     "png" => {
@@ -673,10 +655,7 @@ pub fn crop_images(
                     }
                     let cropped = img.crop_imm(cx.min(orig_w), cy.min(orig_h), cw, ch);
                     let ext = get_extension(input_path);
-                    let stem = Path::new(input_path)
-                        .file_stem()
-                        .and_then(|s| s.to_str())
-                        .unwrap_or("output");
+                    let stem = file_stem(input_path);
                     let output_path = out_dir.join(format!("{}-cropped.{}", stem, ext));
                     save_in_original_format(&cropped, input_path, &output_path)?;
                     return Ok((output_path.to_string_lossy().to_string(), orig_w, orig_h, cw, ch));
@@ -712,10 +691,7 @@ pub fn crop_images(
                 let cropped = img.crop_imm(x, y, crop_w, crop_h);
 
                 let ext = get_extension(input_path);
-                let stem = Path::new(input_path)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("output");
+                let stem = file_stem(input_path);
                 let output_path = out_dir.join(format!("{}-cropped.{}", stem, ext));
 
                 save_in_original_format(&cropped, input_path, &output_path)?;

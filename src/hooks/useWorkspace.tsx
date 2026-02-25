@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { mkdir, exists } from "@tauri-apps/plugin-fs";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
@@ -29,7 +29,17 @@ const SUB_FOLDERS: Partial<Record<TabId, string>> = {
   "bulk-rename": "renamed",
 };
 
-export function useWorkspace() {
+interface WorkspaceContextValue {
+  workspace: string;
+  selectWorkspace: () => Promise<void>;
+  getOutputDir: (tabId: TabId) => Promise<string>;
+  openInExplorer: () => Promise<void>;
+  openOutputDir: (tabId: TabId) => Promise<void>;
+}
+
+const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
+
+export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<string>(() => {
     try {
       return localStorage.getItem(STORAGE_KEY) || "";
@@ -100,5 +110,16 @@ export function useWorkspace() {
     [workspace]
   );
 
-  return { workspace, selectWorkspace, getOutputDir, openInExplorer, openOutputDir };
+  const value = useMemo(
+    () => ({ workspace, selectWorkspace, getOutputDir, openInExplorer, openOutputDir }),
+    [workspace, selectWorkspace, getOutputDir, openInExplorer, openOutputDir]
+  );
+
+  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
+}
+
+export function useWorkspace() {
+  const ctx = useContext(WorkspaceContext);
+  if (!ctx) throw new Error("useWorkspace must be used within WorkspaceProvider");
+  return ctx;
 }

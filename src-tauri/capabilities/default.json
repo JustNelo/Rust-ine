@@ -20,13 +20,23 @@
     {
       "identifier": "fs:allow-read",
       "allow": [
-        { "path": "**" }
+        { "path": "$HOME/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$PICTURE/**" },
+        { "path": "$TEMP/**" }
       ]
     },
     {
       "identifier": "fs:allow-write",
       "allow": [
-        { "path": "**" }
+        { "path": "$HOME/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$PICTURE/**" },
+        { "path": "$TEMP/**" }
       ]
     },
     "fs:allow-exists",

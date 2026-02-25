@@ -1,5 +1,6 @@
 use image::{DynamicImage, GenericImageView, RgbaImage};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::utils::ensure_output_dir;
@@ -16,10 +17,15 @@ pub struct SpriteSheetResult {
 
 #[derive(Debug, Serialize)]
 struct AtlasFrame {
-    x: u32,
-    y: u32,
-    w: u32,
-    h: u32,
+    pub x: u32,
+    pub y: u32,
+    pub w: u32,
+    pub h: u32,
+}
+
+#[derive(Debug, Serialize)]
+struct AtlasJson {
+    frames: HashMap<String, AtlasFrame>,
 }
 
 /// Generate a sprite sheet from multiple images arranged in a grid.
@@ -138,7 +144,7 @@ pub fn generate_spritesheet(
     }
 
     // Build and save JSON atlas
-    let atlas_json = build_atlas_json(&atlas_frames);
+    let atlas_json = build_atlas_json(atlas_frames);
     let atlas_path = out_dir.join("spritesheet.json");
     match std::fs::write(&atlas_path, atlas_json) {
         Ok(_) => {
@@ -152,13 +158,9 @@ pub fn generate_spritesheet(
     result
 }
 
-fn build_atlas_json(frames: &[(String, AtlasFrame)]) -> String {
-    let mut entries: Vec<String> = Vec::new();
-    for (name, frame) in frames {
-        entries.push(format!(
-            "    \"{}\": {{ \"x\": {}, \"y\": {}, \"w\": {}, \"h\": {} }}",
-            name, frame.x, frame.y, frame.w, frame.h
-        ));
-    }
-    format!("{{\n  \"frames\": {{\n{}\n  }}\n}}", entries.join(",\n"))
+fn build_atlas_json(frames: Vec<(String, AtlasFrame)>) -> String {
+    let atlas = AtlasJson {
+        frames: frames.into_iter().collect(),
+    };
+    serde_json::to_string_pretty(&atlas).unwrap_or_else(|_| "{}" .to_string())
 }

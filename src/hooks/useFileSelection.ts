@@ -4,7 +4,11 @@ export function useFileSelection() {
   const [files, setFiles] = useState<string[]>([]);
 
   const addFiles = useCallback((paths: string[]) => {
-    setFiles((prev) => [...prev, ...paths]);
+    setFiles((prev) => {
+      const existing = new Set(prev);
+      const unique = paths.filter((p) => !existing.has(p));
+      return unique.length > 0 ? [...prev, ...unique] : prev;
+    });
   }, []);
 
   const removeFile = useCallback((index: number) => {

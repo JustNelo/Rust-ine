@@ -27,6 +27,15 @@ pub fn file_size(path: &str) -> u64 {
     fs::metadata(path).map(|m| m.len()).unwrap_or(0)
 }
 
+/// Get the file stem (name without extension), falling back to "output".
+pub fn file_stem(path: &str) -> String {
+    Path::new(path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("output")
+        .to_string()
+}
+
 /// Get the lowercase file extension, defaulting to "png".
 pub fn get_extension(path: &str) -> String {
     Path::new(path)

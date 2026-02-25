@@ -1,11 +1,11 @@
 use image::{DynamicImage, ImageFormat};
 use serde::{Deserialize, Serialize};
 use std::io::{Cursor, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::utils::ensure_output_dir;
+use crate::utils::{ensure_output_dir, file_stem as get_file_stem};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FaviconResult {
@@ -126,10 +126,7 @@ pub fn generate_favicons(
         }
     };
 
-    let stem = Path::new(image_path)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("favicon");
+    let stem = get_file_stem(image_path);
 
     let zip_path = out_dir.join(format!("{}-favicons.zip", stem));
 

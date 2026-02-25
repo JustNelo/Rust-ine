@@ -1,8 +1,8 @@
 use lopdf::Document as LopdfDocument;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use crate::utils::ensure_output_dir;
+use crate::utils::{ensure_output_dir, file_stem};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PdfSplitResult {
@@ -110,10 +110,7 @@ pub fn split_pdf(
         }
     };
 
-    let pdf_stem = Path::new(pdf_path)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("pdf");
+    let pdf_stem = file_stem(pdf_path);
 
     for (_range_index, (start, end)) in ranges.iter().enumerate() {
         let pages_to_extract: Vec<u32> = (*start..=*end).collect();

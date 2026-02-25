@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import { Toaster } from "sonner";
 import {
   Zap,
@@ -179,6 +180,7 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
 function App() {
   const { t } = useT();
   const { status: updateStatus, version: updateVersion, install: installUpdate, dismiss: dismissUpdate } = useAutoUpdate();
+  const [appVersion, setAppVersion] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("compress");
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -188,6 +190,7 @@ function App() {
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1200);
+    getVersion().then((v) => setAppVersion(v)).catch(() => {});
     return () => clearTimeout(timer);
   }, []);
 
@@ -288,7 +291,7 @@ function App() {
               <p className="text-[10px] text-text-muted leading-relaxed">
                 {t("sidebar.hint")}
               </p>
-              <p className="text-[9px] text-text-muted/60 mt-1">{t("app.version")}</p>
+              {appVersion && <p className="text-[9px] text-text-muted/60 mt-1">v{appVersion}</p>}
             </div>
           </div>
         </aside>

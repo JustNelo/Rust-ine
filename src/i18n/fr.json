@@ -1,7 +1,6 @@
 {
   "app.name": "Rust-ine",
   "app.tagline": "Couteau suisse image & PDF",
-  "app.version": "v2.0.0",
 
   "section.image_tools": "Outils Image",
   "section.pdf_tools": "Outils PDF",
@@ -208,7 +207,6 @@
   "settings.workspace": "Dossier de travail",
   "settings.change": "Modifier",
   "settings.open_explorer": "Ouvrir dans l'explorateur",
-  "settings.about": "À propos",
   "settings.reset_onboarding": "Relancer l'introduction",
   "settings.version": "Version",
 
@@ -273,7 +271,6 @@
   "exif.no_metadata": "Aucune métadonnée EXIF",
   "exif.n_fields": "{n} champs de métadonnées",
 
-  "settings.built_with": "Construit avec Tauri + React + Rust",
 
   "toast.workspace_missing": "Veuillez définir un dossier de travail dans les Paramètres.",
   "toast.watermark_text_missing": "Veuillez saisir un texte de filigrane.",

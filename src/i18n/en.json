@@ -1,7 +1,6 @@
 {
   "app.name": "Rust-ine",
   "app.tagline": "Image & PDF Swiss Army Knife",
-  "app.version": "v2.0.0",
 
   "section.image_tools": "Image Tools",
   "section.pdf_tools": "PDF Tools",
@@ -208,7 +207,6 @@
   "settings.workspace": "Workspace folder",
   "settings.change": "Change",
   "settings.open_explorer": "Open in Explorer",
-  "settings.about": "About",
   "settings.reset_onboarding": "Reset onboarding",
   "settings.version": "Version",
 
@@ -273,7 +271,6 @@
   "exif.no_metadata": "No EXIF metadata",
   "exif.n_fields": "{n} metadata fields",
 
-  "settings.built_with": "Built with Tauri + React + Rust",
 
   "toast.workspace_missing": "Please set a workspace folder in Settings.",
   "toast.watermark_text_missing": "Please enter watermark text.",

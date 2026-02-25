@@ -116,6 +116,7 @@
   "action.to_base64": "Convertir en Base64",
   "action.generate_qr": "Générer le QR Code",
   "action.bulk_rename": "Renommer les fichiers",
+  "action.cancel": "Annuler",
 
   "status.compressing": "Compression...",
   "status.converting": "Conversion...",

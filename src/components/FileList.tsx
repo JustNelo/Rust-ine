@@ -39,6 +39,7 @@ export const FileList = memo(function FileList({ files, onRemove, onClear, type 
           </span>
           <button
             onClick={onClear}
+            data-clear-button
             className="text-xs text-text-muted hover:text-white transition-colors cursor-pointer"
           >
             {t("label.clear_all")}

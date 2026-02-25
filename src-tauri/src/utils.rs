@@ -139,3 +139,47 @@ pub fn embed_image_as_pdf_page(
 
     Ok(doc.add_object(page))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn file_stem_normal_path() {
+        assert_eq!(file_stem("C:\\photos\\image.png"), "image");
+        assert_eq!(file_stem("/home/user/photo.jpg"), "photo");
+    }
+
+    #[test]
+    fn file_stem_no_extension() {
+        assert_eq!(file_stem("C:\\photos\\README"), "README");
+    }
+
+    #[test]
+    fn file_stem_empty_fallback() {
+        assert_eq!(file_stem(""), "output");
+    }
+
+    #[test]
+    fn get_extension_normal() {
+        assert_eq!(get_extension("photo.PNG"), "png");
+        assert_eq!(get_extension("image.JpEg"), "jpeg");
+    }
+
+    #[test]
+    fn get_extension_no_ext_defaults_to_png() {
+        assert_eq!(get_extension("noext"), "png");
+        assert_eq!(get_extension(""), "png");
+    }
+
+    #[test]
+    fn filename_or_default_extracts_name() {
+        assert_eq!(filename_or_default("C:\\dir\\file.txt"), "file.txt");
+        assert_eq!(filename_or_default("/a/b/c.pdf"), "c.pdf");
+    }
+
+    #[test]
+    fn filename_or_default_fallback() {
+        assert_eq!(filename_or_default(""), "");
+    }
+}

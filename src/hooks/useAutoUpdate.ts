@@ -48,7 +48,6 @@ export function useAutoUpdate(): AutoUpdateState {
       await relaunch();
     } catch {
       setStatus("error");
-      setTimeout(() => setStatus("available"), 3000);
     }
   }, [pendingUpdate]);
 

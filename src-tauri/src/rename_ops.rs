@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use time::OffsetDateTime;
 
 use crate::utils::ensure_output_dir;
 
@@ -37,7 +38,7 @@ pub fn bulk_rename(
         return result;
     }
 
-    let today = chrono_free_date();
+    let today = today_date();
 
     for (i, input_path) in input_paths.iter().enumerate() {
         let path = Path::new(input_path);
@@ -93,46 +94,33 @@ pub fn bulk_rename(
     result
 }
 
-/// Get today's date as YYYY-MM-DD without pulling in the chrono crate.
-fn chrono_free_date() -> String {
-    let now = std::time::SystemTime::now();
-    let duration = now
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default();
-    let secs = duration.as_secs();
-    // Simple date calculation (no leap second precision needed)
-    let days = secs / 86400;
-    let mut y = 1970i32;
-    let mut remaining_days = days as i32;
-
-    loop {
-        let days_in_year = if is_leap(y) { 366 } else { 365 };
-        if remaining_days < days_in_year {
-            break;
-        }
-        remaining_days -= days_in_year;
-        y += 1;
-    }
-
-    let month_days = if is_leap(y) {
-        [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    } else {
-        [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    };
-
-    let mut m = 1u32;
-    for &md in &month_days {
-        if remaining_days < md {
-            break;
-        }
-        remaining_days -= md;
-        m += 1;
-    }
-    let d = remaining_days + 1;
-
-    format!("{:04}-{:02}-{:02}", y, m, d)
+/// Get today's date as YYYY-MM-DD using the `time` crate.
+fn today_date() -> String {
+    let now = OffsetDateTime::now_utc();
+    format!(
+        "{:04}-{:02}-{:02}",
+        now.year(),
+        now.month() as u8,
+        now.day()
+    )
 }
 
-fn is_leap(y: i32) -> bool {
-    (y % 4 == 0 && y % 100 != 0) || y % 400 == 0
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn today_date_format() {
+        let date = today_date();
+        // Must be YYYY-MM-DD
+        assert_eq!(date.len(), 10);
+        assert_eq!(&date[4..5], "-");
+        assert_eq!(&date[7..8], "-");
+        let year: i32 = date[0..4].parse().unwrap();
+        let month: u32 = date[5..7].parse().unwrap();
+        let day: u32 = date[8..10].parse().unwrap();
+        assert!(year >= 2025);
+        assert!((1..=12).contains(&month));
+        assert!((1..=31).contains(&day));
+    }
 }

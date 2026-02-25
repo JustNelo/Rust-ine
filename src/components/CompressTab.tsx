@@ -1,73 +1,28 @@
 import { useState, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { Zap } from "lucide-react";
-import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
-import { useFileSelection } from "../hooks/useFileSelection";
-import { useWorkspace } from "../hooks/useWorkspace";
+import { useTabProcessor } from "../hooks/useTabProcessor";
 import { useT } from "../i18n/i18n";
-import type { BatchProgress, ProcessingResult } from "../types";
 
 export function CompressTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const {
+    files, removeFile, handleFilesSelected, handleClearFiles,
+    loading, results, process,
+  } = useTabProcessor({ tabId: "compress", command: "compress_webp" });
   const [quality, setQuality] = useState(80);
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<ProcessingResult[]>([]);
-
-  const handleFilesSelected = useCallback((paths: string[]) => {
-    addFiles(paths);
-    setResults([]);
-  }, [addFiles]);
-
-  const handleClearFiles = useCallback(() => {
-    clearFiles();
-    setResults([]);
-  }, [clearFiles]);
 
   const handleCompress = useCallback(async () => {
-    if (files.length === 0) {
-      toast.error(t("toast.select_images"));
-      return;
-    }
-    const outputDir = await getOutputDir("compress");
-    if (!outputDir) {
-      toast.error(t("toast.workspace_missing"));
-      return;
-    }
-
-    setLoading(true);
-    setResults([]);
-
-    try {
-      const result = await invoke<BatchProgress>("compress_webp", {
-        inputPaths: files,
-        quality: quality,
-        outputDir: outputDir,
-      });
-
-      setResults(result.results);
-
-      if (result.completed === result.total) {
-        toast.success(t("toast.compress_success", { n: result.completed }));
-        await openOutputDir("compress");
-      } else if (result.completed > 0) {
-        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
-        await openOutputDir("compress");
-      } else {
-        toast.error(t("toast.all_failed"));
-      }
-    } catch (err) {
-      toast.error(`${t("status.compressing")} ${err}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [files, quality, getOutputDir, openOutputDir]);
+    await process({
+      extraParams: { quality },
+      successMessage: t("toast.compress_success", { n: files.length }),
+      errorPrefix: t("status.compressing"),
+    });
+  }, [process, quality, files.length, t]);
 
   return (
     <div className="space-y-5">

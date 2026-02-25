@@ -87,7 +87,7 @@ pub fn generate_spritesheet(
     let max_h = images.iter().map(|(_, img)| img.height()).max().unwrap_or(64);
 
     let count = images.len() as u32;
-    let rows = (count + cols - 1) / cols;
+    let rows = count.div_ceil(cols);
 
     let sheet_width = cols * max_w + (cols + 1) * padding;
     let sheet_height = rows * max_h + (rows + 1) * padding;

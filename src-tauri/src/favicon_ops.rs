@@ -195,3 +195,34 @@ pub fn generate_favicons(
     result.zip_path = zip_path.to_string_lossy().to_string();
     result
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn webmanifest_is_valid_json() {
+        let manifest = generate_webmanifest();
+        let parsed: serde_json::Value = serde_json::from_str(&manifest)
+            .expect("webmanifest should be valid JSON");
+        assert!(parsed.get("icons").is_some());
+        let icons = parsed["icons"].as_array().unwrap();
+        assert_eq!(icons.len(), 2);
+        assert_eq!(icons[0]["sizes"], "192x192");
+        assert_eq!(icons[1]["sizes"], "512x512");
+    }
+
+    #[test]
+    fn favicon_sizes_constant_is_correct() {
+        assert!(FAVICON_SIZES.len() >= 4);
+        assert!(FAVICON_SIZES.iter().any(|(name, _, _)| *name == "apple-touch-icon.png"));
+        assert!(FAVICON_SIZES.iter().any(|(name, _, _)| *name == "favicon-16x16.png"));
+    }
+
+    #[test]
+    fn ico_sizes_all_fit_in_u8() {
+        for &s in ICO_SIZES {
+            assert!(s <= 256, "ICO size {} exceeds 256", s);
+        }
+    }
+}

@@ -1,9 +1,20 @@
+import { useCallback } from "react";
+import { X } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import { useProcessingProgress } from "../hooks/useProcessingProgress";
 import { useT } from "../i18n/i18n";
 
 export function GlobalProgressBar() {
   const { t } = useT();
   const { progress } = useProcessingProgress();
+
+  const handleCancel = useCallback(async () => {
+    try {
+      await invoke("cancel_processing");
+    } catch (err) {
+      console.error("Failed to cancel:", err);
+    }
+  }, []);
 
   if (!progress || progress.completed >= progress.total) return null;
 
@@ -29,6 +40,9 @@ export function GlobalProgressBar() {
           </span>
           <span className="font-mono text-text-muted">{percent}%</span>
         </div>
+        {progress.current_file && (
+          <p className="text-[10px] text-text-muted truncate max-w-56">{progress.current_file}</p>
+        )}
         <div className="h-1.5 w-full rounded-full bg-accent-muted overflow-hidden">
           <div
             className="h-full rounded-full bg-linear-to-r from-accent to-[#8B8BF5] transition-all duration-300"
@@ -36,6 +50,13 @@ export function GlobalProgressBar() {
           />
         </div>
       </div>
+      <button
+        onClick={handleCancel}
+        className="rounded-lg p-1.5 text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors cursor-pointer"
+        title={t("action.cancel")}
+      >
+        <X className="h-4 w-4" />
+      </button>
     </div>
   );
 }

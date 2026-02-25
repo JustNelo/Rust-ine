@@ -11,15 +11,13 @@ import {
   Eye,
 } from "lucide-react";
 import { ActionButton } from "./ui/ActionButton";
-import { toast } from "sonner";
 import { formatSize } from "../lib/utils";
 import { DropZone } from "./DropZone";
 import { FileList } from "./FileList";
 import { ResultsBanner } from "./ResultsBanner";
-import { useFileSelection } from "../hooks/useFileSelection";
-import { useWorkspace } from "../hooks/useWorkspace";
+import { useTabProcessor } from "../hooks/useTabProcessor";
 import { useT } from "../i18n/i18n";
-import type { BatchProgress, ProcessingResult, ImageMetadata } from "../types";
+import type { ImageMetadata } from "../types";
 
 function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
   const { t } = useT();
@@ -180,26 +178,17 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
 
 export function ExifStripTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<ProcessingResult[]>([]);
+  const {
+    files, removeFile, handleFilesSelected, handleClearFiles: baseClear,
+    loading, results, process,
+  } = useTabProcessor({ tabId: "strip", command: "strip_metadata" });
   const [metadataList, setMetadataList] = useState<ImageMetadata[]>([]);
   const [loadingMeta, setLoadingMeta] = useState(false);
 
-  const handleFilesSelected = useCallback(
-    (paths: string[]) => {
-      addFiles(paths);
-      setResults([]);
-    },
-    [addFiles]
-  );
-
   const handleClearFiles = useCallback(() => {
-    clearFiles();
-    setResults([]);
+    baseClear();
     setMetadataList([]);
-  }, [clearFiles]);
+  }, [baseClear]);
 
   useEffect(() => {
     if (files.length === 0) {
@@ -243,42 +232,11 @@ export function ExifStripTab() {
   );
 
   const handleStrip = useCallback(async () => {
-    if (files.length === 0) {
-      toast.error(t("toast.select_images"));
-      return;
-    }
-    const outputDir = await getOutputDir("strip");
-    if (!outputDir) {
-      toast.error(t("toast.workspace_missing"));
-      return;
-    }
-
-    setLoading(true);
-    setResults([]);
-
-    try {
-      const result = await invoke<BatchProgress>("strip_metadata", {
-        inputPaths: files,
-        outputDir,
-      });
-
-      setResults(result.results);
-
-      if (result.completed === result.total) {
-        toast.success(t("toast.strip_success", { n: result.completed }));
-        await openOutputDir("strip");
-      } else if (result.completed > 0) {
-        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
-        await openOutputDir("strip");
-      } else {
-        toast.error(t("toast.all_failed"));
-      }
-    } catch (err) {
-      toast.error(`${t("status.stripping")} ${err}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [files, getOutputDir, openOutputDir]);
+    await process({
+      successMessage: t("toast.strip_success", { n: files.length }),
+      errorPrefix: t("status.stripping"),
+    });
+  }, [process, files.length, t]);
 
   return (
     <div className="space-y-5">

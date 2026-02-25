@@ -311,7 +311,7 @@ pub fn compress_pdf(
                     .get(b"Subtype")
                     .ok()
                     .and_then(|v| v.as_name().ok())
-                    .map(|n| std::str::from_utf8(n).unwrap_or("").to_string());
+                    .map(|n| std::str::from_utf8(n).unwrap_or_else(|_| "").to_string());
                 subtype.as_deref() == Some("Image")
             } else {
                 false
@@ -459,7 +459,7 @@ fn rc4_encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
 /// For R=2, V=1 (40-bit RC4)
 fn compute_o_value(owner_password: &[u8], user_password: &[u8]) -> Vec<u8> {
     let owner_padded = pad_password(owner_password);
-    let key_hash = md5::compute(&owner_padded);
+    let key_hash = md5::compute(owner_padded);
     // For R=2: use the first 5 bytes of the hash as the RC4 key
     let key = &key_hash[..5];
     let user_padded = pad_password(user_password);

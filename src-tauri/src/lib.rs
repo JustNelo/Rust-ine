@@ -24,10 +24,15 @@ use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
 use std::path::{Path, Component};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::Manager;
 
 /// Resolved pdfium library path, computed once at startup and shared via tauri::State.
 pub struct PdfiumPath(pub Arc<String>);
+
+/// Shared cancellation flag for batch operations.
+/// Set to `true` to request early termination of the current batch.
+pub struct CancellationToken(pub Arc<AtomicBool>);
 
 fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
     let lib_name = if cfg!(target_os = "windows") {
@@ -98,14 +103,17 @@ fn validate_paths(paths: &[String]) -> Result<(), String> {
 #[tauri::command]
 async fn compress_webp(
     app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
     input_paths: Vec<String>,
     quality: f32,
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let cancel = token.0.clone();
+    cancel.store(false, Ordering::Relaxed);
     let result =
-        tokio::task::spawn_blocking(move || image_ops::compress_to_webp(input_paths, quality, output_dir, app_handle))
+        tokio::task::spawn_blocking(move || image_ops::compress_to_webp(input_paths, quality, output_dir, app_handle, cancel))
             .await
             .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
@@ -114,14 +122,17 @@ async fn compress_webp(
 #[tauri::command]
 async fn convert_images(
     app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
     input_paths: Vec<String>,
     output_format: String,
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let cancel = token.0.clone();
+    cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::convert_images(input_paths, output_format, output_dir, app_handle)
+        image_ops::convert_images(input_paths, output_format, output_dir, app_handle, cancel)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -150,6 +161,7 @@ async fn extract_pdf_images(
 #[tauri::command]
 async fn resize_images(
     app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
     input_paths: Vec<String>,
     mode: String,
     width: u32,
@@ -159,8 +171,10 @@ async fn resize_images(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let cancel = token.0.clone();
+    cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::resize_images(input_paths, mode, width, height, percentage, output_dir, app_handle)
+        image_ops::resize_images(input_paths, mode, width, height, percentage, output_dir, app_handle, cancel)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -170,13 +184,16 @@ async fn resize_images(
 #[tauri::command]
 async fn strip_metadata(
     app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
     input_paths: Vec<String>,
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let cancel = token.0.clone();
+    cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::strip_metadata(input_paths, output_dir, app_handle)
+        image_ops::strip_metadata(input_paths, output_dir, app_handle, cancel)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -186,6 +203,7 @@ async fn strip_metadata(
 #[tauri::command]
 async fn add_watermark(
     app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
     input_paths: Vec<String>,
     text: String,
     position: String,
@@ -195,8 +213,10 @@ async fn add_watermark(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let cancel = token.0.clone();
+    cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::add_watermark(input_paths, text, position, opacity, font_size, output_dir, app_handle)
+        image_ops::add_watermark(input_paths, text, position, opacity, font_size, output_dir, app_handle, cancel)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -264,13 +284,16 @@ async fn merge_to_pdf(
 #[tauri::command]
 async fn optimize_images(
     app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
     input_paths: Vec<String>,
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let cancel = token.0.clone();
+    cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::optimize_lossless(input_paths, output_dir, app_handle)
+        image_ops::optimize_lossless(input_paths, output_dir, app_handle, cancel)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -278,8 +301,10 @@ async fn optimize_images(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 async fn crop_images(
     app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
     input_paths: Vec<String>,
     ratio: String,
     anchor: String,
@@ -291,8 +316,10 @@ async fn crop_images(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let cancel = token.0.clone();
+    cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::crop_images(input_paths, ratio, anchor, width, height, crop_x, crop_y, output_dir, app_handle)
+        image_ops::crop_images(input_paths, ratio, anchor, width, height, crop_x, crop_y, output_dir, app_handle, cancel)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -485,6 +512,16 @@ async fn generate_qr_cmd(
 }
 
 #[tauri::command]
+fn cancel_processing(token: tauri::State<'_, CancellationToken>) {
+    token.0.store(true, Ordering::Relaxed);
+}
+
+#[tauri::command]
+fn reset_cancel(token: tauri::State<'_, CancellationToken>) {
+    token.0.store(false, Ordering::Relaxed);
+}
+
+#[tauri::command]
 async fn image_to_base64(image_path: String) -> Result<String, String> {
     validate_path(&image_path)?;
     tokio::task::spawn_blocking(move || {
@@ -494,7 +531,7 @@ async fn image_to_base64(image_path: String) -> Result<String, String> {
             .extension()
             .and_then(|e| e.to_str())
             .map(|e| e.to_lowercase())
-            .unwrap_or("png".to_string());
+            .unwrap_or_else(|| "png".to_string());
         let mime = match ext.as_str() {
             "png" => "image/png",
             "jpg" | "jpeg" => "image/jpeg",
@@ -545,7 +582,9 @@ pub fn run() {
             unlock_pdf_cmd,
             image_to_base64,
             generate_qr_cmd,
-            bulk_rename_cmd
+            bulk_rename_cmd,
+            cancel_processing,
+            reset_cancel
         ])
         .setup(|app| {
             let png_bytes = include_bytes!("../icons/icon.png");
@@ -562,6 +601,7 @@ pub fn run() {
             let pdfium_path = resolve_pdfium_path(app.handle())
                 .unwrap_or_default();
             app.manage(PdfiumPath(Arc::new(pdfium_path)));
+            app.manage(CancellationToken(Arc::new(AtomicBool::new(false))));
 
             Ok(())
         })
@@ -570,4 +610,47 @@ pub fn run() {
             eprintln!("Fatal: failed to start Rust-ine — {}", e);
             std::process::exit(1);
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn validate_path_rejects_relative() {
+        assert!(validate_path("images/photo.png").is_err());
+    }
+
+    #[test]
+    fn validate_path_rejects_traversal() {
+        assert!(validate_path("C:\\Users\\..\\admin\\secret.txt").is_err());
+        assert!(validate_path("/home/../etc/passwd").is_err());
+    }
+
+    #[test]
+    fn validate_path_accepts_absolute() {
+        // On Windows, this is an absolute path; on Unix C:\... is relative,
+        // so we use cfg to pick the right test path.
+        if cfg!(windows) {
+            assert!(validate_path("C:\\Users\\test\\photo.png").is_ok());
+        } else {
+            assert!(validate_path("/home/test/photo.png").is_ok());
+        }
+    }
+
+    #[test]
+    fn validate_paths_fails_on_any_bad() {
+        let paths = if cfg!(windows) {
+            vec![
+                "C:\\Users\\test\\ok.png".to_string(),
+                "images\\relative.png".to_string(),
+            ]
+        } else {
+            vec![
+                "/home/test/ok.png".to_string(),
+                "images/relative.png".to_string(),
+            ]
+        };
+        assert!(validate_paths(&paths).is_err());
+    }
 }

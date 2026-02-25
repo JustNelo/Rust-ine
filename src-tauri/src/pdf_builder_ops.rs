@@ -455,7 +455,7 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
     doc.trailer.set("Root", Object::Reference(catalog_id));
 
     if let Some(parent) = Path::new(&options.output_path).parent() {
-        if let Err(e) = ensure_output_dir(&parent.to_path_buf()) {
+        if let Err(e) = ensure_output_dir(parent) {
             result.errors.push(e);
             return result;
         }

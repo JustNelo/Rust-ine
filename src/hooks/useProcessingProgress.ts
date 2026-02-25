@@ -4,6 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 interface ProgressPayload {
   completed: number;
   total: number;
+  current_file?: string;
 }
 
 export function useProcessingProgress() {

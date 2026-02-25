@@ -4324,6 +4324,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-process",
  "tauri-plugin-updater",
+ "time",
  "tokio",
  "webp",
  "zip 2.4.2",

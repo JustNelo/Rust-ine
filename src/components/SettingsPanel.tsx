@@ -31,7 +31,6 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
       }
     } catch {
       setUpdateStatus("error");
-      setTimeout(() => setUpdateStatus("idle"), 3000);
     }
   }, []);
 
@@ -43,7 +42,6 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
       await relaunch();
     } catch {
       setUpdateStatus("error");
-      setTimeout(() => setUpdateStatus("available"), 3000);
     }
   }, [foundUpdate]);
 

@@ -3,7 +3,7 @@ use pdfium_render::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::utils::{ensure_output_dir, embed_image_as_pdf_page, file_stem, filename_or_default};
+use crate::utils::{embed_image_as_pdf_page, ensure_output_dir, file_stem, filename_or_default};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PdfExtractionResult {
@@ -63,8 +63,7 @@ pub fn extract_images_from_pdf(
 
                 match image_object.get_raw_image() {
                     Ok(dynamic_image) => {
-                        let out_path =
-                            out_dir.join(format!("{}_{}.png", pdf_stem, image_index));
+                        let out_path = out_dir.join(format!("{}_{}.png", pdf_stem, image_index));
                         match dynamic_image.into_rgb8().save(&out_path) {
                             Ok(_) => result.extracted_count += 1,
                             Err(e) => result.errors.push(format!(
@@ -100,10 +99,7 @@ pub struct ImagesToPdfResult {
     pub errors: Vec<String>,
 }
 
-pub fn images_to_pdf(
-    input_paths: Vec<String>,
-    output_path: &str,
-) -> ImagesToPdfResult {
+pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str) -> ImagesToPdfResult {
     let mut result = ImagesToPdfResult {
         output_path: output_path.to_string(),
         page_count: 0,
@@ -119,7 +115,9 @@ pub fn images_to_pdf(
         let img = match image::open(input_path) {
             Ok(i) => i,
             Err(e) => {
-                result.errors.push(format!("{}: {}", filename_or_default(input_path), e));
+                result
+                    .errors
+                    .push(format!("{}: {}", filename_or_default(input_path), e));
                 continue;
             }
         };
@@ -132,13 +130,17 @@ pub fn images_to_pdf(
                 result.page_count += 1;
             }
             Err(e) => {
-                result.errors.push(format!("{}: {}", filename_or_default(input_path), e));
+                result
+                    .errors
+                    .push(format!("{}: {}", filename_or_default(input_path), e));
             }
         }
     }
 
     if result.page_count == 0 {
-        result.errors.push("No images could be added to the PDF".to_string());
+        result
+            .errors
+            .push("No images could be added to the PDF".to_string());
         return result;
     }
 
@@ -196,7 +198,9 @@ pub fn pdf_to_images(
     let bindings = match Pdfium::bind_to_library(pdfium_lib_path) {
         Ok(b) => b,
         Err(e) => {
-            result.errors.push(format!("Cannot load Pdfium library: {}", e));
+            result
+                .errors
+                .push(format!("Cannot load Pdfium library: {}", e));
             return result;
         }
     };
@@ -205,7 +209,9 @@ pub fn pdf_to_images(
     let document = match pdfium.load_pdf_from_file(pdf_path, None) {
         Ok(d) => d,
         Err(e) => {
-            result.errors.push(format!("Cannot open PDF '{}': {}", pdf_path, e));
+            result
+                .errors
+                .push(format!("Cannot open PDF '{}': {}", pdf_path, e));
             return result;
         }
     };
@@ -227,7 +233,8 @@ pub fn pdf_to_images(
             Ok(bitmap) => {
                 let dynamic_image = bitmap.as_image();
                 let ext = if format == "jpg" { "jpg" } else { "png" };
-                let out_path = out_dir.join(format!("{}_page_{}.{}", pdf_stem, page_index + 1, ext));
+                let out_path =
+                    out_dir.join(format!("{}_page_{}.{}", pdf_stem, page_index + 1, ext));
 
                 let save_result = if format == "jpg" {
                     dynamic_image.to_rgb8().save(&out_path)
@@ -245,11 +252,9 @@ pub fn pdf_to_images(
                 }
             }
             Err(e) => {
-                result.errors.push(format!(
-                    "Page {}: render failed — {}",
-                    page_index + 1,
-                    e
-                ));
+                result
+                    .errors
+                    .push(format!("Page {}: render failed — {}", page_index + 1, e));
             }
         }
     }
@@ -269,11 +274,7 @@ pub struct PdfCompressResult {
 
 /// Compress a PDF by re-encoding embedded images at lower JPEG quality.
 /// Iterates over all stream objects, detects images, re-encodes them.
-pub fn compress_pdf(
-    pdf_path: &str,
-    quality: u8,
-    output_dir: &str,
-) -> PdfCompressResult {
+pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompressResult {
     let mut result = PdfCompressResult {
         output_path: String::new(),
         original_size: 0,
@@ -288,9 +289,7 @@ pub fn compress_pdf(
     }
 
     // Get original file size
-    result.original_size = std::fs::metadata(pdf_path)
-        .map(|m| m.len())
-        .unwrap_or(0);
+    result.original_size = std::fs::metadata(pdf_path).map(|m| m.len()).unwrap_or(0);
 
     let mut doc = match LopdfDocument::load(pdf_path) {
         Ok(d) => d,
@@ -311,7 +310,7 @@ pub fn compress_pdf(
                     .get(b"Subtype")
                     .ok()
                     .and_then(|v| v.as_name().ok())
-                    .map(|n| std::str::from_utf8(n).unwrap_or_else(|_| "").to_string());
+                    .map(|n| std::str::from_utf8(n).unwrap_or("").to_string());
                 subtype.as_deref() == Some("Image")
             } else {
                 false
@@ -325,11 +324,15 @@ pub fn compress_pdf(
         // Try to decode image data from the stream and re-encode as JPEG
         let recompressed = {
             if let Ok(stream) = doc.get_object(obj_id).and_then(|o| o.as_stream()) {
-                let width = stream.dict.get(b"Width")
+                let width = stream
+                    .dict
+                    .get(b"Width")
                     .ok()
                     .and_then(|v| v.as_i64().ok())
                     .unwrap_or(0) as u32;
-                let height = stream.dict.get(b"Height")
+                let height = stream
+                    .dict
+                    .get(b"Height")
                     .ok()
                     .and_then(|v| v.as_i64().ok())
                     .unwrap_or(0) as u32;
@@ -361,7 +364,8 @@ pub fn compress_pdf(
 
         if let Some((jpeg_data, width, height)) = recompressed {
             // Only replace if compressed data is smaller
-            let original_len = doc.get_object(obj_id)
+            let original_len = doc
+                .get_object(obj_id)
                 .ok()
                 .and_then(|o| o.as_stream().ok())
                 .map(|s| s.content.len())
@@ -397,7 +401,9 @@ pub fn compress_pdf(
                 .unwrap_or(0);
         }
         Err(e) => {
-            result.errors.push(format!("Cannot save compressed PDF: {}", e));
+            result
+                .errors
+                .push(format!("Cannot save compressed PDF: {}", e));
         }
     }
 
@@ -415,10 +421,8 @@ pub struct PdfProtectResult {
 
 /// Standard PDF padding string (Table 3.18, PDF Reference 1.7)
 const PDF_PADDING: [u8; 32] = [
-    0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41,
-    0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
-    0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80,
-    0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A,
+    0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41, 0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
+    0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80, 0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A,
 ];
 
 /// Pad or truncate a password to exactly 32 bytes per PDF spec
@@ -625,10 +629,8 @@ pub fn protect_pdf(
     // Ensure the document has an ID array in the trailer
     if doc.trailer.get(b"ID").is_err() {
         let id_string = Object::String(file_id.clone(), lopdf::StringFormat::Literal);
-        doc.trailer.set(
-            "ID",
-            Object::Array(vec![id_string.clone(), id_string]),
-        );
+        doc.trailer
+            .set("ID", Object::Array(vec![id_string.clone(), id_string]));
     }
 
     let pdf_stem = file_stem(pdf_path);
@@ -640,7 +642,9 @@ pub fn protect_pdf(
             result.success = true;
         }
         Err(e) => {
-            result.errors.push(format!("Cannot save protected PDF: {}", e));
+            result
+                .errors
+                .push(format!("Cannot save protected PDF: {}", e));
         }
     }
 
@@ -679,7 +683,9 @@ pub fn unlock_pdf(
     let doc = match pdfium.load_pdf_from_file(pdf_path, Some(password)) {
         Ok(d) => d,
         Err(e) => {
-            result.errors.push(format!("Cannot unlock PDF (wrong password?): {}", e));
+            result
+                .errors
+                .push(format!("Cannot unlock PDF (wrong password?): {}", e));
             return result;
         }
     };
@@ -694,7 +700,9 @@ pub fn unlock_pdf(
             result.success = true;
         }
         Err(e) => {
-            result.errors.push(format!("Cannot save unlocked PDF: {}", e));
+            result
+                .errors
+                .push(format!("Cannot save unlocked PDF: {}", e));
         }
     }
 

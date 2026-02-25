@@ -18,12 +18,9 @@ pub struct PaletteResult {
 
 /// Extract dominant colors using histogram-based quantization.
 /// Downscales the image, buckets pixel colors, then picks the top N.
-pub fn extract_palette(
-    image_path: &str,
-    num_colors: usize,
-) -> Result<PaletteResult, String> {
-    let img = image::open(image_path)
-        .map_err(|e| format!("Cannot open '{}': {}", image_path, e))?;
+pub fn extract_palette(image_path: &str, num_colors: usize) -> Result<PaletteResult, String> {
+    let img =
+        image::open(image_path).map_err(|e| format!("Cannot open '{}': {}", image_path, e))?;
 
     // Downscale for speed — 100x100 is enough for color extraction
     let thumb = img.resize(100, 100, image::imageops::FilterType::Triangle);

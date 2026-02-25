@@ -48,7 +48,11 @@ pub struct MergePdfResult {
 fn encode_image_to_b64_jpeg(img: &image::DynamicImage, max_width: u32) -> Result<String, String> {
     let owned_resized;
     let to_encode: &image::DynamicImage = if img.width() > max_width {
-        owned_resized = img.resize(max_width, max_width * 2, image::imageops::FilterType::Triangle);
+        owned_resized = img.resize(
+            max_width,
+            max_width * 2,
+            image::imageops::FilterType::Triangle,
+        );
         &owned_resized
     } else {
         img
@@ -191,7 +195,10 @@ pub fn generate_thumbnails_batch(
                 for pdf_path in &pdf_paths {
                     match generate_pdf_page_thumbnails(pdf_path, &pdfium) {
                         Ok(thumbs) => all_thumbnails.extend(thumbs),
-                        Err(e) => eprintln!("Warning: PDF thumbnail generation failed for {}: {}", pdf_path, e),
+                        Err(e) => eprintln!(
+                            "Warning: PDF thumbnail generation failed for {}: {}",
+                            pdf_path, e
+                        ),
                     }
                 }
             }
@@ -255,16 +262,14 @@ fn copy_pdf_page_from_loaded(
     let source_pages = source_doc.get_pages();
     let page_num_u32 = page_number as u32;
 
-    let source_page_id = source_pages
-        .get(&page_num_u32)
-        .ok_or_else(|| {
-            format!(
-                "Page {} not found in '{}' (has {} pages)",
-                page_number,
-                source_path,
-                source_pages.len()
-            )
-        })?;
+    let source_page_id = source_pages.get(&page_num_u32).ok_or_else(|| {
+        format!(
+            "Page {} not found in '{}' (has {} pages)",
+            page_number,
+            source_path,
+            source_pages.len()
+        )
+    })?;
 
     // Always create a fresh page object even if this page was cloned before
     // (e.g. same PDF added twice). Sub-resources (fonts, images) stay shared.
@@ -374,9 +379,11 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
                     visited_cache.insert(item.source_path.clone(), HashMap::new());
                 }
                 Err(e) => {
-                    result
-                        .errors
-                        .push(format!("{}: Cannot load PDF: {}", filename_or_default(&item.source_path), e));
+                    result.errors.push(format!(
+                        "{}: Cannot load PDF: {}",
+                        filename_or_default(&item.source_path),
+                        e
+                    ));
                 }
             }
         }
@@ -384,24 +391,29 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
 
     for item in &items {
         match item.source_type.as_str() {
-            "image" => {
-                match add_image_page(&mut doc, pages_id, &item.source_path, &options) {
-                    Ok(page_id) => {
-                        page_ids.push(Object::Reference(page_id));
-                        result.page_count += 1;
-                    }
-                    Err(e) => {
-                        result.errors.push(format!("{}: {}", filename_or_default(&item.source_path), e));
-                    }
+            "image" => match add_image_page(&mut doc, pages_id, &item.source_path, &options) {
+                Ok(page_id) => {
+                    page_ids.push(Object::Reference(page_id));
+                    result.page_count += 1;
                 }
-            }
+                Err(e) => {
+                    result.errors.push(format!(
+                        "{}: {}",
+                        filename_or_default(&item.source_path),
+                        e
+                    ));
+                }
+            },
             "pdf" => {
                 let page_num = item.page_number.unwrap_or(1);
                 if let Some(source_doc) = pdf_cache.get(&item.source_path) {
                     let visited = match visited_cache.get_mut(&item.source_path) {
                         Some(v) => v,
                         None => {
-                            result.errors.push(format!("{}: visited cache missing", filename_or_default(&item.source_path)));
+                            result.errors.push(format!(
+                                "{}: visited cache missing",
+                                filename_or_default(&item.source_path)
+                            ));
                             continue;
                         }
                     };
@@ -418,9 +430,12 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
                             result.page_count += 1;
                         }
                         Err(e) => {
-                            result
-                                .errors
-                                .push(format!("{} (page {}): {}", filename_or_default(&item.source_path), page_num, e));
+                            result.errors.push(format!(
+                                "{} (page {}): {}",
+                                filename_or_default(&item.source_path),
+                                page_num,
+                                e
+                            ));
                         }
                     }
                 }

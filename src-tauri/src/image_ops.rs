@@ -78,21 +78,27 @@ pub fn compress_to_webp(
     app_handle: tauri::AppHandle,
     cancel: Arc<AtomicBool>,
 ) -> BatchProgress {
-    batch_process(&input_paths, &output_dir, &app_handle, &cancel, |input_path, out_dir| {
-        let img = load_image(input_path)?;
-        let rgba = img.to_rgba8();
-        let (w, h) = rgba.dimensions();
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let rgba = img.to_rgba8();
+            let (w, h) = rgba.dimensions();
 
-        let encoder = Encoder::from_rgba(&rgba, w, h);
-        let webp_data = encoder.encode(quality);
+            let encoder = Encoder::from_rgba(&rgba, w, h);
+            let webp_data = encoder.encode(quality);
 
-        let stem = file_stem(input_path);
-        let output_path = out_dir.join(format!("{}-compressed.webp", stem));
-        fs::write(&output_path, &*webp_data)
-            .map_err(|e| format!("Cannot write WebP file: {}", e))?;
+            let stem = file_stem(input_path);
+            let output_path = out_dir.join(format!("{}-compressed.webp", stem));
+            fs::write(&output_path, &*webp_data)
+                .map_err(|e| format!("Cannot write WebP file: {}", e))?;
 
-        Ok((output_path.to_string_lossy().to_string(), None))
-    })
+            Ok((output_path.to_string_lossy().to_string(), None))
+        },
+    )
 }
 
 pub fn convert_images(
@@ -104,62 +110,73 @@ pub fn convert_images(
 ) -> BatchProgress {
     let target_format = output_format.to_lowercase();
 
-    batch_process(&input_paths, &output_dir, &app_handle, &cancel, |input_path, out_dir| {
-        let img = load_image(input_path)?;
-        let stem = file_stem(input_path);
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let stem = file_stem(input_path);
 
-        let output_path_str = match target_format.as_str() {
-            "webp" => {
-                let rgba = img.to_rgba8();
-                let (w, h) = rgba.dimensions();
-                let encoder = Encoder::from_rgba(&rgba, w, h);
-                let webp_data = encoder.encode(100.0);
-                let output_path = out_dir.join(format!("{}-converted.webp", stem));
-                fs::write(&output_path, &*webp_data)
-                    .map_err(|e| format!("Cannot write WebP: {}", e))?;
-                output_path.to_string_lossy().to_string()
-            }
-            "png" => {
-                let output_path = out_dir.join(format!("{}-converted.png", stem));
-                img.save_with_format(&output_path, ImageFormat::Png)
-                    .map_err(|e| format!("Cannot save PNG: {}", e))?;
-                output_path.to_string_lossy().to_string()
-            }
-            "jpg" | "jpeg" => {
-                let output_path = out_dir.join(format!("{}-converted.jpg", stem));
-                img.save_with_format(&output_path, ImageFormat::Jpeg)
-                    .map_err(|e| format!("Cannot save JPEG: {}", e))?;
-                output_path.to_string_lossy().to_string()
-            }
-            "bmp" => {
-                let output_path = out_dir.join(format!("{}-converted.bmp", stem));
-                img.save_with_format(&output_path, ImageFormat::Bmp)
-                    .map_err(|e| format!("Cannot save BMP: {}", e))?;
-                output_path.to_string_lossy().to_string()
-            }
-            "ico" => {
-                let resized = img.resize(256, 256, image::imageops::FilterType::Lanczos3);
-                let output_path = out_dir.join(format!("{}-converted.ico", stem));
-                resized.save_with_format(&output_path, ImageFormat::Ico)
-                    .map_err(|e| format!("Cannot save ICO: {}", e))?;
-                output_path.to_string_lossy().to_string()
-            }
-            "tiff" | "tif" => {
-                let output_path = out_dir.join(format!("{}-converted.tiff", stem));
-                img.save_with_format(&output_path, ImageFormat::Tiff)
-                    .map_err(|e| format!("Cannot save TIFF: {}", e))?;
-                output_path.to_string_lossy().to_string()
-            }
-            _ => return Err(format!("Unsupported output format: {}", target_format)),
-        };
+            let output_path_str = match target_format.as_str() {
+                "webp" => {
+                    let rgba = img.to_rgba8();
+                    let (w, h) = rgba.dimensions();
+                    let encoder = Encoder::from_rgba(&rgba, w, h);
+                    let webp_data = encoder.encode(100.0);
+                    let output_path = out_dir.join(format!("{}-converted.webp", stem));
+                    fs::write(&output_path, &*webp_data)
+                        .map_err(|e| format!("Cannot write WebP: {}", e))?;
+                    output_path.to_string_lossy().to_string()
+                }
+                "png" => {
+                    let output_path = out_dir.join(format!("{}-converted.png", stem));
+                    img.save_with_format(&output_path, ImageFormat::Png)
+                        .map_err(|e| format!("Cannot save PNG: {}", e))?;
+                    output_path.to_string_lossy().to_string()
+                }
+                "jpg" | "jpeg" => {
+                    let output_path = out_dir.join(format!("{}-converted.jpg", stem));
+                    img.save_with_format(&output_path, ImageFormat::Jpeg)
+                        .map_err(|e| format!("Cannot save JPEG: {}", e))?;
+                    output_path.to_string_lossy().to_string()
+                }
+                "bmp" => {
+                    let output_path = out_dir.join(format!("{}-converted.bmp", stem));
+                    img.save_with_format(&output_path, ImageFormat::Bmp)
+                        .map_err(|e| format!("Cannot save BMP: {}", e))?;
+                    output_path.to_string_lossy().to_string()
+                }
+                "ico" => {
+                    let resized = img.resize(256, 256, image::imageops::FilterType::Lanczos3);
+                    let output_path = out_dir.join(format!("{}-converted.ico", stem));
+                    resized
+                        .save_with_format(&output_path, ImageFormat::Ico)
+                        .map_err(|e| format!("Cannot save ICO: {}", e))?;
+                    output_path.to_string_lossy().to_string()
+                }
+                "tiff" | "tif" => {
+                    let output_path = out_dir.join(format!("{}-converted.tiff", stem));
+                    img.save_with_format(&output_path, ImageFormat::Tiff)
+                        .map_err(|e| format!("Cannot save TIFF: {}", e))?;
+                    output_path.to_string_lossy().to_string()
+                }
+                _ => return Err(format!("Unsupported output format: {}", target_format)),
+            };
 
-        Ok((output_path_str, None))
-    })
+            Ok((output_path_str, None))
+        },
+    )
 }
 
 // --- Shared helpers for new features ---
 
-fn save_in_original_format(img: &DynamicImage, input_path: &str, output_path: &Path) -> Result<(), String> {
+fn save_in_original_format(
+    img: &DynamicImage,
+    input_path: &str,
+    output_path: &Path,
+) -> Result<(), String> {
     let ext = get_extension(input_path);
     match ext.as_str() {
         "webp" => {
@@ -167,8 +184,7 @@ fn save_in_original_format(img: &DynamicImage, input_path: &str, output_path: &P
             let (w, h) = rgba.dimensions();
             let encoder = Encoder::from_rgba(&rgba, w, h);
             let webp_data = encoder.encode(90.0);
-            fs::write(output_path, &*webp_data)
-                .map_err(|e| format!("Cannot write WebP: {}", e))
+            fs::write(output_path, &*webp_data).map_err(|e| format!("Cannot write WebP: {}", e))
         }
         "jpg" | "jpeg" => img
             .save_with_format(output_path, ImageFormat::Jpeg)
@@ -226,16 +242,25 @@ fn build_result(
     }
 }
 
-fn emit_progress(app_handle: &tauri::AppHandle, processed: &AtomicUsize, total: usize, current_file: &str) {
+fn emit_progress(
+    app_handle: &tauri::AppHandle,
+    processed: &AtomicUsize,
+    total: usize,
+    current_file: &str,
+) {
     let done = processed.fetch_add(1, Ordering::Relaxed) + 1;
     let filename = std::path::Path::new(current_file)
         .file_name()
         .and_then(|f| f.to_str())
-        .unwrap_or_else(|| current_file)
+        .unwrap_or(current_file)
         .to_string();
     let _ = app_handle.emit(
         "processing-progress",
-        ProgressPayload { completed: done, total, current_file: filename },
+        ProgressPayload {
+            completed: done,
+            total,
+            current_file: filename,
+        },
     );
 }
 
@@ -284,11 +309,16 @@ where
         .collect();
 
     let completed = results.iter().filter(|r| r.success).count();
-    BatchProgress { completed, total, results }
+    BatchProgress {
+        completed,
+        total,
+        results,
+    }
 }
 
 // --- Resize ---
 
+#[allow(clippy::too_many_arguments)]
 pub fn resize_images(
     input_paths: Vec<String>,
     mode: String,
@@ -299,43 +329,52 @@ pub fn resize_images(
     app_handle: tauri::AppHandle,
     cancel: Arc<AtomicBool>,
 ) -> BatchProgress {
-    batch_process(&input_paths, &output_dir, &app_handle, &cancel, |input_path, out_dir| {
-        let img = load_image(input_path)?;
-        let (orig_w, orig_h) = (img.width(), img.height());
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let (orig_w, orig_h) = (img.width(), img.height());
 
-        let (new_w, new_h) = match mode.as_str() {
-            "exact" => (width, height),
-            "width" => {
-                let ratio = width as f64 / orig_w as f64;
-                (width, (orig_h as f64 * ratio).round() as u32)
+            let (new_w, new_h) = match mode.as_str() {
+                "exact" => (width, height),
+                "width" => {
+                    let ratio = width as f64 / orig_w as f64;
+                    (width, (orig_h as f64 * ratio).round() as u32)
+                }
+                "height" => {
+                    let ratio = height as f64 / orig_h as f64;
+                    ((orig_w as f64 * ratio).round() as u32, height)
+                }
+                "percentage" => {
+                    let scale = percentage as f64 / 100.0;
+                    (
+                        (orig_w as f64 * scale).round() as u32,
+                        (orig_h as f64 * scale).round() as u32,
+                    )
+                }
+                _ => return Err(format!("Unknown resize mode: {}", mode)),
+            };
+
+            if new_w == 0 || new_h == 0 {
+                return Err("Target dimensions cannot be zero".to_string());
             }
-            "height" => {
-                let ratio = height as f64 / orig_h as f64;
-                ((orig_w as f64 * ratio).round() as u32, height)
-            }
-            "percentage" => {
-                let scale = percentage as f64 / 100.0;
-                (
-                    (orig_w as f64 * scale).round() as u32,
-                    (orig_h as f64 * scale).round() as u32,
-                )
-            }
-            _ => return Err(format!("Unknown resize mode: {}", mode)),
-        };
 
-        if new_w == 0 || new_h == 0 {
-            return Err("Target dimensions cannot be zero".to_string());
-        }
+            let resized = img.resize_exact(new_w, new_h, image::imageops::FilterType::Lanczos3);
 
-        let resized = img.resize_exact(new_w, new_h, image::imageops::FilterType::Lanczos3);
+            let ext = get_extension(input_path);
+            let stem = file_stem(input_path);
+            let output_path = out_dir.join(format!("{}-resized.{}", stem, ext));
 
-        let ext = get_extension(input_path);
-        let stem = file_stem(input_path);
-        let output_path = out_dir.join(format!("{}-resized.{}", stem, ext));
-
-        save_in_original_format(&resized, input_path, &output_path)?;
-        Ok((output_path.to_string_lossy().to_string(), Some((orig_w, orig_h, new_w, new_h))))
-    })
+            save_in_original_format(&resized, input_path, &output_path)?;
+            Ok((
+                output_path.to_string_lossy().to_string(),
+                Some((orig_w, orig_h, new_w, new_h)),
+            ))
+        },
+    )
 }
 
 // --- EXIF Strip ---
@@ -346,17 +385,26 @@ pub fn strip_metadata(
     app_handle: tauri::AppHandle,
     cancel: Arc<AtomicBool>,
 ) -> BatchProgress {
-    batch_process(&input_paths, &output_dir, &app_handle, &cancel, |input_path, out_dir| {
-        let img = load_image(input_path)?;
-        let (w, h) = (img.width(), img.height());
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let (w, h) = (img.width(), img.height());
 
-        let ext = get_extension(input_path);
-        let stem = file_stem(input_path);
-        let output_path = out_dir.join(format!("{}-stripped.{}", stem, ext));
+            let ext = get_extension(input_path);
+            let stem = file_stem(input_path);
+            let output_path = out_dir.join(format!("{}-stripped.{}", stem, ext));
 
-        save_in_original_format(&img, input_path, &output_path)?;
-        Ok((output_path.to_string_lossy().to_string(), Some((w, h, w, h))))
-    })
+            save_in_original_format(&img, input_path, &output_path)?;
+            Ok((
+                output_path.to_string_lossy().to_string(),
+                Some((w, h, w, h)),
+            ))
+        },
+    )
 }
 
 // --- Watermark ---
@@ -391,6 +439,7 @@ fn find_system_font() -> Result<Vec<u8>, String> {
     Err("No system font found. Install Arial, DejaVu Sans, or Liberation Sans.".to_string())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn add_watermark(
     input_paths: Vec<String>,
     text: String,
@@ -407,72 +456,83 @@ pub fn add_watermark(
     };
     let font = match FontArc::try_from_vec(font_data) {
         Ok(f) => f,
-        Err(_) => return BatchProgress::all_failed(&input_paths, "Failed to load font".to_string()),
+        Err(_) => {
+            return BatchProgress::all_failed(&input_paths, "Failed to load font".to_string())
+        }
     };
 
     let opacity_byte = (opacity.clamp(0.0, 1.0) * 255.0) as u8;
     let color = Rgba([255u8, 255, 255, opacity_byte]);
     let scale = PxScale::from(font_size);
 
-    batch_process(&input_paths, &output_dir, &app_handle, &cancel, |input_path, out_dir| {
-        let img = load_image(input_path)?;
-        let (img_w, img_h) = (img.width(), img.height());
-        let mut base = img.to_rgba8();
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let (img_w, img_h) = (img.width(), img.height());
+            let mut base = img.to_rgba8();
 
-        let text_width = (font_size * text.len() as f32 * 0.55) as i32;
-        let text_height = font_size as i32;
-        let margin = 20i32;
+            let text_width = (font_size * text.len() as f32 * 0.55) as i32;
+            let text_height = font_size as i32;
+            let margin = 20i32;
 
-        match position.as_str() {
-            "center" => {
-                let x = (img_w as i32 - text_width) / 2;
-                let y = (img_h as i32 - text_height) / 2;
-                draw_text_mut(&mut base, color, x, y, scale, &font, &text);
-            }
-            "top-left" => {
-                draw_text_mut(&mut base, color, margin, margin, scale, &font, &text);
-            }
-            "top-right" => {
-                let x = img_w as i32 - text_width - margin;
-                draw_text_mut(&mut base, color, x, margin, scale, &font, &text);
-            }
-            "bottom-left" => {
-                let y = img_h as i32 - text_height - margin;
-                draw_text_mut(&mut base, color, margin, y, scale, &font, &text);
-            }
-            "bottom-right" => {
-                let x = img_w as i32 - text_width - margin;
-                let y = img_h as i32 - text_height - margin;
-                draw_text_mut(&mut base, color, x, y, scale, &font, &text);
-            }
-            "tiled" => {
-                let step_x = text_width + 80;
-                let step_y = text_height + 80;
-                let mut y = margin;
-                while y < img_h as i32 {
-                    let mut x = margin;
-                    while x < img_w as i32 {
-                        draw_text_mut(&mut base, color, x, y, scale, &font, &text);
-                        x += step_x;
+            match position.as_str() {
+                "center" => {
+                    let x = (img_w as i32 - text_width) / 2;
+                    let y = (img_h as i32 - text_height) / 2;
+                    draw_text_mut(&mut base, color, x, y, scale, &font, &text);
+                }
+                "top-left" => {
+                    draw_text_mut(&mut base, color, margin, margin, scale, &font, &text);
+                }
+                "top-right" => {
+                    let x = img_w as i32 - text_width - margin;
+                    draw_text_mut(&mut base, color, x, margin, scale, &font, &text);
+                }
+                "bottom-left" => {
+                    let y = img_h as i32 - text_height - margin;
+                    draw_text_mut(&mut base, color, margin, y, scale, &font, &text);
+                }
+                "bottom-right" => {
+                    let x = img_w as i32 - text_width - margin;
+                    let y = img_h as i32 - text_height - margin;
+                    draw_text_mut(&mut base, color, x, y, scale, &font, &text);
+                }
+                "tiled" => {
+                    let step_x = text_width + 80;
+                    let step_y = text_height + 80;
+                    let mut y = margin;
+                    while y < img_h as i32 {
+                        let mut x = margin;
+                        while x < img_w as i32 {
+                            draw_text_mut(&mut base, color, x, y, scale, &font, &text);
+                            x += step_x;
+                        }
+                        y += step_y;
                     }
-                    y += step_y;
+                }
+                _ => {
+                    let x = (img_w as i32 - text_width) / 2;
+                    let y = (img_h as i32 - text_height) / 2;
+                    draw_text_mut(&mut base, color, x, y, scale, &font, &text);
                 }
             }
-            _ => {
-                let x = (img_w as i32 - text_width) / 2;
-                let y = (img_h as i32 - text_height) / 2;
-                draw_text_mut(&mut base, color, x, y, scale, &font, &text);
-            }
-        }
 
-        let result_img = DynamicImage::ImageRgba8(base);
-        let ext = get_extension(input_path);
-        let stem = file_stem(input_path);
-        let output_path = out_dir.join(format!("{}-watermarked.{}", stem, ext));
+            let result_img = DynamicImage::ImageRgba8(base);
+            let ext = get_extension(input_path);
+            let stem = file_stem(input_path);
+            let output_path = out_dir.join(format!("{}-watermarked.{}", stem, ext));
 
-        save_in_original_format(&result_img, input_path, &output_path)?;
-        Ok((output_path.to_string_lossy().to_string(), Some((img_w, img_h, img_w, img_h))))
-    })
+            save_in_original_format(&result_img, input_path, &output_path)?;
+            Ok((
+                output_path.to_string_lossy().to_string(),
+                Some((img_w, img_h, img_w, img_h)),
+            ))
+        },
+    )
 }
 
 // --- Lossless Optimize ---
@@ -483,40 +543,44 @@ pub fn optimize_lossless(
     app_handle: tauri::AppHandle,
     cancel: Arc<AtomicBool>,
 ) -> BatchProgress {
-    batch_process(&input_paths, &output_dir, &app_handle, &cancel, |input_path, out_dir| {
-        let ext = get_extension(input_path);
-        let stem = file_stem(input_path);
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let ext = get_extension(input_path);
+            let stem = file_stem(input_path);
 
-        let output_path_str = match ext.as_str() {
-            "png" => {
-                let input_data = fs::read(input_path)
-                    .map_err(|e| format!("Cannot read '{}': {}", input_path, e))?;
+            let output_path_str = match ext.as_str() {
+                "png" => {
+                    let input_data = fs::read(input_path)
+                        .map_err(|e| format!("Cannot read '{}': {}", input_path, e))?;
 
-                let optimized = oxipng::optimize_from_memory(
-                    &input_data,
-                    &oxipng::Options::from_preset(4),
-                )
-                .map_err(|e| format!("PNG optimization failed: {}", e))?;
+                    let optimized =
+                        oxipng::optimize_from_memory(&input_data, &oxipng::Options::from_preset(4))
+                            .map_err(|e| format!("PNG optimization failed: {}", e))?;
 
-                let output_path = out_dir.join(format!("{}-optimized.png", stem));
-                fs::write(&output_path, &optimized)
-                    .map_err(|e| format!("Cannot write optimized PNG: {}", e))?;
+                    let output_path = out_dir.join(format!("{}-optimized.png", stem));
+                    fs::write(&output_path, &optimized)
+                        .map_err(|e| format!("Cannot write optimized PNG: {}", e))?;
 
-                output_path.to_string_lossy().to_string()
-            }
-            "jpg" | "jpeg" => {
-                // Re-encode JPEG with optimized Huffman tables at quality 100
-                let img = load_image(input_path)?;
-                let output_path = out_dir.join(format!("{}-optimized.jpg", stem));
-                img.save_with_format(&output_path, ImageFormat::Jpeg)
-                    .map_err(|e| format!("Cannot save optimized JPEG: {}", e))?;
-                output_path.to_string_lossy().to_string()
-            }
-            _ => return Err(format!("Unsupported format for optimization: {}", ext)),
-        };
+                    output_path.to_string_lossy().to_string()
+                }
+                "jpg" | "jpeg" => {
+                    // Re-encode JPEG with optimized Huffman tables at quality 100
+                    let img = load_image(input_path)?;
+                    let output_path = out_dir.join(format!("{}-optimized.jpg", stem));
+                    img.save_with_format(&output_path, ImageFormat::Jpeg)
+                        .map_err(|e| format!("Cannot save optimized JPEG: {}", e))?;
+                    output_path.to_string_lossy().to_string()
+                }
+                _ => return Err(format!("Unsupported format for optimization: {}", ext)),
+            };
 
-        Ok((output_path_str, None))
-    })
+            Ok((output_path_str, None))
+        },
+    )
 }
 
 // --- Crop ---
@@ -546,62 +610,75 @@ pub fn crop_images(
     app_handle: tauri::AppHandle,
     cancel: Arc<AtomicBool>,
 ) -> BatchProgress {
-    batch_process(&input_paths, &output_dir, &app_handle, &cancel, |input_path, out_dir| {
-        let img = load_image(input_path)?;
-        let (orig_w, orig_h) = (img.width(), img.height());
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let (orig_w, orig_h) = (img.width(), img.height());
 
-        // When explicit crop_x/crop_y are provided, use them directly
-        // (free-form rectangle drawn by the user on the preview)
-        if let (Some(cx), Some(cy)) = (crop_x, crop_y) {
-            let cw = target_width.min(orig_w.saturating_sub(cx));
-            let ch = target_height.min(orig_h.saturating_sub(cy));
-            if cw == 0 || ch == 0 {
+            // When explicit crop_x/crop_y are provided, use them directly
+            // (free-form rectangle drawn by the user on the preview)
+            if let (Some(cx), Some(cy)) = (crop_x, crop_y) {
+                let cw = target_width.min(orig_w.saturating_sub(cx));
+                let ch = target_height.min(orig_h.saturating_sub(cy));
+                if cw == 0 || ch == 0 {
+                    return Err("Crop dimensions cannot be zero".to_string());
+                }
+                let cropped = img.crop_imm(cx.min(orig_w), cy.min(orig_h), cw, ch);
+                let ext = get_extension(input_path);
+                let stem = file_stem(input_path);
+                let output_path = out_dir.join(format!("{}-cropped.{}", stem, ext));
+                save_in_original_format(&cropped, input_path, &output_path)?;
+                return Ok((
+                    output_path.to_string_lossy().to_string(),
+                    Some((orig_w, orig_h, cw, ch)),
+                ));
+            }
+
+            let (crop_w, crop_h) = if ratio == "free" {
+                (target_width.min(orig_w), target_height.min(orig_h))
+            } else if let Some((rw, rh)) = parse_ratio(&ratio) {
+                let scale_w = orig_w as f64 / rw;
+                let scale_h = orig_h as f64 / rh;
+                let scale = scale_w.min(scale_h);
+                let cw = (rw * scale).round() as u32;
+                let ch = (rh * scale).round() as u32;
+                (cw.min(orig_w), ch.min(orig_h))
+            } else {
+                return Err(format!("Invalid crop ratio: {}", ratio));
+            };
+
+            if crop_w == 0 || crop_h == 0 {
                 return Err("Crop dimensions cannot be zero".to_string());
             }
-            let cropped = img.crop_imm(cx.min(orig_w), cy.min(orig_h), cw, ch);
+
+            let (x, y) = match anchor.as_str() {
+                "top-left" => (0, 0),
+                "top-right" => (orig_w.saturating_sub(crop_w), 0),
+                "bottom-left" => (0, orig_h.saturating_sub(crop_h)),
+                "bottom-right" => (orig_w.saturating_sub(crop_w), orig_h.saturating_sub(crop_h)),
+                _ => (
+                    (orig_w.saturating_sub(crop_w)) / 2,
+                    (orig_h.saturating_sub(crop_h)) / 2,
+                ),
+            };
+
+            let cropped = img.crop_imm(x, y, crop_w, crop_h);
+
             let ext = get_extension(input_path);
             let stem = file_stem(input_path);
             let output_path = out_dir.join(format!("{}-cropped.{}", stem, ext));
+
             save_in_original_format(&cropped, input_path, &output_path)?;
-            return Ok((output_path.to_string_lossy().to_string(), Some((orig_w, orig_h, cw, ch))));
-        }
-
-        let (crop_w, crop_h) = if ratio == "free" {
-            (target_width.min(orig_w), target_height.min(orig_h))
-        } else if let Some((rw, rh)) = parse_ratio(&ratio) {
-            let scale_w = orig_w as f64 / rw;
-            let scale_h = orig_h as f64 / rh;
-            let scale = scale_w.min(scale_h);
-            let cw = (rw * scale).round() as u32;
-            let ch = (rh * scale).round() as u32;
-            (cw.min(orig_w), ch.min(orig_h))
-        } else {
-            return Err(format!("Invalid crop ratio: {}", ratio));
-        };
-
-        if crop_w == 0 || crop_h == 0 {
-            return Err("Crop dimensions cannot be zero".to_string());
-        }
-
-        let (x, y) = match anchor.as_str() {
-            "top-left" => (0, 0),
-            "top-right" => (orig_w.saturating_sub(crop_w), 0),
-            "bottom-left" => (0, orig_h.saturating_sub(crop_h)),
-            "bottom-right" => (orig_w.saturating_sub(crop_w), orig_h.saturating_sub(crop_h)),
-            _ => {
-                ((orig_w.saturating_sub(crop_w)) / 2, (orig_h.saturating_sub(crop_h)) / 2)
-            }
-        };
-
-        let cropped = img.crop_imm(x, y, crop_w, crop_h);
-
-        let ext = get_extension(input_path);
-        let stem = file_stem(input_path);
-        let output_path = out_dir.join(format!("{}-cropped.{}", stem, ext));
-
-        save_in_original_format(&cropped, input_path, &output_path)?;
-        Ok((output_path.to_string_lossy().to_string(), Some((orig_w, orig_h, crop_w, crop_h))))
-    })
+            Ok((
+                output_path.to_string_lossy().to_string(),
+                Some((orig_w, orig_h, crop_w, crop_h)),
+            ))
+        },
+    )
 }
 
 #[cfg(test)]
@@ -615,7 +692,10 @@ mod tests {
         assert_eq!(bp.completed, 0);
         assert_eq!(bp.total, 2);
         assert!(bp.results.iter().all(|r| !r.success));
-        assert!(bp.results.iter().all(|r| r.error.as_deref() == Some("boom")));
+        assert!(bp
+            .results
+            .iter()
+            .all(|r| r.error.as_deref() == Some("boom")));
     }
 
     #[test]

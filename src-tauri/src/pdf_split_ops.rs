@@ -30,13 +30,14 @@ fn parse_ranges(ranges_str: &str, total_pages: u32) -> Result<Vec<(u32, u32)>, S
                 .parse()
                 .map_err(|_| format!("Invalid start page: '{}'", start_str))?;
 
-            let end: u32 = if end_str.eq_ignore_ascii_case("end") || end_str.eq_ignore_ascii_case("fin") {
-                total_pages
-            } else {
-                end_str
-                    .parse()
-                    .map_err(|_| format!("Invalid end page: '{}'", end_str))?
-            };
+            let end: u32 =
+                if end_str.eq_ignore_ascii_case("end") || end_str.eq_ignore_ascii_case("fin") {
+                    total_pages
+                } else {
+                    end_str
+                        .parse()
+                        .map_err(|_| format!("Invalid end page: '{}'", end_str))?
+                };
 
             if start == 0 || end == 0 {
                 return Err("Page numbers must be >= 1".to_string());
@@ -59,10 +60,7 @@ fn parse_ranges(ranges_str: &str, total_pages: u32) -> Result<Vec<(u32, u32)>, S
                 .map_err(|_| format!("Invalid page number: '{}'", trimmed))?;
 
             if page == 0 || page > total_pages {
-                return Err(format!(
-                    "Page {} is out of range (1-{})",
-                    page, total_pages
-                ));
+                return Err(format!("Page {} is out of range (1-{})", page, total_pages));
             }
             result.push((page, page));
         }
@@ -107,9 +105,7 @@ fn remap_object(
     id_map: &mut HashMap<ObjectId, ObjectId>,
 ) -> Object {
     match obj {
-        Object::Reference(id) => {
-            Object::Reference(copy_object_deep(source, dest, id, id_map))
-        }
+        Object::Reference(id) => Object::Reference(copy_object_deep(source, dest, id, id_map)),
         Object::Array(arr) => Object::Array(
             arr.into_iter()
                 .map(|o| remap_object(source, dest, o, id_map))
@@ -123,12 +119,8 @@ fn remap_object(
             Object::Dictionary(new_dict)
         }
         Object::Stream(stream) => {
-            let new_dict = match remap_object(
-                source,
-                dest,
-                Object::Dictionary(stream.dict),
-                id_map,
-            ) {
+            let new_dict = match remap_object(source, dest, Object::Dictionary(stream.dict), id_map)
+            {
                 Object::Dictionary(d) => d,
                 _ => lopdf::Dictionary::new(),
             };
@@ -138,11 +130,7 @@ fn remap_object(
     }
 }
 
-pub fn split_pdf(
-    pdf_path: &str,
-    ranges_str: &str,
-    output_dir: &str,
-) -> PdfSplitResult {
+pub fn split_pdf(pdf_path: &str, ranges_str: &str, output_dir: &str) -> PdfSplitResult {
     let mut result = PdfSplitResult {
         output_files: Vec::new(),
         errors: Vec::new(),
@@ -211,9 +199,7 @@ pub fn split_pdf(
             "Type" => "Catalog",
             "Pages" => pages_id
         });
-        new_doc
-            .trailer
-            .set("Root", Object::Reference(catalog_id));
+        new_doc.trailer.set("Root", Object::Reference(catalog_id));
 
         let output_filename = if *start == *end {
             format!("{}_page_{}.pdf", pdf_stem, start)
@@ -229,10 +215,9 @@ pub fn split_pdf(
                     .push(output_path.to_string_lossy().to_string());
             }
             Err(e) => {
-                result.errors.push(format!(
-                    "Range {}-{}: failed to save — {}",
-                    start, end, e
-                ));
+                result
+                    .errors
+                    .push(format!("Range {}-{}: failed to save — {}", start, end, e));
             }
         }
     }

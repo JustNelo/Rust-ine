@@ -51,8 +51,7 @@ const EXIF_TAGS: &[(Tag, &str)] = &[
 ];
 
 pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
-    let reader = image::ImageReader::open(path)
-        .map_err(|e| format!("Cannot open file: {}", e))?;
+    let reader = image::ImageReader::open(path).map_err(|e| format!("Cannot open file: {}", e))?;
 
     // Read dimensions from header only — avoids decoding the full image
     let (width, height) = reader
@@ -69,8 +68,7 @@ pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
 
     let mut exif_entries: Vec<MetadataEntry> = Vec::new();
 
-    let file = fs::File::open(path)
-        .map_err(|e| format!("Cannot open file: {}", e))?;
+    let file = fs::File::open(path).map_err(|e| format!("Cannot open file: {}", e))?;
     let mut buf_reader = std::io::BufReader::new(&file);
 
     if let Ok(exif_data) = exif::Reader::new().read_from_container(&mut buf_reader) {

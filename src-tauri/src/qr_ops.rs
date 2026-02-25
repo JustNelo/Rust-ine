@@ -14,11 +14,7 @@ pub struct QrResult {
 
 /// Generate a QR code PNG from the given text content.
 /// The output image is `size × size` pixels with a white background and dark modules.
-pub fn generate_qr(
-    text: &str,
-    size: u32,
-    output_dir: &str,
-) -> QrResult {
+pub fn generate_qr(text: &str, size: u32, output_dir: &str) -> QrResult {
     let mut result = QrResult {
         output_path: String::new(),
         size,

@@ -11,20 +11,22 @@ mod rename_ops;
 mod sprite_ops;
 mod utils;
 
-use image_ops::BatchProgress;
-use metadata_ops::ImageMetadata;
-use pdf_builder_ops::{MergePdfOptions, MergePdfResult, PageThumbnail, PdfBuilderItem};
 use color_ops::PaletteResult;
 use favicon_ops::FaviconResult;
 use gif_ops::AnimationResult;
-use pdf_ops::{ImagesToPdfResult, PdfCompressResult, PdfExtractionResult, PdfProtectResult, PdfToImagesResult};
+use image_ops::BatchProgress;
+use metadata_ops::ImageMetadata;
+use pdf_builder_ops::{MergePdfOptions, MergePdfResult, PageThumbnail, PdfBuilderItem};
+use pdf_ops::{
+    ImagesToPdfResult, PdfCompressResult, PdfExtractionResult, PdfProtectResult, PdfToImagesResult,
+};
 use pdf_split_ops::PdfSplitResult;
 use qr_ops::QrResult;
 use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
-use std::path::{Path, Component};
-use std::sync::Arc;
+use std::path::{Component, Path};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tauri::Manager;
 
 /// Resolved pdfium library path, computed once at startup and shared via tauri::State.
@@ -85,7 +87,10 @@ fn validate_path(path: &str) -> Result<(), String> {
     // If the path already exists, resolve symlinks and re-validate
     if p.exists() {
         if let Ok(canonical) = std::fs::canonicalize(p) {
-            if canonical.components().any(|c| matches!(c, Component::ParentDir)) {
+            if canonical
+                .components()
+                .any(|c| matches!(c, Component::ParentDir))
+            {
                 return Err(format!("Symlink traversal detected: {}", path));
             }
         }
@@ -112,10 +117,11 @@ async fn compress_webp(
     validate_paths(&input_paths)?;
     let cancel = token.0.clone();
     cancel.store(false, Ordering::Relaxed);
-    let result =
-        tokio::task::spawn_blocking(move || image_ops::compress_to_webp(input_paths, quality, output_dir, app_handle, cancel))
-            .await
-            .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::compress_to_webp(input_paths, quality, output_dir, app_handle, cancel)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -158,6 +164,7 @@ async fn extract_pdf_images(
     Ok(result)
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 async fn resize_images(
     app_handle: tauri::AppHandle,
@@ -174,7 +181,16 @@ async fn resize_images(
     let cancel = token.0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::resize_images(input_paths, mode, width, height, percentage, output_dir, app_handle, cancel)
+        image_ops::resize_images(
+            input_paths,
+            mode,
+            width,
+            height,
+            percentage,
+            output_dir,
+            app_handle,
+            cancel,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -200,6 +216,7 @@ async fn strip_metadata(
     Ok(result)
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 async fn add_watermark(
     app_handle: tauri::AppHandle,
@@ -216,7 +233,16 @@ async fn add_watermark(
     let cancel = token.0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::add_watermark(input_paths, text, position, opacity, font_size, output_dir, app_handle, cancel)
+        image_ops::add_watermark(
+            input_paths,
+            text,
+            position,
+            opacity,
+            font_size,
+            output_dir,
+            app_handle,
+            cancel,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -230,24 +256,19 @@ async fn images_to_pdf(
 ) -> Result<ImagesToPdfResult, String> {
     validate_path(&output_path)?;
     validate_paths(&input_paths)?;
-    let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::images_to_pdf(input_paths, &output_path)
-    })
-    .await
-    .map_err(|e| format!("Task failed: {}", e))?;
+    let result =
+        tokio::task::spawn_blocking(move || pdf_ops::images_to_pdf(input_paths, &output_path))
+            .await
+            .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
 #[tauri::command]
-async fn read_metadata(
-    file_path: String,
-) -> Result<ImageMetadata, String> {
+async fn read_metadata(file_path: String) -> Result<ImageMetadata, String> {
     validate_path(&file_path)?;
-    tokio::task::spawn_blocking(move || {
-        metadata_ops::read_image_metadata(&file_path)
-    })
-    .await
-    .map_err(|e| format!("Task failed: {}", e))?
+    tokio::task::spawn_blocking(move || metadata_ops::read_image_metadata(&file_path))
+        .await
+        .map_err(|e| format!("Task failed: {}", e))?
 }
 
 #[tauri::command]
@@ -273,11 +294,9 @@ async fn merge_to_pdf(
     validate_path(&options.output_path)?;
     let item_paths: Vec<String> = items.iter().map(|i| i.source_path.clone()).collect();
     validate_paths(&item_paths)?;
-    let result = tokio::task::spawn_blocking(move || {
-        pdf_builder_ops::merge_to_pdf(items, options)
-    })
-    .await
-    .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || pdf_builder_ops::merge_to_pdf(items, options))
+        .await
+        .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -319,7 +338,18 @@ async fn crop_images(
     let cancel = token.0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
-        image_ops::crop_images(input_paths, ratio, anchor, width, height, crop_x, crop_y, output_dir, app_handle, cancel)
+        image_ops::crop_images(
+            input_paths,
+            ratio,
+            anchor,
+            width,
+            height,
+            crop_x,
+            crop_y,
+            output_dir,
+            app_handle,
+            cancel,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -362,16 +392,11 @@ async fn split_pdf(
 }
 
 #[tauri::command]
-async fn extract_palette(
-    image_path: String,
-    num_colors: usize,
-) -> Result<PaletteResult, String> {
+async fn extract_palette(image_path: String, num_colors: usize) -> Result<PaletteResult, String> {
     validate_path(&image_path)?;
-    tokio::task::spawn_blocking(move || {
-        color_ops::extract_palette(&image_path, num_colors)
-    })
-    .await
-    .map_err(|e| format!("Task failed: {}", e))?
+    tokio::task::spawn_blocking(move || color_ops::extract_palette(&image_path, num_colors))
+        .await
+        .map_err(|e| format!("Task failed: {}", e))?
 }
 
 #[tauri::command]
@@ -382,11 +407,10 @@ async fn compress_pdf_cmd(
 ) -> Result<PdfCompressResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::compress_pdf(&pdf_path, quality, &output_dir)
-    })
-    .await
-    .map_err(|e| format!("Task failed: {}", e))?;
+    let result =
+        tokio::task::spawn_blocking(move || pdf_ops::compress_pdf(&pdf_path, quality, &output_dir))
+            .await
+            .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -497,17 +521,11 @@ async fn bulk_rename_cmd(
 }
 
 #[tauri::command]
-async fn generate_qr_cmd(
-    text: String,
-    size: u32,
-    output_dir: String,
-) -> Result<QrResult, String> {
+async fn generate_qr_cmd(text: String, size: u32, output_dir: String) -> Result<QrResult, String> {
     validate_path(&output_dir)?;
-    let result = tokio::task::spawn_blocking(move || {
-        qr_ops::generate_qr(&text, size, &output_dir)
-    })
-    .await
-    .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || qr_ops::generate_qr(&text, size, &output_dir))
+        .await
+        .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -525,8 +543,7 @@ fn reset_cancel(token: tauri::State<'_, CancellationToken>) {
 async fn image_to_base64(image_path: String) -> Result<String, String> {
     validate_path(&image_path)?;
     tokio::task::spawn_blocking(move || {
-        let bytes = std::fs::read(&image_path)
-            .map_err(|e| format!("Cannot read file: {}", e))?;
+        let bytes = std::fs::read(&image_path).map_err(|e| format!("Cannot read file: {}", e))?;
         let ext = Path::new(&image_path)
             .extension()
             .and_then(|e| e.to_str())
@@ -598,8 +615,7 @@ pub fn run() {
             }
 
             // Resolve pdfium library path once at startup
-            let pdfium_path = resolve_pdfium_path(app.handle())
-                .unwrap_or_default();
+            let pdfium_path = resolve_pdfium_path(app.handle()).unwrap_or_default();
             app.manage(PdfiumPath(Arc::new(pdfium_path)));
             app.manage(CancellationToken(Arc::new(AtomicBool::new(false))));
 

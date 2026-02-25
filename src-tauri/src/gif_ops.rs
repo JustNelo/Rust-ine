@@ -44,7 +44,9 @@ pub fn create_gif(
     let first_img = match image::open(&image_paths[0]) {
         Ok(img) => img,
         Err(e) => {
-            result.errors.push(format!("Cannot open first image: {}", e));
+            result
+                .errors
+                .push(format!("Cannot open first image: {}", e));
             return result;
         }
     };
@@ -59,7 +61,9 @@ pub fn create_gif(
     let file = match File::create(&output_path) {
         Ok(f) => f,
         Err(e) => {
-            result.errors.push(format!("Cannot create output file: {}", e));
+            result
+                .errors
+                .push(format!("Cannot create output file: {}", e));
             return result;
         }
     };
@@ -67,7 +71,9 @@ pub fn create_gif(
     let mut encoder = match Encoder::new(file, gif_width, gif_height, &[]) {
         Ok(enc) => enc,
         Err(e) => {
-            result.errors.push(format!("Cannot create GIF encoder: {}", e));
+            result
+                .errors
+                .push(format!("Cannot create GIF encoder: {}", e));
             return result;
         }
     };
@@ -109,7 +115,9 @@ pub fn create_gif(
         frame.delay = delay_cs;
 
         if let Err(e) = encoder.write_frame(&frame) {
-            result.errors.push(format!("Frame {}: write error — {}", i + 1, e));
+            result
+                .errors
+                .push(format!("Frame {}: write error — {}", i + 1, e));
             continue;
         }
 

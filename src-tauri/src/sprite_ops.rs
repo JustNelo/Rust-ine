@@ -83,8 +83,16 @@ pub fn generate_spritesheet(
     }
 
     // Find max cell dimensions
-    let max_w = images.iter().map(|(_, img)| img.width()).max().unwrap_or(64);
-    let max_h = images.iter().map(|(_, img)| img.height()).max().unwrap_or(64);
+    let max_w = images
+        .iter()
+        .map(|(_, img)| img.width())
+        .max()
+        .unwrap_or(64);
+    let max_h = images
+        .iter()
+        .map(|(_, img)| img.height())
+        .max()
+        .unwrap_or(64);
 
     let count = images.len() as u32;
     let rows = count.div_ceil(cols);
@@ -114,7 +122,12 @@ pub fn generate_spritesheet(
         let offset_y = (max_h.saturating_sub(ih)) / 2;
 
         let rgba = img.to_rgba8();
-        image::imageops::overlay(&mut sheet, &rgba, (x + offset_x) as i64, (y + offset_y) as i64);
+        image::imageops::overlay(
+            &mut sheet,
+            &rgba,
+            (x + offset_x) as i64,
+            (y + offset_y) as i64,
+        );
 
         atlas_frames.push((
             name.clone(),
@@ -138,7 +151,9 @@ pub fn generate_spritesheet(
             result.sheet_height = sheet_height;
         }
         Err(e) => {
-            result.errors.push(format!("Cannot save spritesheet: {}", e));
+            result
+                .errors
+                .push(format!("Cannot save spritesheet: {}", e));
             return result;
         }
     }
@@ -162,5 +177,5 @@ fn build_atlas_json(frames: Vec<(String, AtlasFrame)>) -> String {
     let atlas = AtlasJson {
         frames: frames.into_iter().collect(),
     };
-    serde_json::to_string_pretty(&atlas).unwrap_or_else(|_| "{}" .to_string())
+    serde_json::to_string_pretty(&atlas).unwrap_or_else(|_| "{}".to_string())
 }

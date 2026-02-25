@@ -42,14 +42,8 @@ pub fn bulk_rename(
 
     for (i, input_path) in input_paths.iter().enumerate() {
         let path = Path::new(input_path);
-        let original_stem = path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("file");
-        let extension = path
-            .extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("");
+        let original_stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("file");
+        let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
         let index = start_index + i as u32;
 
         let new_stem = pattern
@@ -83,10 +77,9 @@ pub fn bulk_rename(
                 result.renamed_count += 1;
             }
             Err(e) => {
-                result.errors.push(format!(
-                    "Failed to copy '{}': {}",
-                    input_path, e
-                ));
+                result
+                    .errors
+                    .push(format!("Failed to copy '{}': {}", input_path, e));
             }
         }
     }

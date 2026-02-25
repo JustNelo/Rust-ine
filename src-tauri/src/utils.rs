@@ -1,6 +1,6 @@
+use image::codecs::jpeg::JpegEncoder;
 use lopdf::content::{Content, Operation};
 use lopdf::{dictionary, Document as LopdfDocument, Object, Stream};
-use image::codecs::jpeg::JpegEncoder;
 use std::fs;
 use std::io::Cursor;
 use std::path::Path;
@@ -8,8 +8,7 @@ use std::path::Path;
 /// Create the output directory if it does not exist.
 pub fn ensure_output_dir(dir: &Path) -> Result<(), String> {
     if !dir.exists() {
-        fs::create_dir_all(dir)
-            .map_err(|e| format!("Cannot create output directory: {}", e))?;
+        fs::create_dir_all(dir).map_err(|e| format!("Cannot create output directory: {}", e))?;
     }
     Ok(())
 }

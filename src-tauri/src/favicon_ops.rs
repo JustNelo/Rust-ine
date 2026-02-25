@@ -102,10 +102,7 @@ fn generate_webmanifest() -> String {
     .to_string()
 }
 
-pub fn generate_favicons(
-    image_path: &str,
-    output_dir: &str,
-) -> FaviconResult {
+pub fn generate_favicons(image_path: &str, output_dir: &str) -> FaviconResult {
     let mut result = FaviconResult {
         zip_path: String::new(),
         generated_files: Vec::new(),
@@ -121,7 +118,9 @@ pub fn generate_favicons(
     let img = match image::open(image_path) {
         Ok(i) => i,
         Err(e) => {
-            result.errors.push(format!("Cannot open '{}': {}", image_path, e));
+            result
+                .errors
+                .push(format!("Cannot open '{}': {}", image_path, e));
             return result;
         }
     };
@@ -139,8 +138,7 @@ pub fn generate_favicons(
     };
 
     let mut zip = ZipWriter::new(zip_file);
-    let options = SimpleFileOptions::default()
-        .compression_method(zip::CompressionMethod::Deflated);
+    let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     // Generate PNG sizes
     for (filename, w, h) in FAVICON_SIZES {
@@ -203,8 +201,8 @@ mod tests {
     #[test]
     fn webmanifest_is_valid_json() {
         let manifest = generate_webmanifest();
-        let parsed: serde_json::Value = serde_json::from_str(&manifest)
-            .expect("webmanifest should be valid JSON");
+        let parsed: serde_json::Value =
+            serde_json::from_str(&manifest).expect("webmanifest should be valid JSON");
         assert!(parsed.get("icons").is_some());
         let icons = parsed["icons"].as_array().unwrap();
         assert_eq!(icons.len(), 2);
@@ -215,8 +213,12 @@ mod tests {
     #[test]
     fn favicon_sizes_constant_is_correct() {
         assert!(FAVICON_SIZES.len() >= 4);
-        assert!(FAVICON_SIZES.iter().any(|(name, _, _)| *name == "apple-touch-icon.png"));
-        assert!(FAVICON_SIZES.iter().any(|(name, _, _)| *name == "favicon-16x16.png"));
+        assert!(FAVICON_SIZES
+            .iter()
+            .any(|(name, _, _)| *name == "apple-touch-icon.png"));
+        assert!(FAVICON_SIZES
+            .iter()
+            .any(|(name, _, _)| *name == "favicon-16x16.png"));
     }
 
     #[test]

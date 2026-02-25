@@ -17,6 +17,8 @@ jobs:
         include:
           - platform: windows-latest
             args: ""
+          - platform: ubuntu-22.04
+            args: ""
 
     runs-on: ${{ matrix.platform }}
     environment: Tauri
@@ -25,14 +27,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Ensure pdfium.dll exists
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Ensure pdfium.dll exists (Windows)
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
           if (-not (Test-Path "src-tauri/resources/pdfium.dll")) {
-            Write-Error "pdfium.dll is missing from src-tauri/resources/. Commit it to the repo or add a download step."
+            Write-Error "pdfium.dll is missing from src-tauri/resources/."
             exit 1
           }
+
+      - name: Ensure libpdfium.so exists (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          if [ ! -f "src-tauri/resources/libpdfium.so" ]; then
+            echo "::error::libpdfium.so is missing from src-tauri/resources/."
+            exit 1
+          fi
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

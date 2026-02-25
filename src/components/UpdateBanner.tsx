@@ -17,7 +17,7 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-accent/20 bg-accent/8 px-4 py-2">
+    <div className="flex items-center justify-between gap-3 border-b border-glass-border px-4 py-2" style={{ background: 'rgba(108,108,237,0.06)' }}>
       <div className="flex items-center gap-2.5">
         {status === "downloading" ? (
           <Loader2 className="h-3.5 w-3.5 text-accent animate-spin shrink-0" />

@@ -138,7 +138,7 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
           {/* About */}
           <div className="pt-2 border-t border-border">
             <p className="text-[10px] text-text-muted">
-              {t("settings.about")} — Rust-ine {t("app.version")}
+              {t("settings.about")} Rust-ine {t("app.version")}
             </p>
             <p className="text-[10px] text-text-muted mt-0.5">
               {t("settings.built_with")}

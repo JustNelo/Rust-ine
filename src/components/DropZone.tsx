@@ -98,6 +98,9 @@ export function DropZone({
         {sublabel && (
           <p className="mt-1 text-xs text-text-muted">{sublabel}</p>
         )}
+        <p className="mt-1.5 text-[10px] text-text-muted/50">
+          <kbd className="rounded border border-glass-border bg-surface-card px-1 py-0.5 font-mono text-[10px]">Ctrl+O</kbd>
+        </p>
       </div>
     </div>
   );

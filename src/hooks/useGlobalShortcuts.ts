@@ -1,19 +1,14 @@
 import { useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import type { TabId } from "../types";
 
 interface UseGlobalShortcutsOptions {
   acceptExtensions: string[];
   onFilesSelected: (paths: string[]) => void;
-  allTabIds?: TabId[];
-  onSwitchTab?: (tabId: TabId) => void;
 }
 
 export function useGlobalShortcuts({
   acceptExtensions,
   onFilesSelected,
-  allTabIds,
-  onSwitchTab,
 }: UseGlobalShortcutsOptions) {
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -55,18 +50,16 @@ export function useGlobalShortcuts({
         return;
       }
 
-      // Ctrl+1-9 — switch tabs
-      const digit = parseInt(e.key, 10);
-      if (digit >= 1 && digit <= 9 && allTabIds && onSwitchTab) {
+      // Escape — cancel ongoing processing
+      if (e.key === "Escape") {
         e.preventDefault();
-        const idx = digit - 1;
-        if (idx < allTabIds.length) {
-          onSwitchTab(allTabIds[idx]);
-        }
+        const btn = document.querySelector<HTMLButtonElement>("[data-cancel-button]");
+        if (btn) btn.click();
+        return;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [acceptExtensions, onFilesSelected, allTabIds, onSwitchTab]);
+  }, [acceptExtensions, onFilesSelected]);
 }

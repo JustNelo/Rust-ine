@@ -268,6 +268,7 @@ where
         .par_iter()
         .map(|input_path| {
             if cancel.load(Ordering::Relaxed) {
+                emit_progress(app_handle, &processed, total, input_path);
                 return build_result(input_path, Err("Cancelled".to_string()), None);
             }
 

@@ -209,16 +209,9 @@ function App() {
     setCollapsedSections((prev) => ({ ...prev, [titleKey]: !prev[titleKey] }));
   }, []);
 
-  const allTabIds = useMemo(
-    () => SIDEBAR_SECTIONS.flatMap((s) => s.tabs.map((t) => t.id)),
-    []
-  );
-
   useGlobalShortcuts({
     acceptExtensions: activeExtensions,
     onFilesSelected: handleShortcutFiles,
-    allTabIds,
-    onSwitchTab: setActiveTab,
   });
 
   return (

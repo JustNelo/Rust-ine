@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { X, FolderOpen, RotateCcw, Globe, RefreshCw, Loader2, CheckCircle } from "lucide-react";
+import { X, FolderOpen, RotateCcw, Globe, RefreshCw, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { useT, type Lang } from "../i18n/i18n";
@@ -13,16 +13,18 @@ interface SettingsPanelProps {
 export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps) {
   const { lang, setLang, t } = useT();
   const { workspace, selectWorkspace, openInExplorer } = useWorkspace();
-  const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "downloading" | "up-to-date" | "error">("idle");
+  const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "available" | "downloading" | "up-to-date" | "error">("idle");
+  const [foundUpdate, setFoundUpdate] = useState<Awaited<ReturnType<typeof check>> | null>(null);
+  const [foundVersion, setFoundVersion] = useState("");
 
   const handleCheckUpdate = useCallback(async () => {
     setUpdateStatus("checking");
     try {
       const update = await check();
       if (update) {
-        setUpdateStatus("downloading");
-        await update.downloadAndInstall();
-        await relaunch();
+        setFoundUpdate(update);
+        setFoundVersion(update.version);
+        setUpdateStatus("available");
       } else {
         setUpdateStatus("up-to-date");
         setTimeout(() => setUpdateStatus("idle"), 3000);
@@ -32,6 +34,18 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
       setTimeout(() => setUpdateStatus("idle"), 3000);
     }
   }, []);
+
+  const handleInstallUpdate = useCallback(async () => {
+    if (!foundUpdate) return;
+    setUpdateStatus("downloading");
+    try {
+      await foundUpdate.downloadAndInstall();
+      await relaunch();
+    } catch {
+      setUpdateStatus("error");
+      setTimeout(() => setUpdateStatus("available"), 3000);
+    }
+  }, [foundUpdate]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -115,7 +129,7 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
           </div>
 
           {/* Updates */}
-          <div className="pt-2 border-t border-border">
+          <div className="pt-2 border-t border-border space-y-2">
             <button
               onClick={handleCheckUpdate}
               disabled={updateStatus === "checking" || updateStatus === "downloading"}
@@ -125,14 +139,31 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : updateStatus === "up-to-date" ? (
                 <CheckCircle className="h-3.5 w-3.5 text-success" />
+              ) : updateStatus === "error" ? (
+                <AlertCircle className="h-3.5 w-3.5 text-red-400" />
               ) : (
                 <RefreshCw className="h-3.5 w-3.5" />
               )}
               {updateStatus === "checking" ? t("status.scanning")
                 : updateStatus === "downloading" ? t("updater.downloading")
                 : updateStatus === "up-to-date" ? t("updater.up_to_date")
+                : updateStatus === "error" ? t("updater.error")
                 : t("updater.check")}
             </button>
+
+            {updateStatus === "available" && (
+              <div className="flex items-center justify-between rounded-lg border border-accent/20 bg-accent/5 px-3 py-2">
+                <span className="text-xs text-text-primary">
+                  {t("updater.new_version").replace("{version}", foundVersion)}
+                </span>
+                <button
+                  onClick={handleInstallUpdate}
+                  className="rounded-md bg-accent px-3 py-1 text-[11px] font-medium text-white shadow-[0_0_10px_rgba(108,108,237,0.25)] hover:bg-accent-hover transition-colors cursor-pointer"
+                >
+                  {t("updater.download")}
+                </button>
+              </div>
+            )}
           </div>
 
         </div>

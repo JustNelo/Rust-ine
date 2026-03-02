@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, memo } from "react";
-import { CheckCircle, AlertCircle, XCircle, ZoomIn } from "lucide-react";
+import { CheckCircle, AlertCircle, XCircle, ZoomIn, FolderOpen } from "lucide-react";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { formatSize, isImage, safeAssetUrl } from "../lib/utils";
 import { BeforeAfterSlider } from "./ui/BeforeAfterSlider";
 import { useT } from "../i18n/i18n";
@@ -8,9 +9,10 @@ import type { ProcessingResult } from "../types";
 interface ResultsBannerProps {
   results: ProcessingResult[];
   total: number;
+  outputDir?: string;
 }
 
-export const ResultsBanner = memo(function ResultsBanner({ results, total }: ResultsBannerProps) {
+export const ResultsBanner = memo(function ResultsBanner({ results, total, outputDir }: ResultsBannerProps) {
   const { t } = useT();
   const [previewResult, setPreviewResult] = useState<ProcessingResult | null>(null);
 
@@ -32,17 +34,28 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total }: Res
   return (
     <>
       <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-3 space-y-3">
-        <div className="flex items-center gap-2">
-          {failed === 0 ? (
-            <CheckCircle className="h-4 w-4 text-success" />
-          ) : succeeded === 0 ? (
-            <XCircle className="h-4 w-4 text-error" />
-          ) : (
-            <AlertCircle className="h-4 w-4 text-warning" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {failed === 0 ? (
+              <CheckCircle className="h-4 w-4 text-success" />
+            ) : succeeded === 0 ? (
+              <XCircle className="h-4 w-4 text-error" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-warning" />
+            )}
+            <span className="text-xs font-medium text-text-primary">
+              {t("result.processed", { succeeded, total })}
+            </span>
+          </div>
+          {outputDir && (
+            <button
+              onClick={() => revealItemInDir(outputDir)}
+              className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-text-secondary hover:bg-surface hover:text-text-primary transition-colors cursor-pointer"
+            >
+              <FolderOpen className="h-3 w-3" />
+              {t("label.open_output_folder")}
+            </button>
           )}
-          <span className="text-xs font-medium text-text-primary">
-            {t("result.processed", { succeeded, total })}
-          </span>
         </div>
 
         {succeeded > 0 && sizeStats.totalInput > 0 && (

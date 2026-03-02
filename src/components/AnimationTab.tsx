@@ -17,7 +17,7 @@ interface AnimationResult {
 
 export function AnimationTab() {
   const { t } = useT();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { getOutputDir } = useWorkspace();
   const [frames, setFrames] = useState<string[]>([]);
   const [delayMs, setDelayMs] = useState(100);
   const [loopCount, setLoopCount] = useState(0);
@@ -74,10 +74,8 @@ export function AnimationTab() {
 
       if (res.frame_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.animation_success", { frames: res.frame_count }));
-        await openOutputDir("animation");
       } else if (res.frame_count > 0) {
         toast.warning(t("toast.partial", { completed: res.frame_count, total: frames.length }));
-        await openOutputDir("animation");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -86,7 +84,7 @@ export function AnimationTab() {
     } finally {
       setLoading(false);
     }
-  }, [frames, delayMs, loopCount, getOutputDir, openOutputDir, t]);
+  }, [frames, delayMs, loopCount, getOutputDir, t]);
 
   const getFilename = (path: string) => {
     const parts = path.replace(/\\/g, "/").split("/");

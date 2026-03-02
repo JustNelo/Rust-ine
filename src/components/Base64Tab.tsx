@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Code, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useT } from "../i18n/i18n";
@@ -11,7 +11,7 @@ import { safeAssetUrl } from "../lib/utils";
 
 export function Base64Tab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const [loading, setLoading] = useState(false);
   const [dataUri, setDataUri] = useState("");
   const [copied, setCopied] = useState(false);
@@ -71,7 +71,7 @@ export function Base64Tab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       {/* Image preview */}
       {files.length > 0 && (

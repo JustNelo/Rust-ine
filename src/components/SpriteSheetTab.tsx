@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Loader2, LayoutGrid, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
@@ -19,8 +19,8 @@ interface SpriteSheetResult {
 
 export function SpriteSheetTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
+  const { getOutputDir } = useWorkspace();
   const [columns, setColumns] = useState(4);
   const [padding, setPadding] = useState(2);
   const [loading, setLoading] = useState(false);
@@ -62,10 +62,8 @@ export function SpriteSheetTab() {
 
       if (res.sprite_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.spritesheet_success", { n: res.sprite_count }));
-        await openOutputDir("spritesheet");
       } else if (res.sprite_count > 0) {
         toast.warning(t("toast.partial", { completed: res.sprite_count, total: files.length }));
-        await openOutputDir("spritesheet");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -74,7 +72,7 @@ export function SpriteSheetTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, columns, padding, getOutputDir, openOutputDir, t]);
+  }, [files, columns, padding, getOutputDir, t]);
 
   return (
     <div className="space-y-5">
@@ -85,7 +83,7 @@ export function SpriteSheetTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">

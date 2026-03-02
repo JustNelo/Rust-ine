@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Loader2, Globe, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
@@ -16,8 +16,8 @@ interface FaviconResult {
 
 export function FaviconTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
+  const { getOutputDir } = useWorkspace();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FaviconResult | null>(null);
 
@@ -55,10 +55,8 @@ export function FaviconTab() {
 
       if (res.generated_files.length > 0 && res.errors.length === 0) {
         toast.success(t("toast.favicon_success"));
-        await openOutputDir("favicon");
       } else if (res.generated_files.length > 0) {
         toast.warning(t("toast.partial", { completed: res.generated_files.length, total: res.generated_files.length + res.errors.length }));
-        await openOutputDir("favicon");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -67,7 +65,7 @@ export function FaviconTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, getOutputDir, openOutputDir, t]);
+  }, [files, getOutputDir, t]);
 
   return (
     <div className="space-y-5">
@@ -78,7 +76,7 @@ export function FaviconTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <button
         onClick={handleGenerate}

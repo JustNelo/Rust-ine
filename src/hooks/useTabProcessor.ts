@@ -21,9 +21,10 @@ interface ProcessCallOptions {
 export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessorOptions) {
   const { t } = useT();
   const fileSelection = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { getOutputDir } = useWorkspace();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [lastOutputDir, setLastOutputDir] = useState<string>("");
 
   const handleFilesSelected = useCallback(
     (paths: string[]) => {
@@ -52,6 +53,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
 
       setLoading(true);
       setResults([]);
+      setLastOutputDir(outputDir);
 
       try {
         const result = await invoke<BatchProgress>(command, {
@@ -64,7 +66,6 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
 
         if (result.completed === result.total) {
           toast.success(successMessage);
-          await openOutputDir(tabId);
         } else if (result.completed > 0) {
           toast.warning(
             t("toast.partial", {
@@ -72,7 +73,6 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
               total: result.total,
             })
           );
-          await openOutputDir(tabId);
         } else {
           toast.error(t("toast.all_failed"));
         }
@@ -82,7 +82,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
         setLoading(false);
       }
     },
-    [fileSelection.files, command, tabId, getOutputDir, openOutputDir, acceptToast, t]
+    [fileSelection.files, command, tabId, getOutputDir, acceptToast, t]
   );
 
   return {
@@ -91,11 +91,13 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
     removeFile: fileSelection.removeFile,
     clearFiles: fileSelection.clearFiles,
     setFiles: fileSelection.setFiles,
+    reorderFiles: fileSelection.reorderFiles,
     handleFilesSelected,
     handleClearFiles,
     loading,
     results,
     setResults,
+    lastOutputDir,
     process,
   };
 }

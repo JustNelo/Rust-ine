@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { PenLine, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
@@ -24,8 +24,8 @@ const TOKENS = ["{name}", "{index}", "{date}", "{ext}"];
 
 export function BulkRenameTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
+  const { getOutputDir } = useWorkspace();
   const [pattern, setPattern] = useState("{name}_{index}");
   const [startIndex, setStartIndex] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -92,10 +92,8 @@ export function BulkRenameTab() {
 
       if (res.renamed_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.rename_success", { n: res.renamed_count }));
-        await openOutputDir("bulk-rename");
       } else if (res.renamed_count > 0) {
         toast.warning(t("toast.partial", { completed: res.renamed_count, total: files.length }));
-        await openOutputDir("bulk-rename");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -104,7 +102,7 @@ export function BulkRenameTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, pattern, startIndex, getOutputDir, openOutputDir, t]);
+  }, [files, pattern, startIndex, getOutputDir, t]);
 
   return (
     <div className="space-y-5">
@@ -115,7 +113,7 @@ export function BulkRenameTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       {/* Pattern input */}
       <div className="space-y-2">

@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Crop, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
@@ -34,7 +34,7 @@ const HANDLE_CURSORS: Record<string, string> = {
   move: "move",
 };
 
-const HANDLE_SIZE = 8; // px — hit target for edge/corner handles
+const HANDLE_SIZE = 14; // px — hit target for edge/corner handles
 
 /** Default crop: 80 % of the image, centred */
 const DEFAULT_RECT: Rect = { x: 0.1, y: 0.1, w: 0.8, h: 0.8 };
@@ -45,10 +45,11 @@ function clamp(v: number, lo: number, hi: number) {
 
 export function CropTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
+  const { getOutputDir } = useWorkspace();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [lastOutputDir, setLastOutputDir] = useState("");
 
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [sel, setSel] = useState<Rect>({ ...DEFAULT_RECT });
@@ -60,6 +61,10 @@ export function CropTab() {
   const [isDragging, setIsDragging] = useState(false);
 
   const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Rendered image bounds relative to the container (px)
+  const [imgBounds, setImgBounds] = useState<{ oX: number; oY: number; rW: number; rH: number } | null>(null);
 
   // ── File handlers ────────────────────────────────────────────────────
   const handleFilesSelected = useCallback(
@@ -88,30 +93,47 @@ export function CropTab() {
 
   const resetSelection = useCallback(() => setSel({ ...DEFAULT_RECT }), []);
 
-  // ── Coordinate helpers ───────────────────────────────────────────────
-  /** Rendered image bounds inside the object-contain container */
-  const getRenderedBounds = useCallback(() => {
+  // Keep rendered image bounds in sync via ResizeObserver
+  const updateImgBounds = useCallback(() => {
     const img = imgRef.current;
-    if (!img || !naturalSize) return null;
-    const r = img.getBoundingClientRect();
-    const cW = r.width;
-    const cH = r.height;
+    const container = containerRef.current;
+    if (!img || !container || !naturalSize) { setImgBounds(null); return; }
+    const cR = container.getBoundingClientRect();
+    const cW = cR.width;
+    const cH = cR.height;
     const iA = naturalSize.w / naturalSize.h;
     const cA = cW / cH;
     let rW: number, rH: number, oX: number, oY: number;
     if (iA > cA) {
-      rW = cW;
-      rH = cW / iA;
-      oX = 0;
-      oY = (cH - rH) / 2;
+      rW = cW; rH = cW / iA; oX = 0; oY = (cH - rH) / 2;
     } else {
-      rH = cH;
-      rW = cH * iA;
-      oX = (cW - rW) / 2;
-      oY = 0;
+      rH = cH; rW = cH * iA; oX = (cW - rW) / 2; oY = 0;
     }
-    return { left: r.left + oX, top: r.top + oY, width: rW, height: rH };
+    setImgBounds({ oX, oY, rW, rH });
   }, [naturalSize]);
+
+  useEffect(() => {
+    updateImgBounds();
+    const container = containerRef.current;
+    if (!container) return;
+    const ro = new ResizeObserver(() => updateImgBounds());
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [updateImgBounds]);
+
+  // ── Coordinate helpers ───────────────────────────────────────────────
+  /** Rendered image bounds in screen coordinates (for pointer events) */
+  const getRenderedBounds = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || !imgBounds) return null;
+    const cR = container.getBoundingClientRect();
+    return {
+      left: cR.left + imgBounds.oX,
+      top: cR.top + imgBounds.oY,
+      width: imgBounds.rW,
+      height: imgBounds.rH,
+    };
+  }, [imgBounds]);
 
   /** Determine which handle (if any) sits under the pointer */
   const hitTest = useCallback(
@@ -249,6 +271,7 @@ export function CropTab() {
 
     setLoading(true);
     setResults([]);
+    setLastOutputDir(outputDir);
 
     try {
       const result = await invoke<BatchProgress>("crop_images", {
@@ -266,12 +289,10 @@ export function CropTab() {
 
       if (result.completed === result.total) {
         toast.success(t("toast.crop_success", { n: result.completed }));
-        await openOutputDir("crop");
       } else if (result.completed > 0) {
         toast.warning(
           t("toast.partial", { completed: result.completed, total: result.total }),
         );
-        await openOutputDir("crop");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -280,7 +301,7 @@ export function CropTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, pixelRect, getOutputDir, openOutputDir, t]);
+  }, [files, pixelRect, getOutputDir, t]);
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
@@ -292,7 +313,7 @@ export function CropTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       {/* Interactive crop canvas */}
       {files.length > 0 && (
@@ -311,6 +332,7 @@ export function CropTab() {
           </div>
 
           <div
+            ref={containerRef}
             className="relative rounded-xl overflow-hidden border border-glass-border bg-black select-none touch-none"
             style={{ cursor }}
             onPointerDown={handlePointerDown}
@@ -322,19 +344,19 @@ export function CropTab() {
               src={safeAssetUrl(files[0])}
               alt=""
               onLoad={handleImageLoad}
-              className="w-full max-h-72 object-contain pointer-events-none"
+              className="w-full max-h-112 object-contain pointer-events-none"
               draggable={false}
             />
 
-            {/* Dark overlay with cut-out */}
-            {sel.w > 0 && sel.h > 0 && (
+            {/* Dark overlay with cut-out — positioned in px relative to rendered image */}
+            {sel.w > 0 && sel.h > 0 && imgBounds && (
               <div
                 className="absolute border-2 border-accent/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] pointer-events-none"
                 style={{
-                  left: `${sel.x * 100}%`,
-                  top: `${sel.y * 100}%`,
-                  width: `${sel.w * 100}%`,
-                  height: `${sel.h * 100}%`,
+                  left: imgBounds.oX + sel.x * imgBounds.rW,
+                  top: imgBounds.oY + sel.y * imgBounds.rH,
+                  width: sel.w * imgBounds.rW,
+                  height: sel.h * imgBounds.rH,
                 }}
               >
                 {/* Rule-of-thirds grid lines */}
@@ -347,15 +369,15 @@ export function CropTab() {
 
                 {/* 8 resize handles */}
                 {/* Corners */}
-                <div className="absolute -top-1 -left-1 h-2.5 w-2.5 border-2 border-white bg-accent rounded-sm" />
-                <div className="absolute -top-1 -right-1 h-2.5 w-2.5 border-2 border-white bg-accent rounded-sm" />
-                <div className="absolute -bottom-1 -left-1 h-2.5 w-2.5 border-2 border-white bg-accent rounded-sm" />
-                <div className="absolute -bottom-1 -right-1 h-2.5 w-2.5 border-2 border-white bg-accent rounded-sm" />
+                <div className="absolute -top-1.5 -left-1.5 h-3 w-3 border-2 border-white bg-accent rounded-sm" />
+                <div className="absolute -top-1.5 -right-1.5 h-3 w-3 border-2 border-white bg-accent rounded-sm" />
+                <div className="absolute -bottom-1.5 -left-1.5 h-3 w-3 border-2 border-white bg-accent rounded-sm" />
+                <div className="absolute -bottom-1.5 -right-1.5 h-3 w-3 border-2 border-white bg-accent rounded-sm" />
                 {/* Edge midpoints */}
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 h-1.5 w-4 bg-accent rounded-full" />
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1.5 w-4 bg-accent rounded-full" />
-                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-1.5 h-4 bg-accent rounded-full" />
-                <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-1.5 h-4 bg-accent rounded-full" />
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-2 w-5 bg-accent rounded-full" />
+                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-2 w-5 bg-accent rounded-full" />
+                <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2 h-5 bg-accent rounded-full" />
+                <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2 h-5 bg-accent rounded-full" />
               </div>
             )}
 
@@ -367,11 +389,44 @@ export function CropTab() {
             )}
           </div>
 
-          {naturalSize && (
-            <div className="text-[10px] text-text-muted text-right">
-              {naturalSize.w} × {naturalSize.h}px
-            </div>
-          )}
+          {/* Numeric crop inputs + original size */}
+          <div className="flex items-center justify-between gap-4">
+            {pixelRect && naturalSize && (
+              <div className="flex items-center gap-2">
+                {(["x", "y", "w", "h"] as const).map((field) => {
+                  const labelMap = { x: "X", y: "Y", w: t("label.width"), h: t("label.height") };
+                  const maxMap = { x: naturalSize.w, y: naturalSize.h, w: naturalSize.w, h: naturalSize.h };
+                  return (
+                    <div key={field} className="flex items-center gap-1">
+                      <label className="text-[10px] text-text-muted">{labelMap[field]}</label>
+                      <input
+                        type="number"
+                        min={field === "w" || field === "h" ? 1 : 0}
+                        max={maxMap[field]}
+                        value={pixelRect[field]}
+                        onChange={(e) => {
+                          const v = Math.max(0, Math.min(Number(e.target.value) || 0, maxMap[field]));
+                          setSel((prev) => {
+                            if (field === "x") return { ...prev, x: v / naturalSize.w };
+                            if (field === "y") return { ...prev, y: v / naturalSize.h };
+                            if (field === "w") return { ...prev, w: Math.max(1 / naturalSize.w, v / naturalSize.w) };
+                            return { ...prev, h: Math.max(1 / naturalSize.h, v / naturalSize.h) };
+                          });
+                        }}
+                        className="w-16 rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] text-text-primary text-center focus:border-border-hover focus:outline-none"
+                      />
+                    </div>
+                  );
+                })}
+                <span className="text-[10px] text-text-muted">px</span>
+              </div>
+            )}
+            {naturalSize && (
+              <div className="text-[10px] text-text-muted">
+                {naturalSize.w} × {naturalSize.h}px
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -384,7 +439,7 @@ export function CropTab() {
         icon={<Crop className="h-4 w-4" />}
       />
 
-      <ResultsBanner results={results} total={files.length} />
+      <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />
     </div>
   );
 }

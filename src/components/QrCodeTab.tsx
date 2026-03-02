@@ -17,7 +17,7 @@ const SIZE_OPTIONS = [256, 512, 1024, 2048];
 
 export function QrCodeTab() {
   const { t } = useT();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { getOutputDir } = useWorkspace();
   const [text, setText] = useState("");
   const [size, setSize] = useState(512);
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,6 @@ export function QrCodeTab() {
 
       if (res.output_path && res.errors.length === 0) {
         toast.success(t("toast.qr_success"));
-        await openOutputDir("qrcode");
       } else {
         toast.error(res.errors[0] || t("toast.all_failed"));
       }
@@ -57,7 +56,7 @@ export function QrCodeTab() {
     } finally {
       setLoading(false);
     }
-  }, [text, size, getOutputDir, openOutputDir, t]);
+  }, [text, size, getOutputDir, t]);
 
   return (
     <div className="space-y-5">

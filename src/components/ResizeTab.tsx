@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Scaling } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
@@ -30,14 +30,15 @@ const PRESETS: { labelKey: string; w: number; h: number }[] = [
 
 export function ResizeTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
+  const { getOutputDir } = useWorkspace();
   const [mode, setMode] = useState<ResizeMode>("percentage");
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(600);
   const [percentage, setPercentage] = useState(50);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [lastOutputDir, setLastOutputDir] = useState("");
 
   const handleFilesSelected = useCallback(
     (paths: string[]) => {
@@ -65,6 +66,7 @@ export function ResizeTab() {
 
     setLoading(true);
     setResults([]);
+    setLastOutputDir(outputDir);
 
     try {
       const result = await invoke<BatchProgress>("resize_images", {
@@ -80,10 +82,8 @@ export function ResizeTab() {
 
       if (result.completed === result.total) {
         toast.success(t("toast.resize_success", { n: result.completed }));
-        await openOutputDir("resize");
       } else if (result.completed > 0) {
         toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
-        await openOutputDir("resize");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -92,7 +92,7 @@ export function ResizeTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, mode, width, height, percentage, getOutputDir, openOutputDir]);
+  }, [files, mode, width, height, percentage, getOutputDir, t]);
 
   return (
     <div className="space-y-5">
@@ -103,7 +103,7 @@ export function ResizeTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-3">
         <div className="flex gap-2 flex-wrap">
@@ -193,7 +193,7 @@ export function ResizeTab() {
         icon={<Scaling className="h-4 w-4" />}
       />
 
-      <ResultsBanner results={results} total={files.length} />
+      <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />
     </div>
   );
 }

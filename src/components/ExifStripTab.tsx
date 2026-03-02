@@ -13,7 +13,7 @@ import {
 import { ActionButton } from "./ui/ActionButton";
 import { formatSize } from "../lib/utils";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ResultsBanner } from "./ResultsBanner";
 import { useTabProcessor } from "../hooks/useTabProcessor";
 import { useT } from "../i18n/i18n";
@@ -179,8 +179,8 @@ function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
 export function ExifStripTab() {
   const { t } = useT();
   const {
-    files, removeFile, handleFilesSelected, handleClearFiles: baseClear,
-    loading, results, process,
+    files, removeFile, reorderFiles, handleFilesSelected, handleClearFiles: baseClear,
+    loading, results, lastOutputDir, process,
   } = useTabProcessor({ tabId: "strip", command: "strip_metadata" });
   const [metadataList, setMetadataList] = useState<ImageMetadata[]>([]);
   const [loadingMeta, setLoadingMeta] = useState(false);
@@ -247,7 +247,7 @@ export function ExifStripTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       {files.length > 0 && (
         <div className="space-y-2">
@@ -299,7 +299,7 @@ export function ExifStripTab() {
         icon={<ShieldOff className="h-4 w-4" />}
       />
 
-      <ResultsBanner results={results} total={files.length} />
+      <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />
     </div>
   );
 }

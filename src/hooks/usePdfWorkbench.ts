@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { safeAssetUrl } from "../lib/utils";
 import { useT } from "../i18n/i18n";
 import type {
@@ -448,7 +447,6 @@ export function usePdfWorkbench() {
           if (!needsPostProcessing) {
             setResult({ type: "build", data: buildRes, outputDir: actionDir });
             toast.success(t("toast.build_success", { n: buildRes.page_count }));
-            await revealItemInDir(actionDir);
             setLoading(false);
             setPipelineStep(null);
             return;
@@ -478,7 +476,6 @@ export function usePdfWorkbench() {
           setResult({ type: "split", data: res, outputDir: actionDir });
           if (res.output_files.length > 0) {
             toast.success(t("toast.pdf_split_success", { n: res.output_files.length }));
-            await revealItemInDir(actionDir);
           } else {
             toast.error(t("toast.all_failed"));
           }
@@ -514,7 +511,6 @@ export function usePdfWorkbench() {
           });
           if (res.exported_count > 0) {
             toast.success(t("toast.pdf_to_images_success", { n: res.exported_count }));
-            await revealItemInDir(actionDir);
           } else {
             toast.error(t("toast.all_failed"));
           }
@@ -548,7 +544,6 @@ export function usePdfWorkbench() {
           });
           if (res.extracted_count > 0) {
             toast.success(t("toast.extract_success", { n: res.extracted_count }));
-            await revealItemInDir(actionDir);
           } else if (res.errors.length > 0) {
             toast.error(t("toast.all_failed"));
           } else {
@@ -629,10 +624,8 @@ export function usePdfWorkbench() {
 
         if (pipelineErrors.length === 0) {
           toast.success(t("result.pipeline_complete", { steps: pipelineSteps.join(" → ") }));
-          await revealItemInDir(actionDir);
         } else {
           toast.warning(t("toast.partial", { completed: pipelineSteps.length, total: pipelineSteps.length + pipelineErrors.length }));
-          await revealItemInDir(actionDir);
         }
       } catch (err) {
         toast.error(`${err}`);
@@ -685,7 +678,6 @@ export function usePdfWorkbench() {
 
         if (res.success) {
           toast.success(t("toast.pdf_unlock_success"));
-          await revealItemInDir(unlockDir);
         } else {
           toast.error(res.errors[0] || t("toast.all_failed"));
         }

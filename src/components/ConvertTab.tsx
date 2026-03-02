@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { ArrowRightLeft } from "lucide-react";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { cn } from "../lib/utils";
@@ -30,8 +30,8 @@ const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
 export function ConvertTab() {
   const { t } = useT();
   const {
-    files, removeFile, handleFilesSelected, handleClearFiles,
-    loading, results, process,
+    files, removeFile, reorderFiles, handleFilesSelected, handleClearFiles,
+    loading, results, lastOutputDir, process,
   } = useTabProcessor({ tabId: "convert", command: "convert_images" });
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png");
 
@@ -52,8 +52,9 @@ export function ConvertTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList
+      <ImageGrid
         files={files}
+        onReorder={reorderFiles}
         onRemove={removeFile}
         onClear={handleClearFiles}
       />
@@ -109,7 +110,7 @@ export function ConvertTab() {
         icon={<ArrowRightLeft className="h-4 w-4" />}
       />
 
-      <ResultsBanner results={results} total={files.length} />
+      <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />
     </div>
   );
 }

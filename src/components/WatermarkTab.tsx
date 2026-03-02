@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Stamp } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
@@ -24,14 +24,15 @@ const POSITION_KEYS: { value: WatermarkPosition; labelKey: string }[] = [
 
 export function WatermarkTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
+  const { getOutputDir } = useWorkspace();
   const [text, setText] = useState("");
   const [position, setPosition] = useState<WatermarkPosition>("center");
   const [opacity, setOpacity] = useState(30);
   const [fontSize, setFontSize] = useState(48);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [lastOutputDir, setLastOutputDir] = useState("");
 
   const handleFilesSelected = useCallback(
     (paths: string[]) => {
@@ -63,6 +64,7 @@ export function WatermarkTab() {
 
     setLoading(true);
     setResults([]);
+    setLastOutputDir(outputDir);
 
     try {
       const result = await invoke<BatchProgress>("add_watermark", {
@@ -78,10 +80,8 @@ export function WatermarkTab() {
 
       if (result.completed === result.total) {
         toast.success(t("toast.watermark_success", { n: result.completed }));
-        await openOutputDir("watermark");
       } else if (result.completed > 0) {
         toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
-        await openOutputDir("watermark");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -90,7 +90,7 @@ export function WatermarkTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, text, position, opacity, fontSize, getOutputDir, openOutputDir]);
+  }, [files, text, position, opacity, fontSize, getOutputDir, t]);
 
   return (
     <div className="space-y-5">
@@ -101,7 +101,7 @@ export function WatermarkTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       {/* Live watermark preview */}
       {files.length > 0 && text.trim() && (
@@ -209,7 +209,7 @@ export function WatermarkTab() {
         icon={<Stamp className="h-4 w-4" />}
       />
 
-      <ResultsBanner results={results} total={files.length} />
+      <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />
     </div>
   );
 }

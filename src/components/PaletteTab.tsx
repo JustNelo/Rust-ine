@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Loader2, Pipette, Copy, Check, FileJson, FileCode } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useT } from "../i18n/i18n";
 
@@ -22,7 +22,7 @@ interface PaletteResult {
 
 export function PaletteTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const [numColors, setNumColors] = useState(6);
   const [loading, setLoading] = useState(false);
   const [palette, setPalette] = useState<ColorInfo[]>([]);
@@ -108,7 +108,7 @@ export function PaletteTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-2">
         <label className="text-xs font-medium text-text-secondary">

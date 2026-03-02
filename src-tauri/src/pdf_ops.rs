@@ -273,7 +273,13 @@ pub struct PdfCompressResult {
 }
 
 /// Compress a PDF by re-encoding embedded images at lower JPEG quality.
-/// Iterates over all stream objects, detects images, re-encodes them.
+///
+/// Handles two main stream types:
+/// - **DCTDecode** (already JPEG): decode → re-encode at target quality
+/// - **FlateDecode** (raw pixels, deflate-compressed): decompress → reconstruct
+///   from raw pixel data using Width/Height/ColorSpace → encode as JPEG
+///
+/// Size guard: if the output is larger than the original, copies the original.
 pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompressResult {
     let mut result = PdfCompressResult {
         output_path: String::new(),
@@ -288,7 +294,6 @@ pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompres
         return result;
     }
 
-    // Get original file size
     result.original_size = std::fs::metadata(pdf_path).map(|m| m.len()).unwrap_or(0);
 
     let mut doc = match LopdfDocument::load(pdf_path) {
@@ -299,93 +304,116 @@ pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompres
         }
     };
 
-    // Collect object IDs that are image streams
     let object_ids: Vec<lopdf::ObjectId> = doc.objects.keys().copied().collect();
+    let mut images_replaced: usize = 0;
 
     for obj_id in object_ids {
-        let is_image_stream = {
-            if let Ok(stream) = doc.get_object(obj_id).and_then(|o| o.as_stream()) {
-                let subtype = stream
-                    .dict
-                    .get(b"Subtype")
-                    .ok()
-                    .and_then(|v| v.as_name().ok())
-                    .map(|n| std::str::from_utf8(n).unwrap_or("").to_string());
-                subtype.as_deref() == Some("Image")
-            } else {
-                false
-            }
-        };
+        // --- Phase 1: extract image metadata + decompressed content (clone) ---
+        let image_info = {
+            let stream = match doc.get_object(obj_id).and_then(|o| o.as_stream()) {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
 
-        if !is_image_stream {
-            continue;
-        }
-
-        // Try to decode image data from the stream and re-encode as JPEG
-        let recompressed = {
-            if let Ok(stream) = doc.get_object(obj_id).and_then(|o| o.as_stream()) {
-                let width = stream
-                    .dict
-                    .get(b"Width")
-                    .ok()
-                    .and_then(|v| v.as_i64().ok())
-                    .unwrap_or(0) as u32;
-                let height = stream
-                    .dict
-                    .get(b"Height")
-                    .ok()
-                    .and_then(|v| v.as_i64().ok())
-                    .unwrap_or(0) as u32;
-
-                if width == 0 || height == 0 {
-                    None
-                } else {
-                    // Try to decode the raw content as an image
-                    let content = &stream.content;
-                    match image::load_from_memory(content) {
-                        Ok(img) => {
-                            let mut jpeg_buf = std::io::Cursor::new(Vec::new());
-                            let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(
-                                &mut jpeg_buf,
-                                quality,
-                            );
-                            match img.write_with_encoder(encoder) {
-                                Ok(_) => Some((jpeg_buf.into_inner(), width, height)),
-                                Err(_) => None,
-                            }
-                        }
-                        Err(_) => None,
-                    }
-                }
-            } else {
-                None
-            }
-        };
-
-        if let Some((jpeg_data, width, height)) = recompressed {
-            // Only replace if compressed data is smaller
-            let original_len = doc
-                .get_object(obj_id)
+            let is_image = stream
+                .dict
+                .get(b"Subtype")
                 .ok()
-                .and_then(|o| o.as_stream().ok())
-                .map(|s| s.content.len())
-                .unwrap_or(0);
+                .and_then(|v| v.as_name().ok())
+                .and_then(|n| std::str::from_utf8(n).ok())
+                == Some("Image");
+            if !is_image {
+                continue;
+            }
 
-            if jpeg_data.len() < original_len {
-                let new_stream = lopdf::Stream::new(
-                    lopdf::Dictionary::from_iter(vec![
-                        ("Type", Object::Name(b"XObject".to_vec())),
-                        ("Subtype", Object::Name(b"Image".to_vec())),
-                        ("Width", Object::Integer(width as i64)),
-                        ("Height", Object::Integer(height as i64)),
-                        ("ColorSpace", Object::Name(b"DeviceRGB".to_vec())),
-                        ("BitsPerComponent", Object::Integer(8)),
-                        ("Filter", Object::Name(b"DCTDecode".to_vec())),
-                        ("Length", Object::Integer(jpeg_data.len() as i64)),
-                    ]),
-                    jpeg_data,
-                );
-                doc.objects.insert(obj_id, Object::Stream(new_stream));
+            let width = stream
+                .dict
+                .get(b"Width")
+                .ok()
+                .and_then(|v| v.as_i64().ok())
+                .unwrap_or(0) as u32;
+            let height = stream
+                .dict
+                .get(b"Height")
+                .ok()
+                .and_then(|v| v.as_i64().ok())
+                .unwrap_or(0) as u32;
+            if width == 0 || height == 0 {
+                continue;
+            }
+
+            let colorspace = stream
+                .dict
+                .get(b"ColorSpace")
+                .ok()
+                .and_then(|v| v.as_name().ok())
+                .and_then(|n| std::str::from_utf8(n).ok())
+                .unwrap_or("")
+                .to_string();
+
+            let filter = stream
+                .dict
+                .get(b"Filter")
+                .ok()
+                .and_then(|v| v.as_name().ok())
+                .and_then(|n| std::str::from_utf8(n).ok())
+                .unwrap_or("")
+                .to_string();
+
+            let is_dct = filter == "DCTDecode";
+            let original_len = stream.content.len();
+
+            // Clone + decompress non-JPEG streams
+            let mut cloned = stream.clone();
+            if !is_dct {
+                let _ = cloned.decompress();
+            }
+
+            Some((width, height, colorspace, is_dct, cloned.content, original_len))
+        }; // immutable borrow of `doc` ends here
+
+        let (width, height, colorspace, is_dct, content, original_len) = match image_info {
+            Some(info) => info,
+            None => continue,
+        };
+
+        // --- Phase 2: reconstruct a DynamicImage ---
+        let img: Option<image::DynamicImage> = if is_dct {
+            image::load_from_memory(&content).ok()
+        } else {
+            match colorspace.as_str() {
+                "DeviceRGB" => image::RgbImage::from_raw(width, height, content.clone())
+                    .map(image::DynamicImage::ImageRgb8),
+                "DeviceGray" => image::GrayImage::from_raw(width, height, content.clone())
+                    .map(image::DynamicImage::ImageLuma8),
+                _ => image::load_from_memory(&content).ok(),
+            }
+        };
+
+        // --- Phase 3: re-encode as JPEG and replace if smaller ---
+        if let Some(img) = img {
+            let mut jpeg_buf = std::io::Cursor::new(Vec::new());
+            let encoder =
+                image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg_buf, quality);
+            if img.write_with_encoder(encoder).is_ok() {
+                let jpeg_data = jpeg_buf.into_inner();
+                if jpeg_data.len() < original_len {
+                    let new_stream = lopdf::Stream::new(
+                        lopdf::Dictionary::from_iter(vec![
+                            ("Type", Object::Name(b"XObject".to_vec())),
+                            ("Subtype", Object::Name(b"Image".to_vec())),
+                            ("Width", Object::Integer(width as i64)),
+                            ("Height", Object::Integer(height as i64)),
+                            ("ColorSpace", Object::Name(b"DeviceRGB".to_vec())),
+                            ("BitsPerComponent", Object::Integer(8)),
+                            ("Filter", Object::Name(b"DCTDecode".to_vec())),
+                            ("Length", Object::Integer(jpeg_data.len() as i64)),
+                        ]),
+                        jpeg_data,
+                    );
+                    doc.objects.insert(obj_id, Object::Stream(new_stream));
+                    images_replaced += 1;
+                }
             }
         }
     }
@@ -393,12 +421,32 @@ pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompres
     let pdf_stem = file_stem(pdf_path);
     let output_path = out_dir.join(format!("{}-compressed.pdf", pdf_stem));
 
+    // If no images were replaced, just copy the original (nothing to gain)
+    if images_replaced == 0 {
+        match std::fs::copy(pdf_path, &output_path) {
+            Ok(_) => {
+                result.output_path = output_path.to_string_lossy().to_string();
+                result.compressed_size = result.original_size;
+            }
+            Err(e) => result.errors.push(format!("Cannot copy PDF: {}", e)),
+        }
+        return result;
+    }
+
     match doc.save(&output_path) {
         Ok(_) => {
-            result.output_path = output_path.to_string_lossy().to_string();
-            result.compressed_size = std::fs::metadata(&output_path)
+            let compressed_size = std::fs::metadata(&output_path)
                 .map(|m| m.len())
                 .unwrap_or(0);
+
+            // Size guard: if compressed is bigger, replace with original copy
+            if compressed_size >= result.original_size {
+                let _ = std::fs::copy(pdf_path, &output_path);
+                result.compressed_size = result.original_size;
+            } else {
+                result.compressed_size = compressed_size;
+            }
+            result.output_path = output_path.to_string_lossy().to_string();
         }
         Err(e) => {
             result
@@ -541,7 +589,6 @@ fn encrypt_dictionary(dict: &mut lopdf::Dictionary, obj_key: &[u8]) {
 /// All indirect-object strings and streams are RC4-encrypted with per-object keys
 /// so that readers can actually decrypt and display the content.
 pub fn protect_pdf(
-    _pdfium_path: &str,
     pdf_path: &str,
     password: &str,
     output_dir: &str,

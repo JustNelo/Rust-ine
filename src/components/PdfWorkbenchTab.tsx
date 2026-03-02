@@ -6,7 +6,6 @@ import {
   Scissors,
   Image,
   FileDown,
-  FileArchive,
   Lock,
   Unlock,
   Plus,
@@ -14,7 +13,12 @@ import {
   Upload,
   CheckCircle,
   XCircle,
+  Zap,
+  Shield,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn, formatSize } from "../lib/utils";
 import { PdfPageGrid } from "./PdfPageGrid";
 import { ActionButton } from "./ui/ActionButton";
@@ -23,13 +27,13 @@ import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
 import {
   usePdfWorkbench,
-  type PdfToolAction,
-  type ProtectMode,
+  type PrimaryAction,
   type ExportFormat,
   type ExportDpi,
+  type PostProcessing,
+  type PipelineStep,
   type WorkbenchResult,
 } from "../hooks/usePdfWorkbench";
-import type { MergePdfOptions } from "../types";
 
 const ACCEPTED_EXTENSIONS = new Set([
   "png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf",
@@ -49,21 +53,33 @@ function getPasswordStrength(pw: string): { level: number; label: string; color:
   return { level: 3, label: "Strong", color: "bg-green-500" };
 }
 
-// --- Action definitions ---
+// --- Primary action definitions ---
 interface ActionDef {
-  id: PdfToolAction;
+  id: PrimaryAction;
   labelKey: string;
   icon: typeof FileUp;
 }
 
-const ACTIONS: ActionDef[] = [
+const PRIMARY_ACTIONS: ActionDef[] = [
   { id: "build", labelKey: "pdf_tool.build", icon: FileUp },
   { id: "split", labelKey: "pdf_tool.split", icon: Scissors },
   { id: "export-images", labelKey: "pdf_tool.export_images", icon: Image },
   { id: "extract-images", labelKey: "pdf_tool.extract_images", icon: FileDown },
-  { id: "compress", labelKey: "pdf_tool.compress", icon: FileArchive },
-  { id: "protect", labelKey: "pdf_tool.protect", icon: Lock },
 ];
+
+// Actions that output PDF (support post-processing)
+const PDF_OUTPUT_ACTIONS = new Set<PrimaryAction>(["build"]);
+
+// --- Pipeline step labels ---
+const PIPELINE_STEP_LABELS: Record<PipelineStep, string> = {
+  materialize: "status.materializing",
+  build: "status.building",
+  split: "status.splitting",
+  "export-images": "status.exporting_pages",
+  "extract-images": "status.extracting",
+  compress: "status.compressing_pdf",
+  protect: "status.protecting_pdf",
+};
 
 // --- Main Component ---
 
@@ -75,19 +91,21 @@ export function PdfWorkbenchTab() {
     loading,
     loadingThumbnails,
     result,
+    gridModified,
+    pipelineStep,
     addFiles,
     removePage,
     reorderPages,
     clearAll,
-    buildPdf,
-    splitPdf,
-    exportToImages,
-    extractImages,
-    compressPdf,
-    protectPdf,
+    executePipeline,
+    unlockPdf,
   } = usePdfWorkbench();
 
-  const [activeTool, setActiveTool] = useState<PdfToolAction>("build");
+  // Mode: "workbench" (grid + actions) or "unlock" (standalone)
+  const [mode, setMode] = useState<"workbench" | "unlock">("workbench");
+
+  // Primary action
+  const [activeTool, setActiveTool] = useState<PrimaryAction>("build");
 
   // Build options
   const [outputName, setOutputName] = useState("document.pdf");
@@ -99,13 +117,19 @@ export function PdfWorkbenchTab() {
   const [exportFormat, setExportFormat] = useState<ExportFormat>("png");
   const [exportDpi, setExportDpi] = useState<ExportDpi>(150);
 
-  // Compress options
-  const [compressQuality, setCompressQuality] = useState(60);
+  // Post-processing toggles
+  const [ppCompress, setPpCompress] = useState(false);
+  const [ppCompressQuality, setPpCompressQuality] = useState(60);
+  const [ppProtect, setPpProtect] = useState(false);
+  const [ppPassword, setPpPassword] = useState("");
+  const ppPasswordStrength = useMemo(() => getPasswordStrength(ppPassword), [ppPassword]);
 
-  // Protect options
-  const [protectMode, setProtectMode] = useState<ProtectMode>("protect");
-  const [password, setPassword] = useState("");
-  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+  // Unlock mode state
+  const [unlockFile, setUnlockFile] = useState<string | null>(null);
+  const [unlockPassword, setUnlockPassword] = useState("");
+
+  // Show post-processing options only for PDF-output actions
+  const showPostProcessing = PDF_OUTPUT_ACTIONS.has(activeTool);
 
   // Window-level drag-drop listener
   const filterPaths = useMemo(() => {
@@ -121,11 +145,18 @@ export function PdfWorkbenchTab() {
     const unlisten = appWindow.onDragDropEvent((event) => {
       if (event.payload.type === "drop") {
         const filtered = filterPaths(event.payload.paths);
-        if (filtered.length > 0) addFiles(filtered);
+        if (filtered.length > 0) {
+          if (mode === "unlock") {
+            const pdfs = filtered.filter((p) => p.toLowerCase().endsWith(".pdf"));
+            if (pdfs.length > 0) setUnlockFile(pdfs[0]);
+          } else {
+            addFiles(filtered);
+          }
+        }
       }
     });
     return () => { unlisten.then((fn) => fn()); };
-  }, [filterPaths, addFiles]);
+  }, [filterPaths, addFiles, mode]);
 
   const handleAddMore = useCallback(async () => {
     try {
@@ -148,349 +179,500 @@ export function PdfWorkbenchTab() {
     }
   }, [addFiles]);
 
-  // --- Action handlers ---
-
-  const handleExecute = useCallback(async () => {
-    switch (activeTool) {
-      case "build": {
-        const outputDir = await getOutputDir("pdf-toolkit");
-        if (!outputDir) { return; }
-        const safeName = outputName.endsWith(".pdf") ? outputName : `${outputName}.pdf`;
-        const sep = outputDir.includes("/") ? "/" : "\\";
-        const outputPath = `${outputDir}${sep}${safeName}`;
-        const options: MergePdfOptions = {
-          page_format: "fit",
-          orientation: "portrait",
-          margin_px: 0,
-          image_quality: 90,
-          output_path: outputPath,
-        };
-        await buildPdf(options);
-        await openOutputDir("pdf-toolkit");
-        break;
-      }
-      case "split": {
-        const outputDir = await getOutputDir("pdf-toolkit");
-        if (!outputDir) { return; }
-        await splitPdf(ranges, outputDir, () => openOutputDir("pdf-toolkit"));
-        break;
-      }
-      case "export-images": {
-        const outputDir = await getOutputDir("pdf-toolkit");
-        if (!outputDir) { return; }
-        await exportToImages(exportFormat, exportDpi, outputDir, () => openOutputDir("pdf-toolkit"));
-        break;
-      }
-      case "extract-images": {
-        const outputDir = await getOutputDir("pdf-toolkit");
-        if (!outputDir) { return; }
-        await extractImages(outputDir, () => openOutputDir("pdf-toolkit"));
-        break;
-      }
-      case "compress": {
-        const outputDir = await getOutputDir("pdf-toolkit");
-        if (!outputDir) { return; }
-        await compressPdf(compressQuality, outputDir, () => openOutputDir("pdf-toolkit"));
-        break;
-      }
-      case "protect": {
-        const outputDir = await getOutputDir("pdf-toolkit");
-        if (!outputDir) { return; }
-        await protectPdf(protectMode, password, outputDir, () => openOutputDir("pdf-toolkit"));
-        break;
-      }
+  const handleSelectUnlockFile = useCallback(async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+      });
+      if (selected && typeof selected === "string") setUnlockFile(selected);
+    } catch (err) {
+      console.error("Dialog error:", err);
     }
+  }, []);
+
+  // --- Pipeline execute ---
+  const handleExecute = useCallback(async () => {
+    const outputDir = await getOutputDir("pdf-toolkit");
+    if (!outputDir) {
+      toast.error(t("toast.no_workspace"));
+      return;
+    }
+
+    const postProcessing: PostProcessing = {
+      compress: showPostProcessing && ppCompress,
+      compressQuality: ppCompressQuality,
+      protect: showPostProcessing && ppProtect,
+      protectPassword: ppPassword,
+    };
+
+    await executePipeline(
+      activeTool,
+      outputDir,
+      () => openOutputDir("pdf-toolkit"),
+      {
+        outputName,
+        ranges,
+        exportFormat,
+        exportDpi,
+      },
+      postProcessing
+    );
   }, [
     activeTool, outputName, ranges, exportFormat, exportDpi,
-    compressQuality, protectMode, password,
-    getOutputDir, openOutputDir,
-    buildPdf, splitPdf, exportToImages, extractImages, compressPdf, protectPdf,
+    ppCompress, ppCompressQuality, ppProtect, ppPassword,
+    showPostProcessing, getOutputDir, openOutputDir, executePipeline,
   ]);
 
-  // --- Disable logic per action ---
+  // --- Unlock execute ---
+  const handleUnlock = useCallback(async () => {
+    if (!unlockFile || !unlockPassword.trim()) return;
+    const outputDir = await getOutputDir("pdf-toolkit");
+    if (!outputDir) return;
+    await unlockPdf(unlockFile, unlockPassword, outputDir, () => openOutputDir("pdf-toolkit"));
+  }, [unlockFile, unlockPassword, getOutputDir, openOutputDir, unlockPdf]);
+
+  // --- Disable logic ---
   const isExecuteDisabled = useMemo(() => {
     if (loading) return true;
     if (pages.length === 0) return true;
-    if (activeTool === "protect" && !password.trim()) return true;
+    if (ppProtect && showPostProcessing && !ppPassword.trim()) return true;
     return false;
-  }, [loading, pages.length, activeTool, password]);
+  }, [loading, pages.length, ppProtect, ppPassword, showPostProcessing]);
 
   // --- Action button text ---
   const actionButtonText = useMemo(() => {
-    const map: Record<PdfToolAction, { text: string; loadingText: string }> = {
+    if (pipelineStep) {
+      return {
+        text: t(PIPELINE_STEP_LABELS[pipelineStep]),
+        loadingText: t(PIPELINE_STEP_LABELS[pipelineStep]),
+      };
+    }
+    const map: Record<PrimaryAction, { text: string; loadingText: string }> = {
       "build": { text: t("action.build_pdf"), loadingText: t("status.building") },
       "split": { text: t("action.pdf_split"), loadingText: t("status.splitting") },
       "export-images": { text: t("action.pdf_to_images"), loadingText: t("status.exporting_pages") },
       "extract-images": { text: t("action.extract"), loadingText: t("status.extracting") },
-      "compress": { text: t("action.pdf_compress"), loadingText: t("status.compressing_pdf") },
-      "protect": {
-        text: protectMode === "protect" ? t("action.protect_pdf") : t("action.unlock_pdf"),
-        loadingText: protectMode === "protect" ? t("status.protecting_pdf") : t("status.unlocking_pdf"),
-      },
     };
     return map[activeTool];
-  }, [activeTool, protectMode, t]);
+  }, [activeTool, pipelineStep, t]);
 
   // --- Action icon ---
   const actionIcon = useMemo(() => {
-    const map: Record<PdfToolAction, React.ReactNode> = {
+    const map: Record<PrimaryAction, React.ReactNode> = {
       "build": <FileUp className="h-4 w-4" />,
       "split": <Scissors className="h-4 w-4" />,
       "export-images": <Image className="h-4 w-4" />,
       "extract-images": <FileDown className="h-4 w-4" />,
-      "compress": <FileArchive className="h-4 w-4" />,
-      "protect": protectMode === "protect"
-        ? <Lock className="h-4 w-4" />
-        : <Unlock className="h-4 w-4" />,
     };
     return map[activeTool];
-  }, [activeTool, protectMode]);
+  }, [activeTool]);
+
+  // --- Build pipeline step summary ---
+  const pipelineSummary = useMemo(() => {
+    const steps: string[] = [t(`pdf_tool.${activeTool === "build" ? "build" : activeTool}`)];
+    if (showPostProcessing && ppCompress) steps.push(t("pdf_tool.compress"));
+    if (showPostProcessing && ppProtect) steps.push(t("pdf_tool.protect"));
+    return steps;
+  }, [activeTool, ppCompress, ppProtect, showPostProcessing, t]);
 
   return (
     <div className="space-y-5">
-      {/* Drop zone / Add files bar */}
-      {pages.length === 0 ? (
-        <div
-          onClick={handleAddMore}
-          className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-accent/20 bg-accent/2 p-8 cursor-pointer transition-all duration-200 hover:bg-accent/5 hover:border-accent/30 hover:shadow-[0_0_20px_rgba(108,108,237,0.08)]"
+      {/* Mode switcher: Workbench / Unlock */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setMode("workbench")}
+          className={cn(
+            "flex-1 rounded-xl px-4 py-2.5 text-xs font-medium transition-all cursor-pointer border",
+            mode === "workbench"
+              ? "bg-accent/15 text-white border-accent/40"
+              : "bg-surface-card text-text-secondary border-glass-border hover:bg-surface-hover"
+          )}
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent/70">
-            <Upload className="h-6 w-6" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-text-primary">{t("dropzone.pdf_workbench")}</p>
-            <p className="mt-1 text-xs text-text-muted">{t("dropzone.sublabel_pdf_workbench")}</p>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleAddMore}
-            className="flex items-center gap-2 rounded-xl border border-glass-border bg-surface-card px-4 py-2.5 text-xs font-medium text-text-secondary hover:bg-surface-hover hover:text-white transition-all cursor-pointer"
+          {t("pdf_tool.workbench_mode")}
+        </button>
+        <button
+          onClick={() => setMode("unlock")}
+          className={cn(
+            "flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium transition-all cursor-pointer border",
+            mode === "unlock"
+              ? "bg-accent/15 text-white border-accent/40"
+              : "bg-surface-card text-text-secondary border-glass-border hover:bg-surface-hover"
+          )}
+        >
+          <Unlock className="h-3.5 w-3.5" />
+          {t("pdf_tool.unlock_mode")}
+        </button>
+      </div>
+
+      {/* ========== UNLOCK MODE ========== */}
+      {mode === "unlock" && (
+        <div className="space-y-4">
+          {/* Drop zone for unlock */}
+          <div
+            onClick={handleSelectUnlockFile}
+            className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-accent/20 bg-accent/2 p-8 cursor-pointer transition-all duration-200 hover:bg-accent/5 hover:border-accent/30"
           >
-            <Plus className="h-4 w-4" />
-            {t("label.add_files")}
-          </button>
-          <span className="text-[10px] text-text-muted">
-            {t("label.or_drop_anywhere")}
-          </span>
-          <button
-            onClick={clearAll}
-            className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-white hover:bg-surface-hover transition-all cursor-pointer"
-          >
-            <Trash2 className="h-3 w-3" />
-            {t("label.clear_all")}
-          </button>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent/70">
+              <Lock className="h-6 w-6" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-text-primary">{t("pdf_tool.drop_locked_pdf")}</p>
+              <p className="mt-1 text-xs text-text-muted">{t("pdf_tool.drop_locked_pdf_hint")}</p>
+            </div>
+          </div>
+
+          {unlockFile && (
+            <div className="rounded-2xl border border-glass-border bg-surface-card p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-accent" />
+                <span className="text-xs font-medium text-text-primary truncate">
+                  {unlockFile.split(/[\\/]/).pop()}
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-text-secondary">
+                  {t("label.pdf_password")}
+                </label>
+                <input
+                  type="password"
+                  value={unlockPassword}
+                  onChange={(e) => setUnlockPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
+              <ActionButton
+                onClick={handleUnlock}
+                disabled={loading || !unlockPassword.trim()}
+                loading={loading}
+                loadingText={t("status.unlocking_pdf")}
+                text={t("action.unlock_pdf")}
+                icon={<Unlock className="h-4 w-4" />}
+              />
+            </div>
+          )}
+
+          <ResultPanel result={result} t={t} />
         </div>
       )}
 
-      {/* Page grid */}
-      <PdfPageGrid
-        pages={pages}
-        loadingThumbnails={loadingThumbnails}
-        onReorder={reorderPages}
-        onRemove={removePage}
-      />
-
-      {/* Action selector + options (only when pages loaded) */}
-      {pages.length > 0 && (
+      {/* ========== WORKBENCH MODE ========== */}
+      {mode === "workbench" && (
         <>
-          {/* Action selector grid */}
-          <div className="grid grid-cols-3 gap-2">
-            {ACTIONS.map((action) => {
-              const Icon = action.icon;
-              const isActive = activeTool === action.id;
-              return (
-                <button
-                  key={action.id}
-                  onClick={() => setActiveTool(action.id)}
-                  className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-medium transition-all cursor-pointer border",
-                    isActive
-                      ? "bg-accent/15 text-white border-accent/40 shadow-[0_0_16px_rgba(108,108,237,0.2)]"
-                      : "bg-surface-card text-text-secondary border-glass-border hover:bg-surface-hover hover:text-text-primary"
-                  )}
-                >
-                  <Icon className={cn("h-4 w-4", isActive && "text-accent")} />
-                  {t(action.labelKey)}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Dynamic options panel */}
-          <div className="rounded-2xl border border-glass-border bg-surface-card p-4 space-y-4">
-            {activeTool === "build" && (
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-text-secondary">
-                  {t("label.filename")}
-                </label>
-                <input
-                  type="text"
-                  value={outputName}
-                  onChange={(e) => setOutputName(e.target.value)}
-                  placeholder={t("label.placeholder_filename")}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
-                />
+          {/* Drop zone / Add files bar */}
+          {pages.length === 0 ? (
+            <div
+              onClick={handleAddMore}
+              className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-accent/20 bg-accent/2 p-8 cursor-pointer transition-all duration-200 hover:bg-accent/5 hover:border-accent/30 hover:shadow-[0_0_20px_rgba(108,108,237,0.08)]"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent/70">
+                <Upload className="h-6 w-6" />
               </div>
-            )}
+              <div className="text-center">
+                <p className="text-sm font-medium text-text-primary">{t("dropzone.pdf_workbench")}</p>
+                <p className="mt-1 text-xs text-text-muted">{t("dropzone.sublabel_pdf_workbench")}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAddMore}
+                className="flex items-center gap-2 rounded-xl border border-glass-border bg-surface-card px-4 py-2.5 text-xs font-medium text-text-secondary hover:bg-surface-hover hover:text-white transition-all cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                {t("label.add_files")}
+              </button>
+              {/* Grid modified indicator */}
+              {gridModified && (
+                <span className="flex items-center gap-1 text-[10px] text-accent">
+                  <AlertTriangle className="h-3 w-3" />
+                  {t("pdf_tool.grid_modified")}
+                </span>
+              )}
+              <span className="text-[10px] text-text-muted ml-auto">
+                {pages.length} {t("pdf_tool.pages_count")}
+              </span>
+              <button
+                onClick={clearAll}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-white hover:bg-surface-hover transition-all cursor-pointer"
+              >
+                <Trash2 className="h-3 w-3" />
+                {t("label.clear_all")}
+              </button>
+            </div>
+          )}
 
-            {activeTool === "split" && (
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-text-secondary">
-                  {t("label.page_ranges")}
-                </label>
-                <input
-                  type="text"
-                  value={ranges}
-                  onChange={(e) => setRanges(e.target.value)}
-                  placeholder="1-3, 4-10, 11-end"
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-border-hover focus:outline-none"
-                />
-                <p className="text-[10px] text-text-muted">
-                  {t("label.page_ranges_hint")}
+          {/* Page grid */}
+          <PdfPageGrid
+            pages={pages}
+            loadingThumbnails={loadingThumbnails}
+            onReorder={reorderPages}
+            onRemove={removePage}
+          />
+
+          {/* Action selector + options (only when pages loaded) */}
+          {pages.length > 0 && (
+            <>
+              {/* Primary action selector */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-2">
+                  {t("pdf_tool.primary_action")}
                 </p>
-              </div>
-            )}
-
-            {activeTool === "export-images" && (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-text-secondary mb-2 block">
-                    {t("label.output_format_images")}
-                  </label>
-                  <div className="flex gap-2">
-                    {(["png", "jpg"] as ExportFormat[]).map((f) => (
+                <div className="grid grid-cols-4 gap-2">
+                  {PRIMARY_ACTIONS.map((action) => {
+                    const Icon = action.icon;
+                    const isActive = activeTool === action.id;
+                    return (
                       <button
-                        key={f}
-                        onClick={() => setExportFormat(f)}
+                        key={action.id}
+                        onClick={() => setActiveTool(action.id)}
                         className={cn(
-                          "rounded-md px-4 py-1.5 text-xs font-medium uppercase transition-all cursor-pointer",
-                          exportFormat === f
-                            ? "bg-accent-muted text-white border border-glass-border"
-                            : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
+                          "flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-medium transition-all cursor-pointer border",
+                          isActive
+                            ? "bg-accent/15 text-white border-accent/40 shadow-[0_0_16px_rgba(108,108,237,0.2)]"
+                            : "bg-surface-card text-text-secondary border-glass-border hover:bg-surface-hover hover:text-text-primary"
                         )}
                       >
-                        {f}
+                        <Icon className={cn("h-4 w-4", isActive && "text-accent")} />
+                        {t(action.labelKey)}
                       </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-text-secondary mb-2 block">
-                    {t("label.dpi")}
-                  </label>
-                  <div className="flex gap-2">
-                    {([72, 150, 300] as ExportDpi[]).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => setExportDpi(d)}
-                        className={cn(
-                          "rounded-md px-4 py-1.5 text-xs font-medium transition-all cursor-pointer",
-                          exportDpi === d
-                            ? "bg-accent-muted text-white border border-glass-border"
-                            : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
-                        )}
-                      >
-                        {d} DPI
-                      </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
-            )}
 
-            {activeTool === "extract-images" && (
-              <p className="text-xs text-text-muted">
-                {t("pdf_tool.extract_images_hint")}
-              </p>
-            )}
+              {/* Dynamic options panel */}
+              <div className="rounded-2xl border border-glass-border bg-surface-card p-4 space-y-4">
+                {activeTool === "build" && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-text-secondary">
+                      {t("label.filename")}
+                    </label>
+                    <input
+                      type="text"
+                      value={outputName}
+                      onChange={(e) => setOutputName(e.target.value)}
+                      placeholder={t("label.placeholder_filename")}
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
+                    />
+                  </div>
+                )}
 
-            {activeTool === "compress" && (
-              <Slider
-                label={t("label.image_quality_pdf")}
-                value={compressQuality}
-                min={10}
-                max={95}
-                leftHint={t("label.smaller_file")}
-                rightHint={t("label.higher_quality")}
-                onChange={setCompressQuality}
-              />
-            )}
+                {activeTool === "split" && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-text-secondary">
+                      {t("label.page_ranges")}
+                    </label>
+                    <input
+                      type="text"
+                      value={ranges}
+                      onChange={(e) => setRanges(e.target.value)}
+                      placeholder="1-3, 4-10, 11-end"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-border-hover focus:outline-none"
+                    />
+                    <p className="text-[10px] text-text-muted">
+                      {t("label.page_ranges_hint")}
+                    </p>
+                  </div>
+                )}
 
-            {activeTool === "protect" && (
-              <div className="space-y-3">
-                {/* Mode selector */}
-                <div className="flex gap-2">
-                  {(["protect", "unlock"] as ProtectMode[]).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setProtectMode(m)}
-                      className={cn(
-                        "flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer",
-                        protectMode === m
-                          ? "bg-accent text-white shadow-[0_0_12px_rgba(108,108,237,0.3)]"
-                          : "bg-surface text-text-secondary hover:bg-surface-hover"
-                      )}
-                    >
-                      {m === "protect" ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-                      {m === "protect" ? t("label.pdf_mode_protect") : t("label.pdf_mode_unlock")}
-                    </button>
-                  ))}
-                </div>
-                {/* Password input */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-text-secondary">
-                    {t("label.pdf_password")}
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
-                  />
-                  {password && (
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <div className="flex gap-1 flex-1">
-                        {[1, 2, 3].map((i) => (
-                          <div
-                            key={i}
+                {activeTool === "export-images" && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-text-secondary mb-2 block">
+                        {t("label.output_format_images")}
+                      </label>
+                      <div className="flex gap-2">
+                        {(["png", "jpg"] as ExportFormat[]).map((f) => (
+                          <button
+                            key={f}
+                            onClick={() => setExportFormat(f)}
                             className={cn(
-                              "h-1 flex-1 rounded-full transition-all",
-                              i <= passwordStrength.level ? passwordStrength.color : "bg-surface-hover"
+                              "rounded-md px-4 py-1.5 text-xs font-medium uppercase transition-all cursor-pointer",
+                              exportFormat === f
+                                ? "bg-accent-muted text-white border border-glass-border"
+                                : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
                             )}
-                          />
+                          >
+                            {f}
+                          </button>
                         ))}
                       </div>
-                      <span className={cn(
-                        "text-[10px] font-medium",
-                        passwordStrength.level <= 1 ? "text-red-400" :
-                        passwordStrength.level <= 2 ? "text-yellow-400" : "text-green-400"
-                      )}>
-                        {passwordStrength.label}
-                      </span>
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
+                    <div>
+                      <label className="text-xs font-medium text-text-secondary mb-2 block">
+                        {t("label.dpi")}
+                      </label>
+                      <div className="flex gap-2">
+                        {([72, 150, 300] as ExportDpi[]).map((d) => (
+                          <button
+                            key={d}
+                            onClick={() => setExportDpi(d)}
+                            className={cn(
+                              "rounded-md px-4 py-1.5 text-xs font-medium transition-all cursor-pointer",
+                              exportDpi === d
+                                ? "bg-accent-muted text-white border border-glass-border"
+                                : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
+                            )}
+                          >
+                            {d} DPI
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-            {/* Execute button */}
-            <ActionButton
-              onClick={handleExecute}
-              disabled={isExecuteDisabled}
-              loading={loading}
-              loadingText={actionButtonText.loadingText}
-              text={actionButtonText.text}
-              icon={actionIcon}
-            />
-          </div>
+                {activeTool === "extract-images" && (
+                  <p className="text-xs text-text-muted">
+                    {t("pdf_tool.extract_images_hint")}
+                  </p>
+                )}
+
+                {/* Post-processing toggles (only for PDF output actions) */}
+                {showPostProcessing && (
+                  <div className="border-t border-glass-border pt-3 space-y-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                      {t("pdf_tool.post_processing")}
+                    </p>
+
+                    {/* Compress toggle */}
+                    <div>
+                      <button
+                        onClick={() => setPpCompress(!ppCompress)}
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer w-full border",
+                          ppCompress
+                            ? "bg-accent/15 text-white border-accent/30"
+                            : "bg-surface text-text-secondary border-border hover:bg-surface-hover"
+                        )}
+                      >
+                        <Zap className={cn("h-3.5 w-3.5", ppCompress && "text-accent")} />
+                        {t("pdf_tool.compress")}
+                        <div className={cn(
+                          "ml-auto h-4 w-7 rounded-full transition-all",
+                          ppCompress ? "bg-accent" : "bg-surface-hover"
+                        )}>
+                          <div className={cn(
+                            "h-3 w-3 rounded-full bg-white mt-0.5 transition-all",
+                            ppCompress ? "ml-3.5" : "ml-0.5"
+                          )} />
+                        </div>
+                      </button>
+                      {ppCompress && (
+                        <div className="mt-2 pl-2">
+                          <Slider
+                            label={t("label.image_quality_pdf")}
+                            value={ppCompressQuality}
+                            min={10}
+                            max={95}
+                            leftHint={t("label.smaller_file")}
+                            rightHint={t("label.higher_quality")}
+                            onChange={setPpCompressQuality}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Protect toggle */}
+                    <div>
+                      <button
+                        onClick={() => setPpProtect(!ppProtect)}
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer w-full border",
+                          ppProtect
+                            ? "bg-accent/15 text-white border-accent/30"
+                            : "bg-surface text-text-secondary border-border hover:bg-surface-hover"
+                        )}
+                      >
+                        <Shield className={cn("h-3.5 w-3.5", ppProtect && "text-accent")} />
+                        {t("pdf_tool.protect")}
+                        <div className={cn(
+                          "ml-auto h-4 w-7 rounded-full transition-all",
+                          ppProtect ? "bg-accent" : "bg-surface-hover"
+                        )}>
+                          <div className={cn(
+                            "h-3 w-3 rounded-full bg-white mt-0.5 transition-all",
+                            ppProtect ? "ml-3.5" : "ml-0.5"
+                          )} />
+                        </div>
+                      </button>
+                      {ppProtect && (
+                        <div className="mt-2 pl-2 space-y-1.5">
+                          <input
+                            type="password"
+                            value={ppPassword}
+                            onChange={(e) => setPpPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                          />
+                          {ppPassword && (
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-1 flex-1">
+                                {[1, 2, 3].map((i) => (
+                                  <div
+                                    key={i}
+                                    className={cn(
+                                      "h-1 flex-1 rounded-full transition-all",
+                                      i <= ppPasswordStrength.level ? ppPasswordStrength.color : "bg-surface-hover"
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                              <span className={cn(
+                                "text-[10px] font-medium",
+                                ppPasswordStrength.level <= 1 ? "text-red-400" :
+                                ppPasswordStrength.level <= 2 ? "text-yellow-400" : "text-green-400"
+                              )}>
+                                {ppPasswordStrength.label}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pipeline summary */}
+                {pipelineSummary.length > 1 && (
+                  <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
+                    <span>{t("pdf_tool.pipeline")}:</span>
+                    {pipelineSummary.map((step, i) => (
+                      <span key={i} className="flex items-center gap-1.5">
+                        {i > 0 && <span className="text-accent">→</span>}
+                        <span className="text-text-secondary font-medium">{step}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Pipeline progress indicator */}
+                {pipelineStep && (
+                  <div className="flex items-center gap-2 text-xs text-accent">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>{t(PIPELINE_STEP_LABELS[pipelineStep])}</span>
+                  </div>
+                )}
+
+                {/* Execute button */}
+                <ActionButton
+                  onClick={handleExecute}
+                  disabled={isExecuteDisabled}
+                  loading={loading}
+                  loadingText={actionButtonText.loadingText}
+                  text={actionButtonText.text}
+                  icon={actionIcon}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Result panel */}
+          <ResultPanel result={result} t={t} />
         </>
       )}
-
-      {/* Result panel */}
-      <ResultPanel result={result} t={t} />
     </div>
   );
 }
@@ -573,6 +755,12 @@ function ResultPanel({ result, t }: ResultPanelProps) {
           : t("result.pdf_unlocked")
         : result.data.errors[0] || t("toast.all_failed");
       errors = result.data.success ? [] : result.data.errors;
+      break;
+
+    case "pipeline":
+      successIcon = result.errors.length === 0;
+      mainText = t("result.pipeline_complete", { steps: result.steps.join(" → ") });
+      errors = result.errors;
       break;
   }
 

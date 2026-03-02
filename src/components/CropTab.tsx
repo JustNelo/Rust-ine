@@ -69,12 +69,13 @@ export function CropTab() {
   // ── File handlers ────────────────────────────────────────────────────
   const handleFilesSelected = useCallback(
     (paths: string[]) => {
-      addFiles(paths);
+      clearFiles();
+      addFiles(paths.slice(0, 1));
       setResults([]);
       setSel({ ...DEFAULT_RECT });
       setNaturalSize(null);
     },
-    [addFiles],
+    [addFiles, clearFiles],
   );
 
   const handleClearFiles = useCallback(() => {

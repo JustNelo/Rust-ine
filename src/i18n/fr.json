@@ -258,6 +258,7 @@
   "toast.rename_success": "{n} fichier(s) renommé(s) !",
   "toast.draw_crop": "Veuillez d'abord dessiner une zone de rognage sur l'image.",
   "toast.enter_password": "Veuillez saisir un mot de passe.",
+  "label.open_output_folder": "Ouvrir le dossier",
 
   "preset.1080p": "1080p",
   "preset.4k": "4K",
@@ -314,6 +315,7 @@
   "pdf_tool.drag_hint": "glisser pour réordonner",
   "pdf_tool.loading_pages": "Chargement des pages...",
   "pdf_tool.pages_count": "page(s)",
+  "pdf_tool.sources_summary": "{pdfs} PDF(s), {images} image(s)",
   "pdf_tool.drop_locked_pdf": "Déposez un PDF verrouillé ici",
   "pdf_tool.drop_locked_pdf_hint": "Sélectionnez ou déposez un PDF protégé par mot de passe pour le déverrouiller.",
   "label.frame_delay": "Délai entre frames (ms)",

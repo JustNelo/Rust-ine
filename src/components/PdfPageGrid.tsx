@@ -51,6 +51,20 @@ export function PdfPageGrid({
 
   const itemIds = useMemo(() => pages.map((p) => p.id), [pages]);
 
+  const sourcesSummary = useMemo(() => {
+    const pdfSources = new Set<string>();
+    let imageCount = 0;
+    for (const p of pages) {
+      if (p.sourceType === "pdf") pdfSources.add(p.sourcePath);
+      else imageCount++;
+    }
+    const pdfs = pdfSources.size;
+    if (pdfs > 0 && imageCount > 0) return t("pdf_tool.sources_summary", { pdfs, images: imageCount });
+    if (pdfs > 0) return `${pdfs} PDF(s)`;
+    if (imageCount > 0) return `${imageCount} image(s)`;
+    return "";
+  }, [pages, t]);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -71,7 +85,9 @@ export function PdfPageGrid({
     <div className="rounded-2xl border border-glass-border bg-surface-card p-3 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-text-secondary">
-          {pages.length} {t("pdf_tool.pages_count")} — {t("pdf_tool.drag_hint")}
+          {pages.length} {t("pdf_tool.pages_count")}
+          {sourcesSummary && <span className="text-text-muted"> — {sourcesSummary}</span>}
+          {" — "}{t("pdf_tool.drag_hint")}
         </span>
         {loadingThumbnails && (
           <span className="flex items-center gap-1.5 text-[10px] text-text-muted">

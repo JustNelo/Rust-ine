@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { safeAssetUrl } from "../lib/utils";
 import { useT } from "../i18n/i18n";
 import type {
@@ -39,6 +40,33 @@ const IMAGE_EXTENSIONS = new Set([
 ]);
 
 const THUMBNAIL_BATCH_SIZE = 30;
+
+// Finds a unique file path by appending _2, _3, etc. if the file already exists
+async function uniquePath(basePath: string): Promise<string> {
+  const { exists: fsExists } = await import("@tauri-apps/plugin-fs");
+  if (!(await fsExists(basePath))) return basePath;
+
+  const dotIdx = basePath.lastIndexOf(".");
+  const stem = dotIdx > 0 ? basePath.substring(0, dotIdx) : basePath;
+  const ext = dotIdx > 0 ? basePath.substring(dotIdx) : "";
+
+  let counter = 2;
+  let candidate = `${stem}_${counter}${ext}`;
+  while (await fsExists(candidate)) {
+    counter++;
+    candidate = `${stem}_${counter}${ext}`;
+  }
+  return candidate;
+}
+
+// Sub-folder per action inside the pdf-toolkit directory
+const ACTION_SUBFOLDERS: Record<PrimaryAction | "unlock", string> = {
+  build: "build",
+  split: "split",
+  "export-images": "exported-pages",
+  "extract-images": "extracted-images",
+  unlock: "unlocked",
+};
 
 function isImageFile(path: string): boolean {
   const ext = path.split(".").pop()?.toLowerCase() || "";
@@ -86,13 +114,13 @@ interface PdfProtectResult {
 }
 
 export type WorkbenchResult =
-  | { type: "build"; data: MergePdfResult }
-  | { type: "split"; data: PdfSplitResult }
-  | { type: "export-images"; data: { exported: number; errors: string[] } }
-  | { type: "extract-images"; data: { total_extracted: number; errors: string[] } }
-  | { type: "compress"; data: PdfCompressResult }
-  | { type: "protect"; data: PdfProtectResult; mode: ProtectMode }
-  | { type: "pipeline"; steps: string[]; errors: string[] };
+  | { type: "build"; data: MergePdfResult; outputDir: string }
+  | { type: "split"; data: PdfSplitResult; outputDir: string }
+  | { type: "export-images"; data: { exported: number; errors: string[] }; outputDir: string }
+  | { type: "extract-images"; data: { total_extracted: number; errors: string[] }; outputDir: string }
+  | { type: "compress"; data: PdfCompressResult; outputDir: string }
+  | { type: "protect"; data: PdfProtectResult; mode: ProtectMode; outputDir: string }
+  | { type: "pipeline"; steps: string[]; errors: string[]; outputDir: string };
 
 // --- Hook ---
 
@@ -344,7 +372,6 @@ export function usePdfWorkbench() {
     async (
       primaryAction: PrimaryAction,
       outputDir: string,
-      openOutputDir: () => Promise<void>,
       actionOptions: {
         outputName?: string;
         ranges?: string;
@@ -366,6 +393,17 @@ export function usePdfWorkbench() {
       let materializedPath: string | null = null;
 
       const sep = outputDir.includes("/") ? "/" : "\\";
+
+      // Ensure action-specific sub-folder exists
+      const actionSubfolder = ACTION_SUBFOLDERS[primaryAction];
+      const actionDir = `${outputDir}${sep}${actionSubfolder}`;
+      try {
+        const { mkdir, exists: fsExists } = await import("@tauri-apps/plugin-fs");
+        const dirExists = await fsExists(actionDir);
+        if (!dirExists) await mkdir(actionDir, { recursive: true });
+      } catch (dirErr) {
+        console.error("Cannot create action sub-folder:", dirErr);
+      }
       const safeName = (actionOptions.outputName || "document.pdf").endsWith(".pdf")
         ? actionOptions.outputName || "document.pdf"
         : `${actionOptions.outputName || "document"}.pdf`;
@@ -379,9 +417,10 @@ export function usePdfWorkbench() {
 
           // If post-processing is needed, build to temp first; otherwise write directly
           const needsPostProcessing = postProcessing.compress || postProcessing.protect;
+          const directPath = await uniquePath(`${actionDir}${sep}${safeName}`);
           const buildPath = needsPostProcessing
             ? `${outputDir}${sep}_rustine_temp_build_${Date.now()}.pdf`
-            : `${outputDir}${sep}${safeName}`;
+            : directPath;
 
           const items: PdfBuilderItem[] = currentPages.map((page) => ({
             source_path: page.sourcePath,
@@ -407,9 +446,9 @@ export function usePdfWorkbench() {
           materializedPath = buildPath;
 
           if (!needsPostProcessing) {
-            setResult({ type: "build", data: buildRes });
+            setResult({ type: "build", data: buildRes, outputDir: actionDir });
             toast.success(t("toast.build_success", { n: buildRes.page_count }));
-            await openOutputDir();
+            await revealItemInDir(actionDir);
             setLoading(false);
             setPipelineStep(null);
             return;
@@ -430,16 +469,16 @@ export function usePdfWorkbench() {
           const res = await invoke<PdfSplitResult>("split_pdf", {
             pdfPath: materializedPath,
             ranges: actionOptions.ranges || "1-end",
-            outputDir,
+            outputDir: actionDir,
             outputStem: getOutputStem(),
           });
 
           await cleanupTemp(materializedPath);
 
-          setResult({ type: "split", data: res });
+          setResult({ type: "split", data: res, outputDir: actionDir });
           if (res.output_files.length > 0) {
             toast.success(t("toast.pdf_split_success", { n: res.output_files.length }));
-            await openOutputDir();
+            await revealItemInDir(actionDir);
           } else {
             toast.error(t("toast.all_failed"));
           }
@@ -460,7 +499,7 @@ export function usePdfWorkbench() {
 
           const res = await invoke<PdfToImagesResult>("pdf_to_images", {
             pdfPath: materializedPath,
-            outputDir,
+            outputDir: actionDir,
             format: actionOptions.exportFormat || "png",
             dpi: actionOptions.exportDpi || 150,
             outputStem: getOutputStem(),
@@ -471,10 +510,11 @@ export function usePdfWorkbench() {
           setResult({
             type: "export-images",
             data: { exported: res.exported_count, errors: res.errors },
+            outputDir: actionDir,
           });
           if (res.exported_count > 0) {
             toast.success(t("toast.pdf_to_images_success", { n: res.exported_count }));
-            await openOutputDir();
+            await revealItemInDir(actionDir);
           } else {
             toast.error(t("toast.all_failed"));
           }
@@ -495,7 +535,7 @@ export function usePdfWorkbench() {
 
           const res = await invoke<PdfExtractionResult>("extract_pdf_images", {
             pdfPath: materializedPath,
-            outputDir,
+            outputDir: actionDir,
             outputStem: getOutputStem(),
           });
 
@@ -504,10 +544,11 @@ export function usePdfWorkbench() {
           setResult({
             type: "extract-images",
             data: { total_extracted: res.extracted_count, errors: res.errors },
+            outputDir: actionDir,
           });
           if (res.extracted_count > 0) {
             toast.success(t("toast.extract_success", { n: res.extracted_count }));
-            await openOutputDir();
+            await revealItemInDir(actionDir);
           } else if (res.errors.length > 0) {
             toast.error(t("toast.all_failed"));
           } else {
@@ -520,7 +561,7 @@ export function usePdfWorkbench() {
 
         // === POST-PROCESSING (only for Build action) ===
 
-        const desiredPath = `${outputDir}${sep}${safeName}`;
+        const desiredPath = await uniquePath(`${actionDir}${sep}${safeName}`);
 
         let currentPdfPath = materializedPath!;
         const intermediates: string[] = [];
@@ -533,7 +574,7 @@ export function usePdfWorkbench() {
           const compressRes = await invoke<PdfCompressResult>("compress_pdf_cmd", {
             pdfPath: currentPdfPath,
             quality: postProcessing.compressQuality,
-            outputDir,
+            outputDir: actionDir,
           });
 
           if (compressRes.errors.length > 0 || !compressRes.output_path) {
@@ -552,7 +593,7 @@ export function usePdfWorkbench() {
           const protectRes = await invoke<PdfProtectResult>("protect_pdf_cmd", {
             pdfPath: currentPdfPath,
             password: postProcessing.protectPassword,
-            outputDir,
+            outputDir: actionDir,
           });
 
           if (!protectRes.success) {
@@ -566,11 +607,7 @@ export function usePdfWorkbench() {
         // Rename the final output to the user's desired name
         if (pipelineErrors.length === 0 && currentPdfPath !== desiredPath) {
           try {
-            const { rename, exists: fsExists, remove: fsRemove } = await import("@tauri-apps/plugin-fs");
-            // If the desired name already exists, remove it first to avoid conflicts
-            if (await fsExists(desiredPath)) {
-              await fsRemove(desiredPath);
-            }
+            const { rename } = await import("@tauri-apps/plugin-fs");
             await rename(currentPdfPath, desiredPath);
           } catch (renameErr) {
             pipelineErrors.push(`Rename failed: ${renameErr}`);
@@ -587,14 +624,15 @@ export function usePdfWorkbench() {
           type: "pipeline",
           steps: pipelineSteps,
           errors: pipelineErrors,
+          outputDir: actionDir,
         });
 
         if (pipelineErrors.length === 0) {
           toast.success(t("result.pipeline_complete", { steps: pipelineSteps.join(" → ") }));
-          await openOutputDir();
+          await revealItemInDir(actionDir);
         } else {
           toast.warning(t("toast.partial", { completed: pipelineSteps.length, total: pipelineSteps.length + pipelineErrors.length }));
-          await openOutputDir();
+          await revealItemInDir(actionDir);
         }
       } catch (err) {
         toast.error(`${err}`);
@@ -615,8 +653,7 @@ export function usePdfWorkbench() {
     async (
       pdfPath: string,
       password: string,
-      outputDir: string,
-      openOutputDir: () => Promise<void>
+      outputDir: string
     ) => {
       if (!password.trim()) {
         toast.error(t("toast.enter_password"));
@@ -626,18 +663,29 @@ export function usePdfWorkbench() {
       setLoading(true);
       setResult(null);
 
+      // Ensure unlock sub-folder exists
+      const sep = outputDir.includes("/") ? "/" : "\\";
+      const unlockDir = `${outputDir}${sep}${ACTION_SUBFOLDERS.unlock}`;
+      try {
+        const { mkdir, exists: fsExists } = await import("@tauri-apps/plugin-fs");
+        const dirExists = await fsExists(unlockDir);
+        if (!dirExists) await mkdir(unlockDir, { recursive: true });
+      } catch (dirErr) {
+        console.error("Cannot create unlock sub-folder:", dirErr);
+      }
+
       try {
         const res = await invoke<PdfProtectResult>("unlock_pdf_cmd", {
           pdfPath,
           password,
-          outputDir,
+          outputDir: unlockDir,
         });
 
-        setResult({ type: "protect", data: res, mode: "unlock" });
+        setResult({ type: "protect", data: res, mode: "unlock", outputDir: unlockDir });
 
         if (res.success) {
           toast.success(t("toast.pdf_unlock_success"));
-          await openOutputDir();
+          await revealItemInDir(unlockDir);
         } else {
           toast.error(res.errors[0] || t("toast.all_failed"));
         }

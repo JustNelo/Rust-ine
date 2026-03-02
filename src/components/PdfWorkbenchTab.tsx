@@ -17,8 +17,10 @@ import {
   Shield,
   Loader2,
   AlertTriangle,
+  FolderOpen,
 } from "lucide-react";
 import { toast } from "sonner";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { cn, formatSize } from "../lib/utils";
 import { PdfPageGrid } from "./PdfPageGrid";
 import { ActionButton } from "./ui/ActionButton";
@@ -85,7 +87,7 @@ const PIPELINE_STEP_LABELS: Record<PipelineStep, string> = {
 
 export function PdfWorkbenchTab() {
   const { t } = useT();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { getOutputDir } = useWorkspace();
   const {
     pages,
     loading,
@@ -209,7 +211,6 @@ export function PdfWorkbenchTab() {
     await executePipeline(
       activeTool,
       outputDir,
-      () => openOutputDir("pdf-toolkit"),
       {
         outputName,
         ranges,
@@ -221,7 +222,7 @@ export function PdfWorkbenchTab() {
   }, [
     activeTool, outputName, ranges, exportFormat, exportDpi,
     ppCompress, ppCompressQuality, ppProtect, ppPassword,
-    showPostProcessing, getOutputDir, openOutputDir, executePipeline,
+    showPostProcessing, getOutputDir, executePipeline,
   ]);
 
   // --- Unlock execute ---
@@ -229,8 +230,8 @@ export function PdfWorkbenchTab() {
     if (!unlockFile || !unlockPassword.trim()) return;
     const outputDir = await getOutputDir("pdf-toolkit");
     if (!outputDir) return;
-    await unlockPdf(unlockFile, unlockPassword, outputDir, () => openOutputDir("pdf-toolkit"));
-  }, [unlockFile, unlockPassword, getOutputDir, openOutputDir, unlockPdf]);
+    await unlockPdf(unlockFile, unlockPassword, outputDir);
+  }, [unlockFile, unlockPassword, getOutputDir, unlockPdf]);
 
   // --- Disable logic ---
   const isExecuteDisabled = useMemo(() => {
@@ -767,13 +768,24 @@ function ResultPanel({ result, t }: ResultPanelProps) {
 
   return (
     <div className="rounded-2xl border border-glass-border bg-surface-card p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        {successIcon ? (
-          <CheckCircle className="h-4 w-4 text-success" />
-        ) : (
-          <XCircle className="h-4 w-4 text-warning" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {successIcon ? (
+            <CheckCircle className="h-4 w-4 text-success" />
+          ) : (
+            <XCircle className="h-4 w-4 text-warning" />
+          )}
+          <span className="text-xs font-medium text-text-primary">{mainText}</span>
+        </div>
+        {result.outputDir && (
+          <button
+            onClick={() => revealItemInDir(result.outputDir)}
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-text-secondary hover:bg-surface hover:text-text-primary transition-colors cursor-pointer"
+          >
+            <FolderOpen className="h-3 w-3" />
+            {t("label.open_output_folder")}
+          </button>
         )}
-        <span className="text-xs font-medium text-text-primary">{mainText}</span>
       </div>
 
       {extraContent}

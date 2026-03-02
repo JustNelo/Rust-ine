@@ -258,6 +258,7 @@
   "toast.rename_success": "{n} file(s) renamed!",
   "toast.draw_crop": "Please draw a crop area on the image first.",
   "toast.enter_password": "Please enter a password.",
+  "label.open_output_folder": "Open folder",
 
   "preset.1080p": "1080p",
   "preset.4k": "4K",
@@ -314,6 +315,7 @@
   "pdf_tool.drag_hint": "drag to reorder",
   "pdf_tool.loading_pages": "Loading pages...",
   "pdf_tool.pages_count": "page(s)",
+  "pdf_tool.sources_summary": "{pdfs} PDF(s), {images} image(s)",
   "pdf_tool.drop_locked_pdf": "Drop a locked PDF here",
   "pdf_tool.drop_locked_pdf_hint": "Select or drop a password-protected PDF to unlock it.",
   "label.frame_delay": "Frame delay (ms)",

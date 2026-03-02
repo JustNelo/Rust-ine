@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { safeAssetUrl } from "../lib/utils";
+import { useT } from "../i18n/i18n";
 import type {
   PageThumbnail,
   PdfBuilderItem,
@@ -96,6 +97,7 @@ export type WorkbenchResult =
 // --- Hook ---
 
 export function usePdfWorkbench() {
+  const { t } = useT();
   const [pages, setPages] = useState<BuilderPage[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingThumbnails, setLoadingThumbnails] = useState(false);
@@ -130,6 +132,24 @@ export function usePdfWorkbench() {
     const firstPage = currentPages[0];
     if (firstPage.sourceType !== "pdf") return null;
     return firstPage.sourcePath;
+  }, []);
+
+  // --- Derive an output stem from the grid pages (original PDF name, not temp) ---
+  const getOutputStem = useCallback((): string | null => {
+    const currentPages = pagesRef.current;
+    if (currentPages.length === 0) return null;
+    // Find the first PDF source in the grid
+    const firstPdf = currentPages.find((p) => p.sourceType === "pdf");
+    if (firstPdf) {
+      const fileName = firstPdf.sourcePath.split(/[\\/]/).pop() || "";
+      const dotIdx = fileName.lastIndexOf(".");
+      return dotIdx > 0 ? fileName.substring(0, dotIdx) : fileName || null;
+    }
+    // Fallback: first image source name
+    const first = currentPages[0];
+    const fileName = first.sourcePath.split(/[\\/]/).pop() || "";
+    const dotIdx = fileName.lastIndexOf(".");
+    return dotIdx > 0 ? fileName.substring(0, dotIdx) : fileName || null;
   }, []);
 
   // --- Page management ---
@@ -335,7 +355,7 @@ export function usePdfWorkbench() {
     ) => {
       const currentPages = pagesRef.current;
       if (currentPages.length === 0) {
-        toast.error("Please add at least one file.");
+        toast.error(t("toast.select_files"));
         return;
       }
 
@@ -379,7 +399,7 @@ export function usePdfWorkbench() {
 
           const buildRes = await invoke<MergePdfResult>("merge_to_pdf", { items, options });
           if (buildRes.page_count === 0) {
-            toast.error(buildRes.errors[0] || "Build failed.");
+            toast.error(buildRes.errors[0] || t("toast.all_failed"));
             setLoading(false);
             return;
           }
@@ -388,7 +408,7 @@ export function usePdfWorkbench() {
 
           if (!needsPostProcessing) {
             setResult({ type: "build", data: buildRes });
-            toast.success(`PDF created with ${buildRes.page_count} page(s)!`);
+            toast.success(t("toast.build_success", { n: buildRes.page_count }));
             await openOutputDir();
             setLoading(false);
             setPipelineStep(null);
@@ -399,7 +419,7 @@ export function usePdfWorkbench() {
           // Materialize first if grid was modified
           materializedPath = await materializeGrid(outputDir);
           if (!materializedPath) {
-            toast.error("No PDF to split.");
+            toast.error(t("toast.select_pdf"));
             setLoading(false);
             return;
           }
@@ -411,16 +431,17 @@ export function usePdfWorkbench() {
             pdfPath: materializedPath,
             ranges: actionOptions.ranges || "1-end",
             outputDir,
+            outputStem: getOutputStem(),
           });
 
           await cleanupTemp(materializedPath);
 
           setResult({ type: "split", data: res });
           if (res.output_files.length > 0) {
-            toast.success(`PDF split into ${res.output_files.length} file(s)!`);
+            toast.success(t("toast.pdf_split_success", { n: res.output_files.length }));
             await openOutputDir();
           } else {
-            toast.error("Split failed.");
+            toast.error(t("toast.all_failed"));
           }
           setLoading(false);
           setPipelineStep(null);
@@ -429,7 +450,7 @@ export function usePdfWorkbench() {
         } else if (primaryAction === "export-images") {
           materializedPath = await materializeGrid(outputDir);
           if (!materializedPath) {
-            toast.error("No PDF to export.");
+            toast.error(t("toast.select_pdf"));
             setLoading(false);
             return;
           }
@@ -442,6 +463,7 @@ export function usePdfWorkbench() {
             outputDir,
             format: actionOptions.exportFormat || "png",
             dpi: actionOptions.exportDpi || 150,
+            outputStem: getOutputStem(),
           });
 
           await cleanupTemp(materializedPath);
@@ -451,10 +473,10 @@ export function usePdfWorkbench() {
             data: { exported: res.exported_count, errors: res.errors },
           });
           if (res.exported_count > 0) {
-            toast.success(`${res.exported_count} page(s) exported!`);
+            toast.success(t("toast.pdf_to_images_success", { n: res.exported_count }));
             await openOutputDir();
           } else {
-            toast.error("Export failed.");
+            toast.error(t("toast.all_failed"));
           }
           setLoading(false);
           setPipelineStep(null);
@@ -463,7 +485,7 @@ export function usePdfWorkbench() {
         } else if (primaryAction === "extract-images") {
           materializedPath = await materializeGrid(outputDir);
           if (!materializedPath) {
-            toast.error("No PDF to extract from.");
+            toast.error(t("toast.select_pdf"));
             setLoading(false);
             return;
           }
@@ -474,6 +496,7 @@ export function usePdfWorkbench() {
           const res = await invoke<PdfExtractionResult>("extract_pdf_images", {
             pdfPath: materializedPath,
             outputDir,
+            outputStem: getOutputStem(),
           });
 
           await cleanupTemp(materializedPath);
@@ -483,12 +506,12 @@ export function usePdfWorkbench() {
             data: { total_extracted: res.extracted_count, errors: res.errors },
           });
           if (res.extracted_count > 0) {
-            toast.success(`${res.extracted_count} image(s) extracted!`);
+            toast.success(t("toast.extract_success", { n: res.extracted_count }));
             await openOutputDir();
           } else if (res.errors.length > 0) {
-            toast.error("Extraction failed.");
+            toast.error(t("toast.all_failed"));
           } else {
-            toast.info("No embedded images found.");
+            toast.info(t("result.no_images"));
           }
           setLoading(false);
           setPipelineStep(null);
@@ -567,14 +590,14 @@ export function usePdfWorkbench() {
         });
 
         if (pipelineErrors.length === 0) {
-          toast.success(`Pipeline complete! (${pipelineSteps.join(" → ")})`);
+          toast.success(t("result.pipeline_complete", { steps: pipelineSteps.join(" → ") }));
           await openOutputDir();
         } else {
-          toast.warning(`Pipeline finished with ${pipelineErrors.length} error(s).`);
+          toast.warning(t("toast.partial", { completed: pipelineSteps.length, total: pipelineSteps.length + pipelineErrors.length }));
           await openOutputDir();
         }
       } catch (err) {
-        toast.error(`Pipeline failed: ${err}`);
+        toast.error(`${err}`);
         // Cleanup any temp files
         if (materializedPath) {
           await cleanupTemp(materializedPath);
@@ -584,7 +607,7 @@ export function usePdfWorkbench() {
         setPipelineStep(null);
       }
     },
-    [materializeGrid, cleanupTemp]
+    [materializeGrid, cleanupTemp, getOutputStem, t]
   );
 
   // --- Standalone: Unlock PDF (no grid interaction) ---
@@ -596,7 +619,7 @@ export function usePdfWorkbench() {
       openOutputDir: () => Promise<void>
     ) => {
       if (!password.trim()) {
-        toast.error("Please enter a password.");
+        toast.error(t("toast.enter_password"));
         return;
       }
 
@@ -613,10 +636,10 @@ export function usePdfWorkbench() {
         setResult({ type: "protect", data: res, mode: "unlock" });
 
         if (res.success) {
-          toast.success("PDF unlocked successfully!");
+          toast.success(t("toast.pdf_unlock_success"));
           await openOutputDir();
         } else {
-          toast.error(res.errors[0] || "Unlock failed.");
+          toast.error(res.errors[0] || t("toast.all_failed"));
         }
       } catch (err) {
         toast.error(`${err}`);
@@ -624,7 +647,7 @@ export function usePdfWorkbench() {
         setLoading(false);
       }
     },
-    []
+    [t]
   );
 
   return {

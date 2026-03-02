@@ -257,6 +257,7 @@
   "toast.qr_text_missing": "Please enter text or a URL.",
   "toast.rename_success": "{n} file(s) renamed!",
   "toast.draw_crop": "Please draw a crop area on the image first.",
+  "toast.enter_password": "Please enter a password.",
 
   "preset.1080p": "1080p",
   "preset.4k": "4K",

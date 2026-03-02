@@ -270,7 +270,8 @@ export function PdfWorkbenchTab() {
 
   // --- Build pipeline step summary ---
   const pipelineSummary = useMemo(() => {
-    const steps: string[] = [t(`pdf_tool.${activeTool === "build" ? "build" : activeTool}`)];
+    const actionDef = PRIMARY_ACTIONS.find((a) => a.id === activeTool);
+    const steps: string[] = [actionDef ? t(actionDef.labelKey) : activeTool];
     if (showPostProcessing && ppCompress) steps.push(t("pdf_tool.compress"));
     if (showPostProcessing && ppProtect) steps.push(t("pdf_tool.protect"));
     return steps;

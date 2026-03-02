@@ -17,6 +17,7 @@ pub fn extract_images_from_pdf(
     pdf_path: &str,
     output_dir: &str,
     pdfium_lib_path: &str,
+    output_stem: Option<&str>,
 ) -> PdfExtractionResult {
     let mut result = PdfExtractionResult {
         pdf_path: pdf_path.to_string(),
@@ -52,7 +53,9 @@ pub fn extract_images_from_pdf(
         }
     };
 
-    let pdf_stem = file_stem(pdf_path);
+    let base_name = output_stem
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| file_stem(pdf_path));
 
     let mut image_index: usize = 0;
 
@@ -63,8 +66,8 @@ pub fn extract_images_from_pdf(
 
                 match image_object.get_raw_image() {
                     Ok(dynamic_image) => {
-                        let out_path = out_dir.join(format!("{}_{}.png", pdf_stem, image_index));
-                        match dynamic_image.into_rgb8().save(&out_path) {
+                        let out_path = out_dir.join(format!("{}_img_{}.png", base_name, image_index));
+                        match dynamic_image.save(&out_path) {
                             Ok(_) => result.extracted_count += 1,
                             Err(e) => result.errors.push(format!(
                                 "Page {}, image {}: failed to save — {}",
@@ -181,6 +184,7 @@ pub fn pdf_to_images(
     pdfium_lib_path: &str,
     format: &str,
     dpi: u32,
+    output_stem: Option<&str>,
 ) -> PdfToImagesResult {
     let mut result = PdfToImagesResult {
         pdf_path: pdf_path.to_string(),
@@ -216,7 +220,9 @@ pub fn pdf_to_images(
         }
     };
 
-    let pdf_stem = file_stem(pdf_path);
+    let pdf_stem = output_stem
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| file_stem(pdf_path));
 
     // Scale factor: pdfium renders at 72 DPI by default
     let scale = dpi as f32 / 72.0;

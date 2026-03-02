@@ -257,6 +257,7 @@
   "toast.qr_text_missing": "Veuillez saisir du texte ou une URL.",
   "toast.rename_success": "{n} fichier(s) renommé(s) !",
   "toast.draw_crop": "Veuillez d'abord dessiner une zone de rognage sur l'image.",
+  "toast.enter_password": "Veuillez saisir un mot de passe.",
 
   "preset.1080p": "1080p",
   "preset.4k": "4K",

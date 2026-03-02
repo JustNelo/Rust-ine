@@ -130,7 +130,7 @@ fn remap_object(
     }
 }
 
-pub fn split_pdf(pdf_path: &str, ranges_str: &str, output_dir: &str) -> PdfSplitResult {
+pub fn split_pdf(pdf_path: &str, ranges_str: &str, output_dir: &str, output_stem: Option<&str>) -> PdfSplitResult {
     let mut result = PdfSplitResult {
         output_files: Vec::new(),
         errors: Vec::new(),
@@ -162,7 +162,9 @@ pub fn split_pdf(pdf_path: &str, ranges_str: &str, output_dir: &str) -> PdfSplit
         }
     };
 
-    let pdf_stem = file_stem(pdf_path);
+    let pdf_stem = output_stem
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| file_stem(pdf_path));
     let source_pages = source_doc.get_pages();
 
     for (start, end) in &ranges {

@@ -150,6 +150,7 @@ async fn extract_pdf_images(
     pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     output_dir: String,
+    output_stem: Option<String>,
 ) -> Result<PdfExtractionResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
@@ -157,7 +158,12 @@ async fn extract_pdf_images(
     let pdfium_lib_path = (*pdfium).0.clone();
 
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::extract_images_from_pdf(&pdf_path, &output_dir, &pdfium_lib_path)
+        pdf_ops::extract_images_from_pdf(
+            &pdf_path,
+            &output_dir,
+            &pdfium_lib_path,
+            output_stem.as_deref(),
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -379,12 +385,20 @@ async fn pdf_to_images(
     output_dir: String,
     format: String,
     dpi: u32,
+    output_stem: Option<String>,
 ) -> Result<PdfToImagesResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let pdfium_lib_path = (*pdfium).0.clone();
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::pdf_to_images(&pdf_path, &output_dir, &pdfium_lib_path, &format, dpi)
+        pdf_ops::pdf_to_images(
+            &pdf_path,
+            &output_dir,
+            &pdfium_lib_path,
+            &format,
+            dpi,
+            output_stem.as_deref(),
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -396,11 +410,12 @@ async fn split_pdf(
     pdf_path: String,
     ranges: String,
     output_dir: String,
+    output_stem: Option<String>,
 ) -> Result<PdfSplitResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir)
+        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir, output_stem.as_deref())
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;

@@ -2,8 +2,7 @@ import { useState } from "react";
 import {
   ChevronRight, ChevronLeft, FolderOpen,
   Zap, ArrowRightLeft, Scaling, Stamp, ShieldOff,
-  FileDown, FileUp, Sparkles, Crop, Pipette,
-  Image, Scissors, FileArchive, Lock,
+  FileDown, Sparkles, Crop, Pipette,
   Globe, Film, LayoutGrid, Code, QrCode, PenLine,
 } from "lucide-react";
 import { useT, type Lang } from "../i18n/i18n";
@@ -36,12 +35,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
   {
     titleKey: "onboarding.section_pdf",
     features: [
-      { icon: FileDown, key: "onboarding.feature_extract" },
-      { icon: FileUp, key: "onboarding.feature_builder" },
-      { icon: Image, key: "onboarding.feature_pdf_to_images" },
-      { icon: Scissors, key: "onboarding.feature_pdf_split" },
-      { icon: FileArchive, key: "onboarding.feature_pdf_compress" },
-      { icon: Lock, key: "onboarding.feature_pdf_protect" },
+      { icon: FileDown, key: "onboarding.feature_pdf_toolkit" },
     ],
   },
   {
@@ -64,7 +58,7 @@ const FOLDER_GROUPS = [
   },
   {
     titleKey: "onboarding.section_pdf",
-    folders: ["pdf-extracted/", "pdf-built/", "pdf-pages/", "pdf-split/", "pdf-compressed/", "pdf-protected/"],
+    folders: ["pdf-toolkit/"],
   },
   {
     titleKey: "onboarding.section_dev",

@@ -8,19 +8,14 @@ import {
   Scaling,
   ShieldOff,
   Stamp,
-  FileUp,
   Settings,
   Sparkles,
   Crop,
-  Image,
-  Scissors,
   ChevronDown,
   Pipette,
   Globe,
-  FileArchive,
   Film,
   LayoutGrid,
-  Lock,
   Code,
   QrCode,
   PenLine,
@@ -35,16 +30,11 @@ import { WatermarkTab } from "./components/WatermarkTab";
 import { ExifStripTab } from "./components/ExifStripTab";
 import { OptimizeTab } from "./components/OptimizeTab";
 import { CropTab } from "./components/CropTab";
-import { PdfTab } from "./components/PdfTab";
-import { PdfBuilderTab } from "./components/PdfBuilderTab";
-import { PdfToImagesTab } from "./components/PdfToImagesTab";
-import { PdfSplitTab } from "./components/PdfSplitTab";
+import { PdfWorkbenchTab } from "./components/PdfWorkbenchTab";
 import { PaletteTab } from "./components/PaletteTab";
 import { FaviconTab } from "./components/FaviconTab";
-import { PdfCompressTab } from "./components/PdfCompressTab";
 import { AnimationTab } from "./components/AnimationTab";
 import { SpriteSheetTab } from "./components/SpriteSheetTab";
-import { PdfProtectTab } from "./components/PdfProtectTab";
 import { Base64Tab } from "./components/Base64Tab";
 import { QrCodeTab } from "./components/QrCodeTab";
 import { BulkRenameTab } from "./components/BulkRenameTab";
@@ -67,16 +57,11 @@ const TAB_EXTENSIONS: Record<TabId, string[]> = {
   strip: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   optimize: ["png", "jpg", "jpeg"],
   crop: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
-  pdf: ["pdf"],
-  "pdf-builder": ["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf"],
+  "pdf-toolkit": ["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf"],
   palette: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
-  "pdf-to-images": ["pdf"],
-  "pdf-split": ["pdf"],
-  "pdf-compress": ["pdf"],
   favicon: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   animation: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
   spritesheet: ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp"],
-  "pdf-protect": ["pdf"],
   base64: ["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "svg", "tiff", "tif"],
   qrcode: [],
   "bulk-rename": ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp", "gif", "ico", "svg"],
@@ -110,12 +95,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     titleKey: "section.pdf_tools",
     tabs: [
-      { id: "pdf", labelKey: "tab.pdf", icon: FileDown },
-      { id: "pdf-builder", labelKey: "tab.pdf_builder", icon: FileUp },
-      { id: "pdf-to-images", labelKey: "tab.pdf_to_images", icon: Image },
-      { id: "pdf-split", labelKey: "tab.pdf_split", icon: Scissors },
-      { id: "pdf-compress", labelKey: "tab.pdf_compress", icon: FileArchive },
-      { id: "pdf-protect", labelKey: "tab.pdf_protect", icon: Lock },
+      { id: "pdf-toolkit", labelKey: "tab.pdf_toolkit", icon: FileDown },
     ],
   },
   {
@@ -139,16 +119,11 @@ const TAB_DESC_KEYS: Record<TabId, string> = {
   strip: "tab.strip.desc",
   optimize: "tab.optimize.desc",
   crop: "tab.crop.desc",
-  pdf: "tab.pdf.desc",
-  "pdf-builder": "tab.pdf_builder.desc",
+  "pdf-toolkit": "tab.pdf_toolkit.desc",
   palette: "tab.palette.desc",
-  "pdf-to-images": "tab.pdf_to_images.desc",
-  "pdf-split": "tab.pdf_split.desc",
-  "pdf-compress": "tab.pdf_compress.desc",
   favicon: "tab.favicon.desc",
   animation: "tab.animation.desc",
   spritesheet: "tab.spritesheet.desc",
-  "pdf-protect": "tab.pdf_protect.desc",
   base64: "tab.base64.desc",
   qrcode: "tab.qrcode.desc",
   "bulk-rename": "tab.bulk_rename.desc",
@@ -162,16 +137,11 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
   strip: "tab.strip",
   optimize: "tab.optimize",
   crop: "tab.crop",
-  pdf: "tab.pdf",
-  "pdf-builder": "tab.pdf_builder",
+  "pdf-toolkit": "tab.pdf_toolkit",
   palette: "tab.palette",
-  "pdf-to-images": "tab.pdf_to_images",
-  "pdf-split": "tab.pdf_split",
-  "pdf-compress": "tab.pdf_compress",
   favicon: "tab.favicon",
   animation: "tab.animation",
   spritesheet: "tab.spritesheet",
-  "pdf-protect": "tab.pdf_protect",
   base64: "tab.base64",
   qrcode: "tab.qrcode",
   "bulk-rename": "tab.bulk_rename",
@@ -315,16 +285,11 @@ function App() {
             {activeTab === "optimize" && <OptimizeTab />}
             {activeTab === "watermark" && <WatermarkTab />}
             {activeTab === "strip" && <ExifStripTab />}
-            {activeTab === "pdf" && <PdfTab />}
-            {activeTab === "pdf-builder" && <PdfBuilderTab />}
-            {activeTab === "pdf-to-images" && <PdfToImagesTab />}
-            {activeTab === "pdf-split" && <PdfSplitTab />}
+            {activeTab === "pdf-toolkit" && <PdfWorkbenchTab />}
             {activeTab === "palette" && <PaletteTab />}
-            {activeTab === "pdf-compress" && <PdfCompressTab />}
             {activeTab === "favicon" && <FaviconTab />}
             {activeTab === "animation" && <AnimationTab />}
             {activeTab === "spritesheet" && <SpriteSheetTab />}
-            {activeTab === "pdf-protect" && <PdfProtectTab />}
             {activeTab === "base64" && <Base64Tab />}
             {activeTab === "qrcode" && <QrCodeTab />}
             {activeTab === "bulk-rename" && <BulkRenameTab />}

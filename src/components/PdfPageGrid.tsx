@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Loader2 } from "lucide-react";
 import { PdfPageCard } from "./PdfPageCard";
-import type { BuilderPage } from "../hooks/usePdfBuilder";
+import type { BuilderPage } from "../hooks/usePdfWorkbench";
 
 interface PdfPageGridProps {
   pages: BuilderPage[];

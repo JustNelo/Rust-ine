@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { X, FileText, Image } from "lucide-react";
 import { useT } from "../i18n/i18n";
-import type { BuilderPage } from "../hooks/usePdfBuilder";
+import type { BuilderPage } from "../hooks/usePdfWorkbench";
 
 interface PdfPageCardProps {
   page: BuilderPage;

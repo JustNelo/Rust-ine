@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { Crop, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
@@ -9,6 +9,7 @@ import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
+import { safeAssetUrl } from "../lib/utils";
 import type { BatchProgress, ProcessingResult } from "../types";
 
 /** Rectangle in normalised image coordinates (0–1) */
@@ -318,7 +319,7 @@ export function CropTab() {
           >
             <img
               ref={imgRef}
-              src={convertFileSrc(files[0])}
+              src={safeAssetUrl(files[0])}
               alt=""
               onLoad={handleImageLoad}
               className="w-full max-h-72 object-contain pointer-events-none"

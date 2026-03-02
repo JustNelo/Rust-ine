@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { convertFileSrc } from "@tauri-apps/api/core";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -24,4 +25,15 @@ export function formatSize(bytes: number): string {
 
 export function getFileName(path: string): string {
   return path.split(/[\\/]/).pop() || path;
+}
+
+/**
+ * Convert a local file path to a URL usable by the webview.
+ * Normalizes backslashes to forward slashes so the asset protocol
+ * works correctly on Windows (Tauri issue #7970).
+ */
+export function safeAssetUrl(filePath: string, bustCache = false): string {
+  const normalized = filePath.replace(/\\/g, "/");
+  const base = convertFileSrc(normalized);
+  return bustCache ? `${base}?v=${encodeURIComponent(filePath)}` : base;
 }

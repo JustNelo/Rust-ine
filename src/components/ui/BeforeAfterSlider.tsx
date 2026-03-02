@@ -1,7 +1,6 @@
 import { useRef, useCallback, useMemo, memo } from "react";
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { X, ArrowRight } from "lucide-react";
-import { formatSize } from "../../lib/utils";
+import { formatSize, safeAssetUrl } from "../../lib/utils";
 import { useT } from "../../i18n/i18n";
 import type { ProcessingResult } from "../../types";
 
@@ -53,11 +52,11 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
 
   // Stable URLs — computed once per result, never during drag
   const beforeSrc = useMemo(
-    () => `${convertFileSrc(result.input_path)}?t=${Date.now()}`,
+    () => safeAssetUrl(result.input_path),
     [result.input_path],
   );
   const afterSrc = useMemo(
-    () => `${convertFileSrc(result.output_path)}?t=${Date.now()}`,
+    () => safeAssetUrl(result.output_path, true),
     [result.output_path],
   );
 

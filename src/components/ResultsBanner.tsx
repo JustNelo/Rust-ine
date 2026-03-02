@@ -1,7 +1,6 @@
 import { useMemo, useState, useCallback, memo } from "react";
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { CheckCircle, AlertCircle, XCircle, ZoomIn } from "lucide-react";
-import { formatSize, isImage } from "../lib/utils";
+import { formatSize, isImage, safeAssetUrl } from "../lib/utils";
 import { BeforeAfterSlider } from "./ui/BeforeAfterSlider";
 import { useT } from "../i18n/i18n";
 import type { ProcessingResult } from "../types";
@@ -77,7 +76,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total }: Res
                 >
                   {canPreview ? (
                     <img
-                      src={`${convertFileSrc(r.output_path)}?t=${Date.now()}`}
+                      src={safeAssetUrl(r.output_path, true)}
                       alt={outName}
                       loading="lazy"
                       className="h-full w-full object-cover"

@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { Stamp } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
@@ -11,6 +10,7 @@ import { Slider } from "./ui/Slider";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
+import { safeAssetUrl } from "../lib/utils";
 import type { BatchProgress, ProcessingResult, WatermarkPosition } from "../types";
 
 const POSITION_KEYS: { value: WatermarkPosition; labelKey: string }[] = [
@@ -107,7 +107,7 @@ export function WatermarkTab() {
       {files.length > 0 && text.trim() && (
         <div className="relative rounded-xl overflow-hidden border border-glass-border bg-black aspect-video max-h-48">
           <img
-            src={convertFileSrc(files[0])}
+            src={safeAssetUrl(files[0])}
             alt=""
             className="w-full h-full object-contain"
           />

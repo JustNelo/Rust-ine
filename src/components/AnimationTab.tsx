@@ -1,11 +1,12 @@
 import { useState, useCallback } from "react";
-import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { Film, CheckCircle, XCircle, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { ActionButton } from "./ui/ActionButton";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
+import { safeAssetUrl } from "../lib/utils";
 
 interface AnimationResult {
   output_path: string;
@@ -124,7 +125,7 @@ export function AnimationTab() {
                   {index + 1}
                 </span>
                 <img
-                  src={convertFileSrc(path)}
+                  src={safeAssetUrl(path)}
                   alt=""
                   className="h-7 w-7 rounded object-cover shrink-0 border border-glass-border"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
@@ -212,7 +213,7 @@ export function AnimationTab() {
           {result.output_path && (
             <div className="rounded-xl overflow-hidden border border-glass-border bg-black flex items-center justify-center max-h-48">
               <img
-                src={`${convertFileSrc(result.output_path)}?t=${Date.now()}`}
+                src={safeAssetUrl(result.output_path, true)}
                 alt="Generated GIF"
                 className="max-h-48 object-contain"
               />

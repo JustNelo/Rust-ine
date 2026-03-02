@@ -1,7 +1,6 @@
 import { useState, useCallback, memo } from "react";
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { X, FileText, ZoomIn } from "lucide-react";
-import { isImage } from "../lib/utils";
+import { isImage, safeAssetUrl } from "../lib/utils";
 import { useT } from "../i18n/i18n";
 
 interface FileListProps {
@@ -17,7 +16,7 @@ export const FileList = memo(function FileList({ files, onRemove, onClear, type 
   const [previewName, setPreviewName] = useState("");
 
   const openPreview = useCallback((file: string) => {
-    setPreviewSrc(convertFileSrc(file));
+    setPreviewSrc(safeAssetUrl(file));
     setPreviewName(file.split(/[\\/]/).pop() || file);
   }, []);
 
@@ -59,7 +58,7 @@ export const FileList = memo(function FileList({ files, onRemove, onClear, type 
                 >
                   {canPreview ? (
                     <img
-                      src={convertFileSrc(file)}
+                      src={safeAssetUrl(file)}
                       alt={name}
                       loading="lazy"
                       className="h-full w-full object-cover"

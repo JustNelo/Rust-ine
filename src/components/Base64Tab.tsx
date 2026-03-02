@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { Code, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
@@ -7,6 +7,7 @@ import { FileList } from "./FileList";
 import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useT } from "../i18n/i18n";
+import { safeAssetUrl } from "../lib/utils";
 
 export function Base64Tab() {
   const { t } = useT();
@@ -76,7 +77,7 @@ export function Base64Tab() {
       {files.length > 0 && (
         <div className="rounded-xl overflow-hidden border border-glass-border bg-black flex items-center justify-center max-h-40">
           <img
-            src={convertFileSrc(files[0])}
+            src={safeAssetUrl(files[0])}
             alt=""
             className="max-h-40 object-contain"
           />

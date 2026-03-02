@@ -1,10 +1,11 @@
 import { useState, useCallback } from "react";
-import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { ActionButton } from "./ui/ActionButton";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
+import { safeAssetUrl } from "../lib/utils";
 
 interface QrResult {
   output_path: string;
@@ -113,7 +114,7 @@ export function QrCodeTab() {
         <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-4 flex flex-col items-center gap-3">
           <div className="rounded-xl overflow-hidden border border-glass-border bg-white p-2">
             <img
-              src={`${convertFileSrc(result.output_path)}?t=${Date.now()}`}
+              src={safeAssetUrl(result.output_path, true)}
               alt="QR Code"
               className="w-40 h-40 object-contain"
             />

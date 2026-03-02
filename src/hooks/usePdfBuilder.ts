@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import { safeAssetUrl } from "../lib/utils";
 import type {
   PageThumbnail,
   PdfBuilderItem,
@@ -53,7 +53,7 @@ export function usePdfBuilder() {
         sourcePath: path,
         pageNumber: 0,
         sourceType: "image" as const,
-        thumbnailSrc: convertFileSrc(path),
+        thumbnailSrc: safeAssetUrl(path),
         fileName,
       };
     });

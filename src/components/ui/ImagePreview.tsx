@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { safeAssetUrl } from "../../lib/utils";
 
 interface ImagePreviewProps {
   path: string;
@@ -13,7 +13,7 @@ export const ImagePreview = memo(function ImagePreview({ path, className = "", o
   return (
     <div className={`relative rounded-xl overflow-hidden border border-glass-border bg-surface ${className}`}>
       <img
-        src={`${convertFileSrc(path)}?t=${Date.now()}`}
+        src={safeAssetUrl(path, true)}
         alt=""
         className="w-full h-full object-contain"
         onError={(e) => {

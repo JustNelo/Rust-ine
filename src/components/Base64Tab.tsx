@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Code, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,14 @@ export function Base64Tab() {
   const [loading, setLoading] = useState(false);
   const [dataUri, setDataUri] = useState("");
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timer on unmount to prevent setting state on unmounted component
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const handleFilesSelected = useCallback((paths: string[]) => {
     addFiles(paths.slice(0, 1));
@@ -53,7 +61,8 @@ export function Base64Tab() {
       await navigator.clipboard.writeText(dataUri);
       setCopied(true);
       toast.success(t("toast.copied"));
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Failed to copy");
     }

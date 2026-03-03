@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { X, FolderOpen, RotateCcw, Globe, RefreshCw, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
@@ -16,6 +16,14 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
   const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "available" | "downloading" | "up-to-date" | "error">("idle");
   const [foundUpdate, setFoundUpdate] = useState<Awaited<ReturnType<typeof check>> | null>(null);
   const [foundVersion, setFoundVersion] = useState("");
+  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timer on unmount to prevent setting state on unmounted component
+  useEffect(() => {
+    return () => {
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+    };
+  }, []);
 
   const handleCheckUpdate = useCallback(async () => {
     setUpdateStatus("checking");
@@ -27,7 +35,7 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
         setUpdateStatus("available");
       } else {
         setUpdateStatus("up-to-date");
-        setTimeout(() => setUpdateStatus("idle"), 3000);
+        statusTimerRef.current = setTimeout(() => setUpdateStatus("idle"), 3000);
       }
     } catch {
       setUpdateStatus("error");

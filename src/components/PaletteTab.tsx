@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Loader2, Pipette, Copy, Check, FileJson, FileCode } from "lucide-react";
 import { toast } from "sonner";
@@ -27,6 +27,14 @@ export function PaletteTab() {
   const [loading, setLoading] = useState(false);
   const [palette, setPalette] = useState<ColorInfo[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timer on unmount to prevent setting state on unmounted component
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const handleFilesSelected = useCallback((paths: string[]) => {
     addFiles(paths.slice(0, 1));
@@ -66,7 +74,8 @@ export function PaletteTab() {
     try {
       await navigator.clipboard.writeText(hex);
       setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 1500);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopiedIndex(null), 1500);
     } catch {
       // Fallback for environments where clipboard API isn't available
     }
@@ -121,7 +130,7 @@ export function PaletteTab() {
             max={12}
             value={numColors}
             onChange={(e) => setNumColors(Number(e.target.value))}
-            className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-white/8 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(255,255,255,0.15)]"
+            className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-white/8 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-400 [&::-webkit-slider-thumb]:shadow-[0_0_12px_rgba(129,140,248,0.5)]"
           />
           <span className="text-xs font-mono text-neutral-500 w-6 text-right">
             {numColors}

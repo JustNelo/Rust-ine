@@ -34,7 +34,7 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative h-[160px] rounded-xl overflow-hidden border border-white/8 bg-white/3 cursor-grab active:cursor-grabbing"
+      className="group relative h-40 rounded-xl overflow-hidden border border-white/8 bg-white/3 cursor-grab active:cursor-grabbing"
     >
       {/* Remove button — stops drag activation */}
       <button
@@ -63,7 +63,7 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
       </div>
 
       {/* Thumbnail — fixed area, image contained */}
-      <div className="absolute inset-0 bottom-[28px] flex items-center justify-center bg-white/2">
+      <div className="absolute inset-0 bottom-7 flex items-center justify-center bg-white/2">
         {page.thumbnailLoaded && page.thumbnailSrc ? (
           <img
             src={page.thumbnailSrc}
@@ -88,7 +88,7 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
       </div>
 
       {/* Info bar — pinned to bottom */}
-      <div className="absolute bottom-0 inset-x-0 h-[28px] bg-black/50 px-1.5 py-1 backdrop-blur-sm flex flex-col justify-center">
+      <div className="absolute bottom-0 inset-x-0 h-7 bg-black/50 px-1.5 py-1 backdrop-blur-sm flex flex-col justify-center">
         <p className="text-[9px] text-white/90 truncate font-medium leading-tight">{page.fileName}</p>
         {page.sourceType === "pdf" && page.pageNumber > 0 && (
           <p className="text-[8px] text-white/50 leading-tight">{t("label.page_n", { n: page.pageNumber })}</p>

@@ -6,6 +6,7 @@ mod metadata_ops;
 mod pdf_builder_ops;
 mod pdf_ops;
 mod pdf_split_ops;
+mod pdf_watermark_ops;
 mod qr_ops;
 mod rename_ops;
 mod sprite_ops;
@@ -21,6 +22,7 @@ use pdf_ops::{
     ImagesToPdfResult, PdfCompressResult, PdfExtractionResult, PdfProtectResult, PdfToImagesResult,
 };
 use pdf_split_ops::PdfSplitResult;
+use pdf_watermark_ops::PdfWatermarkResult;
 use qr_ops::QrResult;
 use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
@@ -232,6 +234,7 @@ async fn add_watermark(
     position: String,
     opacity: f32,
     font_size: f32,
+    color: String,
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
@@ -245,6 +248,41 @@ async fn add_watermark(
             position,
             opacity,
             font_size,
+            color,
+            output_dir,
+            app_handle,
+            cancel,
+        )
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[tauri::command]
+async fn add_image_watermark(
+    app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
+    input_paths: Vec<String>,
+    watermark_path: String,
+    position: String,
+    opacity: f32,
+    scale: f32,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    validate_path(&watermark_path)?;
+    validate_paths(&input_paths)?;
+    let cancel = (*token).0.clone();
+    cancel.store(false, Ordering::Relaxed);
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::add_image_watermark(
+            input_paths,
+            watermark_path,
+            position,
+            opacity,
+            scale,
             output_dir,
             app_handle,
             cancel,
@@ -528,6 +566,47 @@ async fn unlock_pdf_cmd(
     Ok(result)
 }
 
+#[allow(clippy::too_many_arguments)]
+#[tauri::command]
+async fn watermark_pdf_text_cmd(
+    pdf_path: String,
+    text: String,
+    position: String,
+    opacity: f32,
+    font_size: f32,
+    color: String,
+    output_dir: String,
+) -> Result<PdfWatermarkResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_watermark_ops::watermark_pdf_text(&pdf_path, &text, &position, opacity, font_size, &color, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn watermark_pdf_image_cmd(
+    image_path: String,
+    pdf_path: String,
+    position: String,
+    opacity: f32,
+    scale: f32,
+    output_dir: String,
+) -> Result<PdfWatermarkResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&image_path)?;
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_watermark_ops::watermark_pdf_image(&pdf_path, &image_path, &position, opacity, scale, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
 #[tauri::command]
 async fn bulk_rename_cmd(
     input_paths: Vec<String>,
@@ -607,6 +686,7 @@ pub fn run() {
             resize_images,
             strip_metadata,
             add_watermark,
+            add_image_watermark,
             optimize_images,
             crop_images,
             images_to_pdf,
@@ -623,6 +703,8 @@ pub fn run() {
             generate_spritesheet,
             protect_pdf_cmd,
             unlock_pdf_cmd,
+            watermark_pdf_text_cmd,
+            watermark_pdf_image_cmd,
             image_to_base64,
             generate_qr_cmd,
             bulk_rename_cmd,

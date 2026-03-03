@@ -18,10 +18,13 @@ import {
   Loader2,
   AlertTriangle,
   FolderOpen,
+  Stamp,
+  Type,
+  ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
-import { cn, formatSize } from "../lib/utils";
+import { cn, formatSize, safeAssetUrl } from "../lib/utils";
 import { PdfPageGrid } from "./PdfPageGrid";
 import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
@@ -67,6 +70,7 @@ const PRIMARY_ACTIONS: ActionDef[] = [
   { id: "split", labelKey: "pdf_tool.split", icon: Scissors },
   { id: "export-images", labelKey: "pdf_tool.export_images", icon: Image },
   { id: "extract-images", labelKey: "pdf_tool.extract_images", icon: FileDown },
+  { id: "watermark", labelKey: "pdf_tool.watermark", icon: Stamp },
 ];
 
 // Actions that output PDF (support post-processing)
@@ -79,9 +83,22 @@ const PIPELINE_STEP_LABELS: Record<PipelineStep, string> = {
   split: "status.splitting",
   "export-images": "status.exporting_pages",
   "extract-images": "status.extracting",
+  watermark: "status.watermarking_pdf",
   compress: "status.compressing_pdf",
   protect: "status.protecting_pdf",
 };
+
+type PdfWmMode = "text" | "image";
+
+const PDF_WM_POSITIONS = [
+  { value: "center", labelKey: "label.center" },
+  { value: "diagonal", labelKey: "label.diagonal" },
+  { value: "bottom-right", labelKey: "label.bottom_right" },
+  { value: "bottom-left", labelKey: "label.bottom_left" },
+  { value: "top-right", labelKey: "label.top_right" },
+  { value: "top-left", labelKey: "label.top_left" },
+  { value: "tiled", labelKey: "label.tiled" },
+] as const;
 
 // --- Main Component ---
 
@@ -100,6 +117,7 @@ export function PdfWorkbenchTab() {
     reorderPages,
     clearAll,
     executePipeline,
+    watermarkPdf,
     unlockPdf,
   } = usePdfWorkbench();
 
@@ -125,6 +143,16 @@ export function PdfWorkbenchTab() {
   const [ppProtect, setPpProtect] = useState(false);
   const [ppPassword, setPpPassword] = useState("");
   const ppPasswordStrength = useMemo(() => getPasswordStrength(ppPassword), [ppPassword]);
+
+  // Watermark options
+  const [wmMode, setWmMode] = useState<PdfWmMode>("text");
+  const [wmText, setWmText] = useState("");
+  const [wmPosition, setWmPosition] = useState<string>("center");
+  const [wmOpacity, setWmOpacity] = useState(30);
+  const [wmFontSize, setWmFontSize] = useState(48);
+  const [wmColor, setWmColor] = useState("#B3B3B3");
+  const [wmLogoPath, setWmLogoPath] = useState<string | null>(null);
+  const [wmScale, setWmScale] = useState(25);
 
   // Unlock mode state
   const [unlockFile, setUnlockFile] = useState<string | null>(null);
@@ -193,11 +221,37 @@ export function PdfWorkbenchTab() {
     }
   }, []);
 
+  const handleSelectWmLogo = useCallback(async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "svg"] }],
+      });
+      if (selected) setWmLogoPath(selected as string);
+    } catch (err) {
+      console.error("Dialog error:", err);
+    }
+  }, []);
+
   // --- Pipeline execute ---
   const handleExecute = useCallback(async () => {
     const outputDir = await getOutputDir("pdf-toolkit");
     if (!outputDir) {
       toast.error(t("toast.no_workspace"));
+      return;
+    }
+
+    // Watermark action uses its own path
+    if (activeTool === "watermark") {
+      await watermarkPdf(outputDir, wmMode, {
+        text: wmText.trim(),
+        imagePath: wmLogoPath || undefined,
+        position: wmPosition as import("../types").PdfWatermarkPosition,
+        opacity: wmOpacity / 100,
+        fontSize: wmFontSize,
+        color: wmColor,
+        scale: wmScale / 100,
+      });
       return;
     }
 
@@ -223,6 +277,7 @@ export function PdfWorkbenchTab() {
     activeTool, outputName, ranges, exportFormat, exportDpi,
     ppCompress, ppCompressQuality, ppProtect, ppPassword,
     showPostProcessing, getOutputDir, executePipeline,
+    watermarkPdf, wmMode, wmText, wmLogoPath, wmPosition, wmOpacity, wmFontSize, wmColor, wmScale,
   ]);
 
   // --- Unlock execute ---
@@ -237,9 +292,14 @@ export function PdfWorkbenchTab() {
   const isExecuteDisabled = useMemo(() => {
     if (loading) return true;
     if (pages.length === 0) return true;
+    if (activeTool === "watermark") {
+      if (wmMode === "text" && !wmText.trim()) return true;
+      if (wmMode === "image" && !wmLogoPath) return true;
+      return false;
+    }
     if (ppProtect && showPostProcessing && !ppPassword.trim()) return true;
     return false;
-  }, [loading, pages.length, ppProtect, ppPassword, showPostProcessing]);
+  }, [loading, pages.length, ppProtect, ppPassword, showPostProcessing, activeTool, wmMode, wmText, wmLogoPath]);
 
   // --- Action button text ---
   const actionButtonText = useMemo(() => {
@@ -254,6 +314,7 @@ export function PdfWorkbenchTab() {
       "split": { text: t("action.pdf_split"), loadingText: t("status.splitting") },
       "export-images": { text: t("action.pdf_to_images"), loadingText: t("status.exporting_pages") },
       "extract-images": { text: t("action.extract"), loadingText: t("status.extracting") },
+      "watermark": { text: t("action.pdf_watermark"), loadingText: t("status.watermarking_pdf") },
     };
     return map[activeTool];
   }, [activeTool, pipelineStep, t]);
@@ -265,6 +326,7 @@ export function PdfWorkbenchTab() {
       "split": <Scissors className="h-4 w-4" strokeWidth={1.5} />,
       "export-images": <Image className="h-4 w-4" strokeWidth={1.5} />,
       "extract-images": <FileDown className="h-4 w-4" strokeWidth={1.5} />,
+      "watermark": <Stamp className="h-4 w-4" strokeWidth={1.5} />,
     };
     return map[activeTool];
   }, [activeTool]);
@@ -421,7 +483,7 @@ export function PdfWorkbenchTab() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">
                   {t("pdf_tool.primary_action")}
                 </p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   {PRIMARY_ACTIONS.map((action) => {
                     const Icon = action.icon;
                     const isActive = activeTool === action.id;
@@ -530,6 +592,157 @@ export function PdfWorkbenchTab() {
                   <p className="text-xs text-neutral-500">
                     {t("pdf_tool.extract_images_hint")}
                   </p>
+                )}
+
+                {activeTool === "watermark" && (
+                  <div className="space-y-3">
+                    {/* Text / Image toggle */}
+                    <div className="flex gap-2">
+                      {(["text", "image"] as PdfWmMode[]).map((m) => (
+                        <button
+                          key={m}
+                          onClick={() => setWmMode(m)}
+                          className={cn(
+                            "flex items-center gap-2 flex-1 justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer border",
+                            wmMode === m
+                              ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+                              : "bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
+                          )}
+                        >
+                          {m === "text" ? (
+                            <Type className="h-3.5 w-3.5" strokeWidth={1.5} />
+                          ) : (
+                            <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                          )}
+                          {m === "text" ? t("label.watermark_text_mode") : t("label.watermark_image_mode")}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Text-specific */}
+                    {wmMode === "text" && (
+                      <>
+                        <div>
+                          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1 block">
+                            {t("label.watermark_text")}
+                          </label>
+                          <input
+                            type="text"
+                            value={wmText}
+                            onChange={(e) => setWmText(e.target.value)}
+                            placeholder={t("label.placeholder_watermark")}
+                            className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
+                          />
+                        </div>
+                        <Slider
+                          label={t("label.font_size")}
+                          value={wmFontSize}
+                          min={8}
+                          max={200}
+                          unit="px"
+                          onChange={setWmFontSize}
+                        />
+                        <div>
+                          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1 block">
+                            {t("label.watermark_color")}
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <label className="relative cursor-pointer">
+                              <input
+                                type="color"
+                                value={wmColor}
+                                onChange={(e) => setWmColor(e.target.value)}
+                                className="absolute inset-0 opacity-0 w-0 h-0 cursor-pointer"
+                              />
+                              <div
+                                className="h-8 w-8 rounded-md border border-white/15 cursor-pointer transition-colors duration-200 hover:border-white/30"
+                                style={{ backgroundColor: wmColor }}
+                              />
+                            </label>
+                            <input
+                              type="text"
+                              value={wmColor}
+                              onChange={(e) => setWmColor(e.target.value)}
+                              maxLength={7}
+                              className="w-24 rounded-md border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white font-mono placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Image-specific */}
+                    {wmMode === "image" && (
+                      <>
+                        <div>
+                          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1 block">
+                            {t("label.watermark_logo")}
+                          </label>
+                          <button
+                            onClick={handleSelectWmLogo}
+                            className="flex items-center gap-2 w-full rounded-lg border border-dashed border-white/15 bg-white/3 px-3 py-3 text-xs text-neutral-400 hover:text-white hover:border-white/25 transition-colors duration-200 cursor-pointer"
+                          >
+                            <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
+                            {wmLogoPath
+                              ? wmLogoPath.split(/[\\/]/).pop()
+                              : t("label.select_logo")}
+                          </button>
+                          {wmLogoPath && (
+                            <div className="mt-2 flex items-center gap-2 rounded-lg border border-white/8 bg-white/3 p-2">
+                              <img
+                                src={safeAssetUrl(wmLogoPath)}
+                                alt="Logo"
+                                className="h-8 w-8 rounded object-contain bg-white/5"
+                              />
+                              <span className="text-[10px] text-neutral-500 truncate flex-1">
+                                {wmLogoPath.split(/[\\/]/).pop()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <Slider
+                          label={t("label.watermark_scale")}
+                          value={wmScale}
+                          min={5}
+                          max={80}
+                          unit="%"
+                          onChange={setWmScale}
+                        />
+                      </>
+                    )}
+
+                    {/* Position */}
+                    <div>
+                      <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1.5 block">
+                        {t("label.position")}
+                      </label>
+                      <div className="flex gap-2 flex-wrap">
+                        {PDF_WM_POSITIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setWmPosition(opt.value)}
+                            className={cn(
+                              "rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
+                              wmPosition === opt.value
+                                ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+                                : "bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
+                            )}
+                          >
+                            {t(opt.labelKey)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Opacity */}
+                    <Slider
+                      label={t("label.opacity")}
+                      value={wmOpacity}
+                      min={5}
+                      max={100}
+                      onChange={setWmOpacity}
+                    />
+                  </div>
                 )}
 
                 {/* Post-processing toggles (only for PDF output actions) */}
@@ -748,6 +961,12 @@ function ResultPanel({ result, t }: ResultPanelProps) {
       }
       break;
     }
+
+    case "watermark":
+      successIcon = result.data.page_count > 0 && result.data.errors.length === 0;
+      mainText = t("result.pdf_watermarked", { n: result.data.page_count });
+      errors = result.data.errors;
+      break;
 
     case "protect":
       successIcon = result.data.success;

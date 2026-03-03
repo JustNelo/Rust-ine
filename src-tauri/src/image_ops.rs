@@ -409,6 +409,19 @@ pub fn strip_metadata(
 
 // --- Watermark ---
 
+/// Parse a hex color string (#RRGGBB or RRGGBB) into (r, g, b) u8 components.
+/// Falls back to white (255, 255, 255) on invalid input.
+fn hex_to_rgba_components(hex: &str) -> (u8, u8, u8) {
+    let hex = hex.trim_start_matches('#');
+    if hex.len() != 6 {
+        return (255, 255, 255);
+    }
+    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(255);
+    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(255);
+    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(255);
+    (r, g, b)
+}
+
 fn find_system_font() -> Result<Vec<u8>, String> {
     let candidates: Vec<&str> = if cfg!(target_os = "windows") {
         vec![
@@ -446,6 +459,7 @@ pub fn add_watermark(
     position: String,
     opacity: f32,
     font_size: f32,
+    color: String,
     output_dir: String,
     app_handle: tauri::AppHandle,
     cancel: Arc<AtomicBool>,
@@ -462,7 +476,8 @@ pub fn add_watermark(
     };
 
     let opacity_byte = (opacity.clamp(0.0, 1.0) * 255.0) as u8;
-    let color = Rgba([255u8, 255, 255, opacity_byte]);
+    let (cr, cg, cb) = hex_to_rgba_components(&color);
+    let color = Rgba([cr, cg, cb, opacity_byte]);
     let scale = PxScale::from(font_size);
 
     batch_process(
@@ -518,6 +533,127 @@ pub fn add_watermark(
                     let x = (img_w as i32 - text_width) / 2;
                     let y = (img_h as i32 - text_height) / 2;
                     draw_text_mut(&mut base, color, x, y, scale, &font, &text);
+                }
+            }
+
+            let result_img = DynamicImage::ImageRgba8(base);
+            let ext = get_extension(input_path);
+            let stem = file_stem(input_path);
+            let output_path = out_dir.join(format!("{}-watermarked.{}", stem, ext));
+
+            save_in_original_format(&result_img, input_path, &output_path)?;
+            Ok((
+                output_path.to_string_lossy().to_string(),
+                Some((img_w, img_h, img_w, img_h)),
+            ))
+        },
+    )
+}
+
+// --- Image Watermark ---
+
+/// Overlay a logo/image watermark on target images with configurable position, opacity, and scale.
+#[allow(clippy::too_many_arguments)]
+pub fn add_image_watermark(
+    input_paths: Vec<String>,
+    watermark_path: String,
+    position: String,
+    opacity: f32,
+    scale: f32,
+    output_dir: String,
+    app_handle: tauri::AppHandle,
+    cancel: Arc<AtomicBool>,
+) -> BatchProgress {
+    // Load the watermark image once (shared across all target images)
+    let watermark_img = match load_image(&watermark_path) {
+        Ok(img) => img.to_rgba8(),
+        Err(e) => return BatchProgress::all_failed(&input_paths, format!("Cannot load watermark image: {}", e)),
+    };
+    let (wm_orig_w, wm_orig_h) = (watermark_img.width(), watermark_img.height());
+
+    if wm_orig_w == 0 || wm_orig_h == 0 {
+        return BatchProgress::all_failed(&input_paths, "Watermark image has zero dimensions".to_string());
+    }
+
+    let opacity_clamped = opacity.clamp(0.0, 1.0);
+
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let (img_w, img_h) = (img.width(), img.height());
+            let mut base = img.to_rgba8();
+
+            // Scale watermark relative to target image width
+            let target_wm_w = ((img_w as f32) * scale.clamp(0.01, 1.0)) as u32;
+            let aspect_ratio = wm_orig_h as f32 / wm_orig_w as f32;
+            let target_wm_h = (target_wm_w as f32 * aspect_ratio) as u32;
+
+            if target_wm_w == 0 || target_wm_h == 0 {
+                return Err("Watermark scaled dimensions are zero".to_string());
+            }
+
+            let resized_wm = image::imageops::resize(
+                &watermark_img,
+                target_wm_w,
+                target_wm_h,
+                image::imageops::FilterType::Lanczos3,
+            );
+
+            // Apply opacity to the watermark alpha channel
+            let mut wm_with_opacity = resized_wm.clone();
+            for pixel in wm_with_opacity.pixels_mut() {
+                pixel[3] = (pixel[3] as f32 * opacity_clamped) as u8;
+            }
+
+            let margin = 20i64;
+
+            let overlay_at = |base_img: &mut image::RgbaImage, x: i64, y: i64| {
+                image::imageops::overlay(base_img, &wm_with_opacity, x, y);
+            };
+
+            match position.as_str() {
+                "center" => {
+                    let x = (img_w as i64 - target_wm_w as i64) / 2;
+                    let y = (img_h as i64 - target_wm_h as i64) / 2;
+                    overlay_at(&mut base, x, y);
+                }
+                "top-left" => {
+                    overlay_at(&mut base, margin, margin);
+                }
+                "top-right" => {
+                    let x = img_w as i64 - target_wm_w as i64 - margin;
+                    overlay_at(&mut base, x, margin);
+                }
+                "bottom-left" => {
+                    let y = img_h as i64 - target_wm_h as i64 - margin;
+                    overlay_at(&mut base, margin, y);
+                }
+                "bottom-right" => {
+                    let x = img_w as i64 - target_wm_w as i64 - margin;
+                    let y = img_h as i64 - target_wm_h as i64 - margin;
+                    overlay_at(&mut base, x, y);
+                }
+                "tiled" => {
+                    let step_x = target_wm_w as i64 + 80;
+                    let step_y = target_wm_h as i64 + 80;
+                    let mut y = margin;
+                    while y < img_h as i64 {
+                        let mut x = margin;
+                        while x < img_w as i64 {
+                            overlay_at(&mut base, x, y);
+                            x += step_x;
+                        }
+                        y += step_y;
+                    }
+                }
+                _ => {
+                    let x = (img_w as i64 - target_wm_w as i64) / 2;
+                    let y = (img_h as i64 - target_wm_h as i64) / 2;
+                    overlay_at(&mut base, x, y);
                 }
             }
 

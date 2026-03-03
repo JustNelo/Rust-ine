@@ -30,6 +30,14 @@ export type ResizeMode = "exact" | "width" | "height" | "percentage";
 
 export type WatermarkPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | "tiled";
 
+export type PdfWatermarkPosition = WatermarkPosition | "diagonal";
+
+export interface PdfWatermarkResult {
+  output_path: string;
+  page_count: number;
+  errors: string[];
+}
+
 export interface MetadataEntry {
   tag: string;
   value: string;

@@ -9,11 +9,13 @@ import type {
   MergePdfOptions,
   MergePdfResult,
   PdfExtractionResult,
+  PdfWatermarkResult,
+  PdfWatermarkPosition,
 } from "../types";
 
 // --- Types ---
 
-export type PrimaryAction = "build" | "split" | "export-images" | "extract-images";
+export type PrimaryAction = "build" | "split" | "export-images" | "extract-images" | "watermark";
 type ProtectMode = "protect" | "unlock";
 export type ExportFormat = "png" | "jpg";
 export type ExportDpi = 72 | 150 | 300;
@@ -31,6 +33,7 @@ export type PipelineStep =
   | "split"
   | "export-images"
   | "extract-images"
+  | "watermark"
   | "compress"
   | "protect";
 
@@ -64,6 +67,7 @@ const ACTION_SUBFOLDERS: Record<PrimaryAction | "unlock", string> = {
   split: "split",
   "export-images": "exported-pages",
   "extract-images": "extracted-images",
+  watermark: "watermarked",
   unlock: "unlocked",
 };
 
@@ -119,6 +123,7 @@ export type WorkbenchResult =
   | { type: "extract-images"; data: { total_extracted: number; errors: string[] }; outputDir: string }
   | { type: "compress"; data: PdfCompressResult; outputDir: string }
   | { type: "protect"; data: PdfProtectResult; mode: ProtectMode; outputDir: string }
+  | { type: "watermark"; data: PdfWatermarkResult; outputDir: string }
   | { type: "pipeline"; steps: string[]; errors: string[]; outputDir: string };
 
 // --- Hook ---
@@ -641,6 +646,98 @@ export function usePdfWorkbench() {
     [materializeGrid, cleanupTemp, getOutputStem, t]
   );
 
+  // --- Standalone: Watermark PDF ---
+  const watermarkPdf = useCallback(
+    async (
+      outputDir: string,
+      watermarkMode: "text" | "image",
+      options: {
+        text?: string;
+        imagePath?: string;
+        position: PdfWatermarkPosition;
+        opacity: number;
+        fontSize?: number;
+        color?: string;
+        scale?: number;
+      }
+    ) => {
+      const currentPages = pagesRef.current;
+      if (currentPages.length === 0) {
+        toast.error(t("toast.select_files"));
+        return;
+      }
+
+      setLoading(true);
+      setResult(null);
+      let materializedPath: string | null = null;
+
+      const sep = outputDir.includes("/") ? "/" : "\\";
+      const actionDir = `${outputDir}${sep}${ACTION_SUBFOLDERS.watermark}`;
+      try {
+        const { mkdir, exists: fsExists } = await import("@tauri-apps/plugin-fs");
+        const dirExists = await fsExists(actionDir);
+        if (!dirExists) await mkdir(actionDir, { recursive: true });
+      } catch (dirErr) {
+        console.error("Cannot create watermark sub-folder:", dirErr);
+      }
+
+      try {
+        materializedPath = await materializeGrid(outputDir);
+        if (!materializedPath) {
+          toast.error(t("toast.select_pdf"));
+          setLoading(false);
+          return;
+        }
+
+        setPipelineStep("watermark");
+
+        let res: PdfWatermarkResult;
+
+        if (watermarkMode === "text") {
+          res = await invoke<PdfWatermarkResult>("watermark_pdf_text_cmd", {
+            pdfPath: materializedPath,
+            text: options.text || "",
+            position: options.position,
+            opacity: options.opacity,
+            fontSize: options.fontSize || 48,
+            color: options.color || "#B3B3B3",
+            outputDir: actionDir,
+          });
+        } else {
+          res = await invoke<PdfWatermarkResult>("watermark_pdf_image_cmd", {
+            pdfPath: materializedPath,
+            imagePath: options.imagePath || "",
+            position: options.position,
+            opacity: options.opacity,
+            scale: options.scale || 0.25,
+            outputDir: actionDir,
+          });
+        }
+
+        await cleanupTemp(materializedPath);
+
+        setResult({ type: "watermark", data: res, outputDir: actionDir });
+
+        if (res.page_count > 0 && res.errors.length === 0) {
+          toast.success(t("toast.pdf_watermark_success", { n: res.page_count }));
+        } else if (res.errors.length > 0) {
+          toast.error(res.errors[0]);
+        } else {
+          toast.error(t("toast.all_failed"));
+        }
+      } catch (err) {
+        toast.error(`${err}`);
+        if (materializedPath) {
+          await cleanupTemp(materializedPath);
+        }
+      } finally {
+        setLoading(false);
+        setPipelineStep(null);
+      }
+    },
+    [materializeGrid, cleanupTemp, t]
+  );
+
   // --- Standalone: Unlock PDF (no grid interaction) ---
   const unlockPdf = useCallback(
     async (
@@ -705,6 +802,7 @@ export function usePdfWorkbench() {
     clearAll,
     // Actions
     executePipeline,
+    watermarkPdf,
     unlockPdf,
   };
 }

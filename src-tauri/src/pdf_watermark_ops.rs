@@ -123,11 +123,9 @@ pub fn watermark_pdf_text(
         inject_page_resources(&mut doc, page_id, &entries);
 
         // Append watermark content stream
-        if let Ok(page_obj) = doc.get_object_mut(page_id) {
-            if let Object::Dictionary(ref mut page_dict) = *page_obj {
-                append_content_to_page(page_dict, content_id);
-                result.page_count += 1;
-            }
+        if let Ok(&mut Object::Dictionary(ref mut page_dict)) = doc.get_object_mut(page_id) {
+            append_content_to_page(page_dict, content_id);
+            result.page_count += 1;
         }
     }
 
@@ -308,11 +306,9 @@ pub fn watermark_pdf_image(
         inject_page_resources(&mut doc, page_id, &entries);
 
         // Append watermark content stream
-        if let Ok(page_obj) = doc.get_object_mut(page_id) {
-            if let Object::Dictionary(ref mut page_dict) = *page_obj {
-                append_content_to_page(page_dict, content_id);
-                result.page_count += 1;
-            }
+        if let Ok(&mut Object::Dictionary(ref mut page_dict)) = doc.get_object_mut(page_id) {
+            append_content_to_page(page_dict, content_id);
+            result.page_count += 1;
         }
     }
 
@@ -364,7 +360,7 @@ fn get_page_dimensions(doc: &LopdfDocument, page_id: lopdf::ObjectId) -> (f32, f
 fn obj_to_f32(obj: &Object) -> Option<f32> {
     match obj {
         Object::Integer(i) => Some(*i as f32),
-        Object::Real(f) => Some(*f as f32),
+        Object::Real(f) => Some(*f),
         _ => None,
     }
 }
@@ -422,10 +418,8 @@ fn inject_page_resources(
     // Step 3 (mutable): For entries whose sub-category IS an indirect ref, modify the ref'd dict
     for (i, &(_, name, obj_id)) in entries.iter().enumerate() {
         if let Some(sub_id) = sub_category_refs[i] {
-            if let Ok(sub_obj) = doc.get_object_mut(sub_id) {
-                if let Object::Dictionary(ref mut sub_dict) = *sub_obj {
-                    sub_dict.set(name, Object::Reference(obj_id));
-                }
+            if let Ok(&mut Object::Dictionary(ref mut sub_dict)) = doc.get_object_mut(sub_id) {
+                sub_dict.set(name, Object::Reference(obj_id));
             }
         }
     }
@@ -443,20 +437,16 @@ fn inject_page_resources(
     }
 
     if let Some(res_id) = resources_ref_id {
-        if let Ok(res_obj) = doc.get_object_mut(res_id) {
-            if let Object::Dictionary(ref mut res_dict) = *res_obj {
-                add_entries_to_resources(res_dict, &remaining_entries);
-            }
+        if let Ok(&mut Object::Dictionary(ref mut res_dict)) = doc.get_object_mut(res_id) {
+            add_entries_to_resources(res_dict, &remaining_entries);
         }
-    } else if let Ok(page_obj) = doc.get_object_mut(page_id) {
-        if let Object::Dictionary(ref mut page_dict) = *page_obj {
-            if let Ok(Object::Dictionary(ref mut res_dict)) = page_dict.get_mut(b"Resources") {
-                add_entries_to_resources(res_dict, &remaining_entries);
-            } else {
-                let mut new_res = lopdf::Dictionary::new();
-                add_entries_to_resources(&mut new_res, &remaining_entries);
-                page_dict.set("Resources", Object::Dictionary(new_res));
-            }
+    } else if let Ok(&mut Object::Dictionary(ref mut page_dict)) = doc.get_object_mut(page_id) {
+        if let Ok(Object::Dictionary(ref mut res_dict)) = page_dict.get_mut(b"Resources") {
+            add_entries_to_resources(res_dict, &remaining_entries);
+        } else {
+            let mut new_res = lopdf::Dictionary::new();
+            add_entries_to_resources(&mut new_res, &remaining_entries);
+            page_dict.set("Resources", Object::Dictionary(new_res));
         }
     }
 }
@@ -504,6 +494,7 @@ fn append_content_to_page(page_dict: &mut lopdf::Dictionary, new_content_id: lop
 }
 
 /// Build PDF content stream operations for a text watermark at the given position.
+#[allow(clippy::too_many_arguments)]
 fn build_text_watermark_ops(
     text: &str,
     position: &str,
@@ -535,20 +526,17 @@ fn build_text_watermark_ops(
             Operation::new("BT", vec![]),
             Operation::new(
                 "Tf",
-                vec![
-                    Object::Name(b"WmF1".to_vec()),
-                    Object::Real(font_size.into()),
-                ],
+                vec![Object::Name(b"WmF1".to_vec()), Object::Real(font_size)],
             ),
             Operation::new(
                 "Tm",
                 vec![
-                    Object::Real(cos_a.into()),
-                    Object::Real(sin_a.into()),
-                    Object::Real((-sin_a).into()),
-                    Object::Real(cos_a.into()),
-                    Object::Real(tx.into()),
-                    Object::Real(ty.into()),
+                    Object::Real(cos_a),
+                    Object::Real(sin_a),
+                    Object::Real(-sin_a),
+                    Object::Real(cos_a),
+                    Object::Real(tx),
+                    Object::Real(ty),
                 ],
             ),
             Operation::new(
@@ -579,10 +567,7 @@ fn build_text_watermark_ops(
             Operation::new("BT", vec![]),
             Operation::new(
                 "Tf",
-                vec![
-                    Object::Name(b"WmF1".to_vec()),
-                    Object::Real(font_size.into()),
-                ],
+                vec![Object::Name(b"WmF1".to_vec()), Object::Real(font_size)],
             ),
             Operation::new(
                 "rg",
@@ -603,11 +588,7 @@ fn build_text_watermark_ops(
                 ops.push(Operation::new(
                     "Td",
                     vec![
-                        Object::Real(if x == margin && y == margin {
-                            x.into()
-                        } else {
-                            0.0
-                        }),
+                        Object::Real(if x == margin && y == margin { x } else { 0.0 }),
                         Object::Real(0.0),
                     ],
                 ));
@@ -619,8 +600,8 @@ fn build_text_watermark_ops(
                         Object::Integer(0),
                         Object::Integer(0),
                         Object::Real(1.0),
-                        Object::Real(x.into()),
-                        Object::Real(y.into()),
+                        Object::Real(x),
+                        Object::Real(y),
                     ],
                 ));
                 ops.push(Operation::new(
@@ -656,10 +637,7 @@ fn build_text_watermark_ops(
         Operation::new("BT", vec![]),
         Operation::new(
             "Tf",
-            vec![
-                Object::Name(b"WmF1".to_vec()),
-                Object::Real(font_size.into()),
-            ],
+            vec![Object::Name(b"WmF1".to_vec()), Object::Real(font_size)],
         ),
         Operation::new(
             "rg",
@@ -669,7 +647,7 @@ fn build_text_watermark_ops(
                 Object::Real(color_b),
             ],
         ),
-        Operation::new("Td", vec![Object::Real(x.into()), Object::Real(y.into())]),
+        Operation::new("Td", vec![Object::Real(x), Object::Real(y)]),
         Operation::new(
             "Tj",
             vec![Object::String(
@@ -707,12 +685,12 @@ fn build_image_watermark_ops(
                 ops.push(Operation::new(
                     "cm",
                     vec![
-                        Object::Real(draw_w.into()),
+                        Object::Real(draw_w),
                         Object::Integer(0),
                         Object::Integer(0),
-                        Object::Real(draw_h.into()),
-                        Object::Real(x.into()),
-                        Object::Real(y.into()),
+                        Object::Real(draw_h),
+                        Object::Real(x),
+                        Object::Real(y),
                     ],
                 ));
                 ops.push(Operation::new("Do", vec![Object::Name(b"WmImg".to_vec())]));
@@ -742,12 +720,12 @@ fn build_image_watermark_ops(
         Operation::new(
             "cm",
             vec![
-                Object::Real(draw_w.into()),
+                Object::Real(draw_w),
                 Object::Integer(0),
                 Object::Integer(0),
-                Object::Real(draw_h.into()),
-                Object::Real(x.into()),
-                Object::Real(y.into()),
+                Object::Real(draw_h),
+                Object::Real(x),
+                Object::Real(y),
             ],
         ),
         Operation::new("Do", vec![Object::Name(b"WmImg".to_vec())]),

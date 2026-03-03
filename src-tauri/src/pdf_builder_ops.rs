@@ -108,11 +108,7 @@ fn generate_pdf_page_thumbnails(
     let limit = max_pages.unwrap_or(total_pages);
     let end_idx = (start_idx + limit).min(total_pages);
 
-    let capacity = if end_idx > start_idx {
-        end_idx - start_idx
-    } else {
-        0
-    };
+    let capacity = end_idx.saturating_sub(start_idx);
     let mut thumbnails: Vec<PageThumbnail> = Vec::with_capacity(capacity);
 
     for (page_index, page) in document.pages().iter().enumerate() {

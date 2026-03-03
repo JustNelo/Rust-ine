@@ -144,16 +144,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn file_stem_normal_path() {
+    fn file_stem_unix_path() {
         assert_eq!(file_stem("/home/user/photo.jpg"), "photo");
-        if cfg!(windows) {
-            assert_eq!(file_stem("C:\\photos\\image.png"), "image");
-        }
+        assert_eq!(file_stem("/home/user/README"), "README");
     }
 
+    #[cfg(windows)]
     #[test]
-    fn file_stem_no_extension() {
-        assert_eq!(file_stem("/home/user/README"), "README");
+    fn file_stem_windows_path() {
+        assert_eq!(file_stem("C:\\photos\\image.png"), "image");
+        assert_eq!(file_stem("C:\\photos\\README"), "README");
     }
 
     #[test]
@@ -174,11 +174,14 @@ mod tests {
     }
 
     #[test]
-    fn filename_or_default_extracts_name() {
+    fn filename_or_default_unix_path() {
         assert_eq!(filename_or_default("/a/b/c.pdf"), "c.pdf");
-        if cfg!(windows) {
-            assert_eq!(filename_or_default("C:\\dir\\file.txt"), "file.txt");
-        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn filename_or_default_windows_path() {
+        assert_eq!(filename_or_default("C:\\dir\\file.txt"), "file.txt");
     }
 
     #[test]

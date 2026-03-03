@@ -119,10 +119,7 @@ pub fn watermark_pdf_text(
         let content_id = doc.add_object(Object::Stream(content_stream));
 
         // Inject watermark resources into the page (handles indirect refs)
-        let entries = vec![
-            ("ExtGState", "WmGs", gs_id),
-            ("Font", "WmF1", font_id),
-        ];
+        let entries = vec![("ExtGState", "WmGs", gs_id), ("Font", "WmF1", font_id)];
         inject_page_resources(&mut doc, page_id, &entries);
 
         // Append watermark content stream
@@ -186,9 +183,10 @@ pub fn watermark_pdf_image(
     let img_rgba = match image::open(image_path) {
         Ok(i) => i.into_rgba8(),
         Err(e) => {
-            result
-                .errors
-                .push(format!("Cannot load watermark image '{}': {}", image_path, e));
+            result.errors.push(format!(
+                "Cannot load watermark image '{}': {}",
+                image_path, e
+            ));
             return result;
         }
     };
@@ -213,9 +211,8 @@ pub fn watermark_pdf_image(
     }
 
     // JPEG-encode the RGB data
-    let rgb_image: image::RgbImage =
-        image::RgbImage::from_raw(img_w, img_h, rgb_pixels)
-            .unwrap_or_else(|| image::RgbImage::new(img_w, img_h));
+    let rgb_image: image::RgbImage = image::RgbImage::from_raw(img_w, img_h, rgb_pixels)
+        .unwrap_or_else(|| image::RgbImage::new(img_w, img_h));
     let mut jpeg_buf: Vec<u8> = Vec::new();
     let mut cursor = Cursor::new(&mut jpeg_buf);
     let encoder = JpegEncoder::new_with_quality(&mut cursor, 90);
@@ -286,9 +283,8 @@ pub fn watermark_pdf_image(
         let draw_h = draw_w * aspect_ratio;
         let margin = 20.0_f32;
 
-        let operations = build_image_watermark_ops(
-            position, draw_w, draw_h, page_w, page_h, margin,
-        );
+        let operations =
+            build_image_watermark_ops(position, draw_w, draw_h, page_w, page_h, margin);
 
         let content_ops = Content { operations };
         let content_bytes = match content_ops.encode() {
@@ -382,17 +378,14 @@ fn inject_page_resources(
     entries: &[(&str, &str, lopdf::ObjectId)],
 ) {
     // Step 1 (read-only): Determine if Resources is an indirect reference
-    let resources_ref_id: Option<lopdf::ObjectId> = doc
-        .get_object(page_id)
-        .ok()
-        .and_then(|obj| {
-            if let Object::Dictionary(d) = obj {
-                if let Ok(Object::Reference(ref_id)) = d.get(b"Resources") {
-                    return Some(*ref_id);
-                }
+    let resources_ref_id: Option<lopdf::ObjectId> = doc.get_object(page_id).ok().and_then(|obj| {
+        if let Object::Dictionary(d) = obj {
+            if let Ok(Object::Reference(ref_id)) = d.get(b"Resources") {
+                return Some(*ref_id);
             }
-            None
-        });
+        }
+        None
+    });
 
     // Step 2 (read-only): For each entry, check if the sub-category dict (Font, XObject…)
     // is itself an indirect reference inside the Resources dict.
@@ -480,10 +473,7 @@ fn add_entries_to_resources(
         if let Ok(Object::Dictionary(ref mut sub)) = res_dict.get_mut(category.as_bytes()) {
             sub.set(name, Object::Reference(obj_id));
         } else {
-            res_dict.set(
-                category,
-                Object::Dictionary(dictionary! { name => obj_id }),
-            );
+            res_dict.set(category, Object::Dictionary(dictionary! { name => obj_id }));
         }
     }
 }
@@ -541,10 +531,7 @@ fn build_text_watermark_ops(
 
         return vec![
             Operation::new("q", vec![]),
-            Operation::new(
-                "gs",
-                vec![Object::Name(b"WmGs".to_vec())],
-            ),
+            Operation::new("gs", vec![Object::Name(b"WmGs".to_vec())]),
             Operation::new("BT", vec![]),
             Operation::new(
                 "Tf",
@@ -588,10 +575,7 @@ fn build_text_watermark_ops(
     if position == "tiled" {
         let mut ops = vec![
             Operation::new("q", vec![]),
-            Operation::new(
-                "gs",
-                vec![Object::Name(b"WmGs".to_vec())],
-            ),
+            Operation::new("gs", vec![Object::Name(b"WmGs".to_vec())]),
             Operation::new("BT", vec![]),
             Operation::new(
                 "Tf",
@@ -663,18 +647,12 @@ fn build_text_watermark_ops(
         "bottom-left" => (margin, margin),
         "bottom-right" => (page_w - text_width - margin, margin),
         // "center" and fallback
-        _ => (
-            (page_w - text_width) / 2.0,
-            (page_h - text_height) / 2.0,
-        ),
+        _ => ((page_w - text_width) / 2.0, (page_h - text_height) / 2.0),
     };
 
     vec![
         Operation::new("q", vec![]),
-        Operation::new(
-            "gs",
-            vec![Object::Name(b"WmGs".to_vec())],
-        ),
+        Operation::new("gs", vec![Object::Name(b"WmGs".to_vec())]),
         Operation::new("BT", vec![]),
         Operation::new(
             "Tf",
@@ -691,10 +669,7 @@ fn build_text_watermark_ops(
                 Object::Real(color_b),
             ],
         ),
-        Operation::new(
-            "Td",
-            vec![Object::Real(x.into()), Object::Real(y.into())],
-        ),
+        Operation::new("Td", vec![Object::Real(x.into()), Object::Real(y.into())]),
         Operation::new(
             "Tj",
             vec![Object::String(
@@ -721,10 +696,7 @@ fn build_image_watermark_ops(
         let step_y = draw_h + 40.0;
         let mut ops = vec![
             Operation::new("q", vec![]),
-            Operation::new(
-                "gs",
-                vec![Object::Name(b"WmGs".to_vec())],
-            ),
+            Operation::new("gs", vec![Object::Name(b"WmGs".to_vec())]),
         ];
 
         let mut y = margin;
@@ -743,10 +715,7 @@ fn build_image_watermark_ops(
                         Object::Real(y.into()),
                     ],
                 ));
-                ops.push(Operation::new(
-                    "Do",
-                    vec![Object::Name(b"WmImg".to_vec())],
-                ));
+                ops.push(Operation::new("Do", vec![Object::Name(b"WmImg".to_vec())]));
                 ops.push(Operation::new("Q", vec![]));
                 x += step_x;
             }
@@ -764,18 +733,12 @@ fn build_image_watermark_ops(
         "bottom-left" => (margin, margin),
         "bottom-right" => (page_w - draw_w - margin, margin),
         // "center", "diagonal", and fallback
-        _ => (
-            (page_w - draw_w) / 2.0,
-            (page_h - draw_h) / 2.0,
-        ),
+        _ => ((page_w - draw_w) / 2.0, (page_h - draw_h) / 2.0),
     };
 
     vec![
         Operation::new("q", vec![]),
-        Operation::new(
-            "gs",
-            vec![Object::Name(b"WmGs".to_vec())],
-        ),
+        Operation::new("gs", vec![Object::Name(b"WmGs".to_vec())]),
         Operation::new(
             "cm",
             vec![
@@ -787,10 +750,7 @@ fn build_image_watermark_ops(
                 Object::Real(y.into()),
             ],
         ),
-        Operation::new(
-            "Do",
-            vec![Object::Name(b"WmImg".to_vec())],
-        ),
+        Operation::new("Do", vec![Object::Name(b"WmImg".to_vec())]),
         Operation::new("Q", vec![]),
     ]
 }

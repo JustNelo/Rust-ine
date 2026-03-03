@@ -130,7 +130,12 @@ fn remap_object(
     }
 }
 
-pub fn split_pdf(pdf_path: &str, ranges_str: &str, output_dir: &str, output_stem: Option<&str>) -> PdfSplitResult {
+pub fn split_pdf(
+    pdf_path: &str,
+    ranges_str: &str,
+    output_dir: &str,
+    output_stem: Option<&str>,
+) -> PdfSplitResult {
     let mut result = PdfSplitResult {
         output_files: Vec::new(),
         errors: Vec::new(),

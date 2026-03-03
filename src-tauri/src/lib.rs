@@ -339,7 +339,12 @@ async fn generate_pdf_thumbnails(
     validate_paths(&file_paths)?;
     let pdfium_lib_path = (*pdfium).0.clone();
     let result = tokio::task::spawn_blocking(move || {
-        pdf_builder_ops::generate_thumbnails_batch(file_paths, &pdfium_lib_path, start_page, max_pages)
+        pdf_builder_ops::generate_thumbnails_batch(
+            file_paths,
+            &pdfium_lib_path,
+            start_page,
+            max_pages,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -580,7 +585,15 @@ async fn watermark_pdf_text_cmd(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_watermark_ops::watermark_pdf_text(&pdf_path, &text, &position, opacity, font_size, &color, &output_dir)
+        pdf_watermark_ops::watermark_pdf_text(
+            &pdf_path,
+            &text,
+            &position,
+            opacity,
+            font_size,
+            &color,
+            &output_dir,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -600,7 +613,14 @@ async fn watermark_pdf_image_cmd(
     validate_path(&image_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_watermark_ops::watermark_pdf_image(&pdf_path, &image_path, &position, opacity, scale, &output_dir)
+        pdf_watermark_ops::watermark_pdf_image(
+            &pdf_path,
+            &image_path,
+            &position,
+            opacity,
+            scale,
+            &output_dir,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;

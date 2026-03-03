@@ -567,12 +567,20 @@ pub fn add_image_watermark(
     // Load the watermark image once (shared across all target images)
     let watermark_img = match load_image(&watermark_path) {
         Ok(img) => img.to_rgba8(),
-        Err(e) => return BatchProgress::all_failed(&input_paths, format!("Cannot load watermark image: {}", e)),
+        Err(e) => {
+            return BatchProgress::all_failed(
+                &input_paths,
+                format!("Cannot load watermark image: {}", e),
+            )
+        }
     };
     let (wm_orig_w, wm_orig_h) = (watermark_img.width(), watermark_img.height());
 
     if wm_orig_w == 0 || wm_orig_h == 0 {
-        return BatchProgress::all_failed(&input_paths, "Watermark image has zero dimensions".to_string());
+        return BatchProgress::all_failed(
+            &input_paths,
+            "Watermark image has zero dimensions".to_string(),
+        );
     }
 
     let opacity_clamped = opacity.clamp(0.0, 1.0);

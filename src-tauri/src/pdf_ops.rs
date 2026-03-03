@@ -66,7 +66,8 @@ pub fn extract_images_from_pdf(
 
                 match image_object.get_raw_image() {
                     Ok(dynamic_image) => {
-                        let out_path = out_dir.join(format!("{}_img_{}.png", base_name, image_index));
+                        let out_path =
+                            out_dir.join(format!("{}_img_{}.png", base_name, image_index));
                         match dynamic_image.save(&out_path) {
                             Ok(_) => result.extracted_count += 1,
                             Err(e) => result.errors.push(format!(
@@ -375,7 +376,14 @@ pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompres
                 let _ = cloned.decompress();
             }
 
-            Some((width, height, colorspace, is_dct, cloned.content, original_len))
+            Some((
+                width,
+                height,
+                colorspace,
+                is_dct,
+                cloned.content,
+                original_len,
+            ))
         }; // immutable borrow of `doc` ends here
 
         let (width, height, colorspace, is_dct, content, original_len) = match image_info {
@@ -594,11 +602,7 @@ fn encrypt_dictionary(dict: &mut lopdf::Dictionary, obj_key: &[u8]) {
 /// Implements Algorithms 1-4 from PDF 1.7 spec (R=2, V=1, 40-bit RC4).
 /// All indirect-object strings and streams are RC4-encrypted with per-object keys
 /// so that readers can actually decrypt and display the content.
-pub fn protect_pdf(
-    pdf_path: &str,
-    password: &str,
-    output_dir: &str,
-) -> PdfProtectResult {
+pub fn protect_pdf(pdf_path: &str, password: &str, output_dir: &str) -> PdfProtectResult {
     let mut result = PdfProtectResult {
         output_path: String::new(),
         success: false,

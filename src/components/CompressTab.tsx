@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Zap } from "lucide-react";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
@@ -11,8 +11,8 @@ import { useT } from "../i18n/i18n";
 export function CompressTab() {
   const { t } = useT();
   const {
-    files, removeFile, handleFilesSelected, handleClearFiles,
-    loading, results, process,
+    files, removeFile, reorderFiles, handleFilesSelected, handleClearFiles,
+    loading, results, lastOutputDir, process,
   } = useTabProcessor({ tabId: "compress", command: "compress_webp" });
   const [quality, setQuality] = useState(80);
 
@@ -33,8 +33,9 @@ export function CompressTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList
+      <ImageGrid
         files={files}
+        onReorder={reorderFiles}
         onRemove={removeFile}
         onClear={handleClearFiles}
       />
@@ -55,10 +56,10 @@ export function CompressTab() {
         loading={loading}
         loadingText={t("status.compressing")}
         text={files.length > 0 ? t("action.compress_n", { n: files.length }) : t("action.compress")}
-        icon={<Zap className="h-4 w-4" />}
+        icon={<Zap className="h-4 w-4" strokeWidth={1.5} />}
       />
 
-      <ResultsBanner results={results} total={files.length} />
+      <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />
     </div>
   );
 }

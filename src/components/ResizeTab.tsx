@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Scaling } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
@@ -30,14 +30,15 @@ const PRESETS: { labelKey: string; w: number; h: number }[] = [
 
 export function ResizeTab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
+  const { getOutputDir } = useWorkspace();
   const [mode, setMode] = useState<ResizeMode>("percentage");
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(600);
   const [percentage, setPercentage] = useState(50);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [lastOutputDir, setLastOutputDir] = useState("");
 
   const handleFilesSelected = useCallback(
     (paths: string[]) => {
@@ -65,6 +66,7 @@ export function ResizeTab() {
 
     setLoading(true);
     setResults([]);
+    setLastOutputDir(outputDir);
 
     try {
       const result = await invoke<BatchProgress>("resize_images", {
@@ -80,10 +82,8 @@ export function ResizeTab() {
 
       if (result.completed === result.total) {
         toast.success(t("toast.resize_success", { n: result.completed }));
-        await openOutputDir("resize");
       } else if (result.completed > 0) {
         toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
-        await openOutputDir("resize");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -92,7 +92,7 @@ export function ResizeTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, mode, width, height, percentage, getOutputDir, openOutputDir]);
+  }, [files, mode, width, height, percentage, getOutputDir, t]);
 
   return (
     <div className="space-y-5">
@@ -103,7 +103,7 @@ export function ResizeTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-3">
         <div className="flex gap-2 flex-wrap">
@@ -111,10 +111,10 @@ export function ResizeTab() {
             <button
               key={opt.value}
               onClick={() => setMode(opt.value)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer ${
                 mode === opt.value
-                  ? "bg-accent-muted text-white border border-glass-border"
-                  : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
+                  ? "bg-indigo-500/10 text-indigo-300 border border-indigo-400/25"
+                  : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
               }`}
             >
               {t(opt.labelKey)}
@@ -123,7 +123,7 @@ export function ResizeTab() {
         </div>
 
         <div>
-          <label className="text-xs font-medium text-text-secondary mb-2 block">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-2 block">
             {t("label.presets")}
           </label>
           <div className="flex gap-1.5 flex-wrap">
@@ -135,7 +135,7 @@ export function ResizeTab() {
                   setWidth(preset.w);
                   setHeight(preset.h);
                 }}
-                className="rounded-md bg-surface border border-border px-2.5 py-1 text-[10px] font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all cursor-pointer"
+                className="rounded-md bg-white/5 border border-white/10 px-2.5 py-1 text-[10px] font-medium text-neutral-400 hover:bg-white/10 hover:text-white transition-all duration-200 cursor-pointer"
               >
                 {t(preset.labelKey)} ({preset.w}x{preset.h})
               </button>
@@ -157,29 +157,29 @@ export function ResizeTab() {
 
         {(mode === "width" || mode === "exact") && (
           <div className="flex items-center gap-2">
-            <label className="text-xs text-text-secondary w-12">{t("label.width")}</label>
+            <label className="text-xs text-neutral-400 w-12">{t("label.width")}</label>
             <input
               type="number"
               min={1}
               value={width}
               onChange={(e) => setWidth(Number(e.target.value))}
-              className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-text-primary focus:border-border-hover focus:outline-none"
+              className="flex-1 rounded-md border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:border-indigo-400/30 focus:outline-none"
             />
-            <span className="text-xs text-text-muted">{t("label.px")}</span>
+            <span className="text-xs text-neutral-500">{t("label.px")}</span>
           </div>
         )}
 
         {(mode === "height" || mode === "exact") && (
           <div className="flex items-center gap-2">
-            <label className="text-xs text-text-secondary w-12">{t("label.height")}</label>
+            <label className="text-xs text-neutral-400 w-12">{t("label.height")}</label>
             <input
               type="number"
               min={1}
               value={height}
               onChange={(e) => setHeight(Number(e.target.value))}
-              className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-text-primary focus:border-border-hover focus:outline-none"
+              className="flex-1 rounded-md border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:border-indigo-400/30 focus:outline-none"
             />
-            <span className="text-xs text-text-muted">{t("label.px")}</span>
+            <span className="text-xs text-neutral-500">{t("label.px")}</span>
           </div>
         )}
       </div>
@@ -190,10 +190,10 @@ export function ResizeTab() {
         loading={loading}
         loadingText={t("status.resizing")}
         text={files.length > 0 ? t("action.resize_n", { n: files.length }) : t("action.resize")}
-        icon={<Scaling className="h-4 w-4" />}
+        icon={<Scaling className="h-4 w-4" strokeWidth={1.5} />}
       />
 
-      <ResultsBanner results={results} total={files.length} />
+      <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />
     </div>
   );
 }

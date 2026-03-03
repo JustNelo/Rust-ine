@@ -1,11 +1,12 @@
 import { useState, useCallback } from "react";
-import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { Film, CheckCircle, XCircle, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { ActionButton } from "./ui/ActionButton";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { useT } from "../i18n/i18n";
+import { safeAssetUrl } from "../lib/utils";
 
 interface AnimationResult {
   output_path: string;
@@ -16,7 +17,7 @@ interface AnimationResult {
 
 export function AnimationTab() {
   const { t } = useT();
-  const { getOutputDir, openOutputDir } = useWorkspace();
+  const { getOutputDir } = useWorkspace();
   const [frames, setFrames] = useState<string[]>([]);
   const [delayMs, setDelayMs] = useState(100);
   const [loopCount, setLoopCount] = useState(0);
@@ -73,10 +74,8 @@ export function AnimationTab() {
 
       if (res.frame_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.animation_success", { frames: res.frame_count }));
-        await openOutputDir("animation");
       } else if (res.frame_count > 0) {
         toast.warning(t("toast.partial", { completed: res.frame_count, total: frames.length }));
-        await openOutputDir("animation");
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -85,7 +84,7 @@ export function AnimationTab() {
     } finally {
       setLoading(false);
     }
-  }, [frames, delayMs, loopCount, getOutputDir, openOutputDir, t]);
+  }, [frames, delayMs, loopCount, getOutputDir, t]);
 
   const getFilename = (path: string) => {
     const parts = path.replace(/\\/g, "/").split("/");
@@ -104,29 +103,29 @@ export function AnimationTab() {
       {frames.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-text-secondary">
+            <p className="text-xs font-medium text-neutral-300">
               {t("result.files_selected", { n: frames.length })}
             </p>
             <button
               onClick={clearFrames}
-              className="text-[10px] text-text-muted hover:text-error transition-colors cursor-pointer"
+              className="text-[10px] text-neutral-500 hover:text-red-400 transition-colors duration-200 cursor-pointer"
             >
               {t("label.clear_all")}
             </button>
           </div>
-          <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl border border-border bg-surface-card p-2">
+          <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl border border-white/8 bg-white/2 backdrop-blur-xl p-2">
             {frames.map((path, index) => (
               <div
                 key={`${path}-${index}`}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-text-secondary bg-surface hover:bg-surface-hover transition-colors group"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-neutral-300 bg-white/3 hover:bg-white/6 transition-colors duration-200 group"
               >
-                <span className="text-[10px] font-mono text-text-muted w-5 text-right shrink-0">
+                <span className="text-[10px] font-mono text-neutral-500 w-5 text-right shrink-0">
                   {index + 1}
                 </span>
                 <img
-                  src={convertFileSrc(path)}
+                  src={safeAssetUrl(path)}
                   alt=""
-                  className="h-7 w-7 rounded object-cover shrink-0 border border-glass-border"
+                  className="h-7 w-7 rounded object-cover shrink-0 border border-white/8"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                 />
                 <span className="flex-1 truncate">{getFilename(path)}</span>
@@ -134,22 +133,22 @@ export function AnimationTab() {
                   <button
                     onClick={() => moveFrame(index, -1)}
                     disabled={index === 0}
-                    className="p-0.5 rounded hover:bg-surface-hover disabled:opacity-30 cursor-pointer"
+                    className="p-0.5 rounded hover:bg-white/6 disabled:opacity-30 cursor-pointer"
                   >
-                    <ArrowUp className="h-3 w-3" />
+                    <ArrowUp className="h-3 w-3" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => moveFrame(index, 1)}
                     disabled={index === frames.length - 1}
-                    className="p-0.5 rounded hover:bg-surface-hover disabled:opacity-30 cursor-pointer"
+                    className="p-0.5 rounded hover:bg-white/6 disabled:opacity-30 cursor-pointer"
                   >
-                    <ArrowDown className="h-3 w-3" />
+                    <ArrowDown className="h-3 w-3" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => removeFrame(index)}
-                    className="p-0.5 rounded hover:bg-surface-hover text-text-muted hover:text-error cursor-pointer"
+                    className="p-0.5 rounded hover:bg-white/6 text-neutral-500 hover:text-red-400 cursor-pointer"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3 w-3" strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -160,7 +159,7 @@ export function AnimationTab() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-text-secondary">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
             {t("label.frame_delay")}
           </label>
           <input
@@ -169,11 +168,11 @@ export function AnimationTab() {
             max={5000}
             value={delayMs}
             onChange={(e) => setDelayMs(Number(e.target.value))}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-text-secondary">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
             {t("label.loop_count")}
           </label>
           <input
@@ -182,7 +181,7 @@ export function AnimationTab() {
             max={9999}
             value={loopCount}
             onChange={(e) => setLoopCount(Number(e.target.value))}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
           />
         </div>
       </div>
@@ -193,26 +192,27 @@ export function AnimationTab() {
         loading={loading}
         loadingText={t("status.creating_animation")}
         text={t("action.create_animation")}
-        icon={<Film className="h-4 w-4" />}
+        icon={<Film className="h-4 w-4" strokeWidth={1.5} />}
       />
 
       {result && result.frame_count > 0 && (
-        <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-4 space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="mt-4 relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-2">
+          <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
+          <div className="relative flex items-center gap-2">
             {result.errors.length === 0 ? (
-              <CheckCircle className="h-4 w-4 text-success" />
+              <CheckCircle className="h-4 w-4 text-green-400" strokeWidth={1.5} />
             ) : (
-              <XCircle className="h-4 w-4 text-warning" />
+              <XCircle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
             )}
-            <span className="text-xs font-medium text-text-primary">
+            <span className="text-xs font-medium text-white">
               {t("result.animation_created", { frames: result.frame_count, format: "GIF" })}
             </span>
           </div>
           {/* GIF preview */}
           {result.output_path && (
-            <div className="rounded-xl overflow-hidden border border-glass-border bg-black flex items-center justify-center max-h-48">
+            <div className="rounded-xl overflow-hidden border border-white/8 bg-neutral-950 flex items-center justify-center max-h-48">
               <img
-                src={`${convertFileSrc(result.output_path)}?t=${Date.now()}`}
+                src={safeAssetUrl(result.output_path, true)}
                 alt="Generated GIF"
                 className="max-h-48 object-contain"
               />
@@ -221,8 +221,8 @@ export function AnimationTab() {
           {result.errors.length > 0 && (
             <div className="max-h-24 overflow-y-auto space-y-1">
               {result.errors.map((err, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs text-error/80">
-                  <XCircle className="h-3 w-3 shrink-0 mt-0.5" />
+                <div key={i} className="flex items-start gap-2 text-xs text-red-400/80">
+                  <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <span>{err}</span>
                 </div>
               ))}

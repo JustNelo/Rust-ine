@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { useTabProcessor } from "../hooks/useTabProcessor";
@@ -10,8 +10,8 @@ import { useT } from "../i18n/i18n";
 export function OptimizeTab() {
   const { t } = useT();
   const {
-    files, removeFile, handleFilesSelected, handleClearFiles,
-    loading, results, process,
+    files, removeFile, reorderFiles, handleFilesSelected, handleClearFiles,
+    loading, results, lastOutputDir, process,
   } = useTabProcessor({ tabId: "optimize", command: "optimize_images" });
 
   const handleOptimize = useCallback(async () => {
@@ -30,8 +30,9 @@ export function OptimizeTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList
+      <ImageGrid
         files={files}
+        onReorder={reorderFiles}
         onRemove={removeFile}
         onClear={handleClearFiles}
       />
@@ -42,10 +43,10 @@ export function OptimizeTab() {
         loading={loading}
         loadingText={t("status.optimizing")}
         text={files.length > 0 ? t("action.optimize_n", { n: files.length }) : t("action.optimize")}
-        icon={<Sparkles className="h-4 w-4" />}
+        icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
       />
 
-      <ResultsBanner results={results} total={files.length} />
+      <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />
     </div>
   );
 }

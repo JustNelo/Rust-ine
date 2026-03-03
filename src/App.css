@@ -1,23 +1,37 @@
 @import "tailwindcss";
 
+/* ─── Glassmorphism Monochrome Premium ─── */
 @theme {
-  --color-background: #09090F;
-  --color-surface: rgba(108, 108, 237, 0.06);
-  --color-surface-hover: rgba(108, 108, 237, 0.12);
-  --color-surface-card: rgba(108, 108, 237, 0.08);
-  --color-border: rgba(108, 108, 237, 0.12);
-  --color-border-hover: rgba(108, 108, 237, 0.25);
-  --color-accent: #6C6CED;
-  --color-accent-hover: #7B7BF2;
-  --color-accent-muted: rgba(108, 108, 237, 0.15);
+  /* Background */
+  --color-background: #0a0a0a;
+
+  /* Surfaces (white-based, ultra-low opacity) */
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-hover: rgba(255, 255, 255, 0.06);
+  --color-surface-card: rgba(255, 255, 255, 0.02);
+
+  /* Borders */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(255, 255, 255, 0.15);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+
+  /* Accent — Soft Indigo */
+  --color-accent: #818cf8;
+  --color-accent-hover: #a5b4fc;
+  --color-accent-muted: rgba(99, 102, 241, 0.08);
+
+  /* Semantic */
   --color-success: #4ADE80;
   --color-error: #F87171;
   --color-warning: #FBBF24;
-  --color-text-primary: rgba(255, 255, 255, 0.92);
-  --color-text-secondary: rgba(255, 255, 255, 0.55);
-  --color-text-muted: rgba(255, 255, 255, 0.38);
-  --color-glass-border: rgba(108, 108, 237, 0.15);
-  --color-glow: rgba(108, 108, 237, 0.12);
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-muted: rgba(255, 255, 255, 0.4);
+
+  /* Glow */
+  --color-glow: rgba(255, 255, 255, 0.06);
 }
 
 body {
@@ -40,12 +54,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(108, 108, 237, 0.2);
+  background: rgba(129, 140, 248, 0.18);
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(108, 108, 237, 0.35);
+  background: rgba(129, 140, 248, 0.3);
 }
 
 @keyframes loading {

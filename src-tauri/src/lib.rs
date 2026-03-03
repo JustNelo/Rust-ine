@@ -6,6 +6,7 @@ mod metadata_ops;
 mod pdf_builder_ops;
 mod pdf_ops;
 mod pdf_split_ops;
+mod pdf_watermark_ops;
 mod qr_ops;
 mod rename_ops;
 mod sprite_ops;
@@ -21,6 +22,7 @@ use pdf_ops::{
     ImagesToPdfResult, PdfCompressResult, PdfExtractionResult, PdfProtectResult, PdfToImagesResult,
 };
 use pdf_split_ops::PdfSplitResult;
+use pdf_watermark_ops::PdfWatermarkResult;
 use qr_ops::QrResult;
 use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
@@ -115,7 +117,7 @@ async fn compress_webp(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
-    let cancel = token.0.clone();
+    let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
         image_ops::compress_to_webp(input_paths, quality, output_dir, app_handle, cancel)
@@ -135,7 +137,7 @@ async fn convert_images(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
-    let cancel = token.0.clone();
+    let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
         image_ops::convert_images(input_paths, output_format, output_dir, app_handle, cancel)
@@ -150,14 +152,20 @@ async fn extract_pdf_images(
     pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     output_dir: String,
+    output_stem: Option<String>,
 ) -> Result<PdfExtractionResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
 
-    let pdfium_lib_path = pdfium.0.clone();
+    let pdfium_lib_path = (*pdfium).0.clone();
 
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::extract_images_from_pdf(&pdf_path, &output_dir, &pdfium_lib_path)
+        pdf_ops::extract_images_from_pdf(
+            &pdf_path,
+            &output_dir,
+            &pdfium_lib_path,
+            output_stem.as_deref(),
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -178,7 +186,7 @@ async fn resize_images(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
-    let cancel = token.0.clone();
+    let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
         image_ops::resize_images(
@@ -206,7 +214,7 @@ async fn strip_metadata(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
-    let cancel = token.0.clone();
+    let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
         image_ops::strip_metadata(input_paths, output_dir, app_handle, cancel)
@@ -226,11 +234,12 @@ async fn add_watermark(
     position: String,
     opacity: f32,
     font_size: f32,
+    color: String,
     output_dir: String,
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
-    let cancel = token.0.clone();
+    let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
         image_ops::add_watermark(
@@ -239,6 +248,41 @@ async fn add_watermark(
             position,
             opacity,
             font_size,
+            color,
+            output_dir,
+            app_handle,
+            cancel,
+        )
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[tauri::command]
+async fn add_image_watermark(
+    app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
+    input_paths: Vec<String>,
+    watermark_path: String,
+    position: String,
+    opacity: f32,
+    scale: f32,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    validate_path(&watermark_path)?;
+    validate_paths(&input_paths)?;
+    let cancel = (*token).0.clone();
+    cancel.store(false, Ordering::Relaxed);
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::add_image_watermark(
+            input_paths,
+            watermark_path,
+            position,
+            opacity,
+            scale,
             output_dir,
             app_handle,
             cancel,
@@ -272,14 +316,30 @@ async fn read_metadata(file_path: String) -> Result<ImageMetadata, String> {
 }
 
 #[tauri::command]
+async fn get_pdf_page_count(
+    pdfium: tauri::State<'_, PdfiumPath>,
+    pdf_path: String,
+) -> Result<usize, String> {
+    validate_path(&pdf_path)?;
+    let pdfium_lib_path = (*pdfium).0.clone();
+    tokio::task::spawn_blocking(move || {
+        pdf_builder_ops::get_pdf_page_count(&pdf_path, &pdfium_lib_path)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?
+}
+
+#[tauri::command]
 async fn generate_pdf_thumbnails(
     pdfium: tauri::State<'_, PdfiumPath>,
     file_paths: Vec<String>,
+    start_page: Option<usize>,
+    max_pages: Option<usize>,
 ) -> Result<Vec<PageThumbnail>, String> {
     validate_paths(&file_paths)?;
-    let pdfium_lib_path = pdfium.0.clone();
+    let pdfium_lib_path = (*pdfium).0.clone();
     let result = tokio::task::spawn_blocking(move || {
-        pdf_builder_ops::generate_thumbnails_batch(file_paths, &pdfium_lib_path)
+        pdf_builder_ops::generate_thumbnails_batch(file_paths, &pdfium_lib_path, start_page, max_pages)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -309,7 +369,7 @@ async fn optimize_images(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
-    let cancel = token.0.clone();
+    let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
         image_ops::optimize_lossless(input_paths, output_dir, app_handle, cancel)
@@ -335,7 +395,7 @@ async fn crop_images(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
-    let cancel = token.0.clone();
+    let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
         image_ops::crop_images(
@@ -363,12 +423,20 @@ async fn pdf_to_images(
     output_dir: String,
     format: String,
     dpi: u32,
+    output_stem: Option<String>,
 ) -> Result<PdfToImagesResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let pdfium_lib_path = pdfium.0.clone();
+    let pdfium_lib_path = (*pdfium).0.clone();
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::pdf_to_images(&pdf_path, &output_dir, &pdfium_lib_path, &format, dpi)
+        pdf_ops::pdf_to_images(
+            &pdf_path,
+            &output_dir,
+            &pdfium_lib_path,
+            &format,
+            dpi,
+            output_stem.as_deref(),
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -380,11 +448,12 @@ async fn split_pdf(
     pdf_path: String,
     ranges: String,
     output_dir: String,
+    output_stem: Option<String>,
 ) -> Result<PdfSplitResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir)
+        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir, output_stem.as_deref())
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -436,9 +505,7 @@ async fn create_gif(
     loop_count: u16,
     output_dir: String,
 ) -> Result<AnimationResult, String> {
-    for path in &image_paths {
-        validate_path(path)?;
-    }
+    validate_paths(&image_paths)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
         gif_ops::create_gif(&image_paths, delay_ms, loop_count, &output_dir)
@@ -455,9 +522,7 @@ async fn generate_spritesheet(
     padding: u32,
     output_dir: String,
 ) -> Result<SpriteSheetResult, String> {
-    for path in &image_paths {
-        validate_path(path)?;
-    }
+    validate_paths(&image_paths)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
         sprite_ops::generate_spritesheet(&image_paths, columns, padding, &output_dir)
@@ -469,16 +534,14 @@ async fn generate_spritesheet(
 
 #[tauri::command]
 async fn protect_pdf_cmd(
-    pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     password: String,
     output_dir: String,
 ) -> Result<PdfProtectResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let pdfium_path = pdfium.0.clone();
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::protect_pdf(&pdfium_path, &pdf_path, &password, &output_dir)
+        pdf_ops::protect_pdf(&pdf_path, &password, &output_dir)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -494,9 +557,50 @@ async fn unlock_pdf_cmd(
 ) -> Result<PdfProtectResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let pdfium_path = pdfium.0.clone();
+    let pdfium_path = (*pdfium).0.clone();
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::unlock_pdf(&pdfium_path, &pdf_path, &password, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[tauri::command]
+async fn watermark_pdf_text_cmd(
+    pdf_path: String,
+    text: String,
+    position: String,
+    opacity: f32,
+    font_size: f32,
+    color: String,
+    output_dir: String,
+) -> Result<PdfWatermarkResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_watermark_ops::watermark_pdf_text(&pdf_path, &text, &position, opacity, font_size, &color, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn watermark_pdf_image_cmd(
+    image_path: String,
+    pdf_path: String,
+    position: String,
+    opacity: f32,
+    scale: f32,
+    output_dir: String,
+) -> Result<PdfWatermarkResult, String> {
+    validate_path(&pdf_path)?;
+    validate_path(&image_path)?;
+    validate_path(&output_dir)?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_watermark_ops::watermark_pdf_image(&pdf_path, &image_path, &position, opacity, scale, &output_dir)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -531,12 +635,12 @@ async fn generate_qr_cmd(text: String, size: u32, output_dir: String) -> Result<
 
 #[tauri::command]
 fn cancel_processing(token: tauri::State<'_, CancellationToken>) {
-    token.0.store(true, Ordering::Relaxed);
+    (*token).0.store(true, Ordering::Relaxed);
 }
 
 #[tauri::command]
 fn reset_cancel(token: tauri::State<'_, CancellationToken>) {
-    token.0.store(false, Ordering::Relaxed);
+    (*token).0.store(false, Ordering::Relaxed);
 }
 
 #[tauri::command]
@@ -582,10 +686,12 @@ pub fn run() {
             resize_images,
             strip_metadata,
             add_watermark,
+            add_image_watermark,
             optimize_images,
             crop_images,
             images_to_pdf,
             read_metadata,
+            get_pdf_page_count,
             generate_pdf_thumbnails,
             merge_to_pdf,
             pdf_to_images,
@@ -597,6 +703,8 @@ pub fn run() {
             generate_spritesheet,
             protect_pdf_cmd,
             unlock_pdf_cmd,
+            watermark_pdf_text_cmd,
+            watermark_pdf_image_cmd,
             image_to_base64,
             generate_qr_cmd,
             bulk_rename_cmd,

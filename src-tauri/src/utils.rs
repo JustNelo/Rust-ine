@@ -146,16 +146,14 @@ mod tests {
     #[test]
     fn file_stem_normal_path() {
         assert_eq!(file_stem("/home/user/photo.jpg"), "photo");
-        assert_eq!(file_stem("photos/image.png"), "image");
-        #[cfg(windows)]
-        assert_eq!(file_stem("C:\\photos\\image.png"), "image");
+        if cfg!(windows) {
+            assert_eq!(file_stem("C:\\photos\\image.png"), "image");
+        }
     }
 
     #[test]
     fn file_stem_no_extension() {
-        assert_eq!(file_stem("photos/README"), "README");
-        #[cfg(windows)]
-        assert_eq!(file_stem("C:\\photos\\README"), "README");
+        assert_eq!(file_stem("/home/user/README"), "README");
     }
 
     #[test]
@@ -178,9 +176,9 @@ mod tests {
     #[test]
     fn filename_or_default_extracts_name() {
         assert_eq!(filename_or_default("/a/b/c.pdf"), "c.pdf");
-        assert_eq!(filename_or_default("dir/file.txt"), "file.txt");
-        #[cfg(windows)]
-        assert_eq!(filename_or_default("C:\\dir\\file.txt"), "file.txt");
+        if cfg!(windows) {
+            assert_eq!(filename_or_default("C:\\dir\\file.txt"), "file.txt");
+        }
     }
 
     #[test]

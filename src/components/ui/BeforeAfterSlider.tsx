@@ -1,7 +1,6 @@
 import { useRef, useCallback, useMemo, memo } from "react";
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { X, ArrowRight } from "lucide-react";
-import { formatSize } from "../../lib/utils";
+import { formatSize, safeAssetUrl } from "../../lib/utils";
 import { useT } from "../../i18n/i18n";
 import type { ProcessingResult } from "../../types";
 
@@ -53,41 +52,42 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
 
   // Stable URLs — computed once per result, never during drag
   const beforeSrc = useMemo(
-    () => `${convertFileSrc(result.input_path)}?t=${Date.now()}`,
+    () => safeAssetUrl(result.input_path),
     [result.input_path],
   );
   const afterSrc = useMemo(
-    () => `${convertFileSrc(result.output_path)}?t=${Date.now()}`,
+    () => safeAssetUrl(result.output_path, true),
     [result.output_path],
   );
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden border border-glass-border bg-surface-card shadow-2xl"
+        className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 bg-surface-card border-b border-glass-border">
-          <div className="flex items-center gap-3 text-xs text-text-secondary">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
+          <div className="flex items-center gap-3 text-xs text-neutral-300">
             <span className="font-medium">{t("preview.before_after")}</span>
-            <span className="text-text-muted">{formatSize(result.input_size)}</span>
-            <ArrowRight className="h-3 w-3 text-text-muted" />
-            <span className="text-text-muted">{formatSize(result.output_size)}</span>
+            <span className="text-neutral-500">{formatSize(result.input_size)}</span>
+            <ArrowRight className="h-3 w-3 text-neutral-500" strokeWidth={1.5} />
+            <span className="text-neutral-500">{formatSize(result.output_size)}</span>
             {sizeDiff !== 0 && (
-              <span className={sizeDiff > 0 ? "font-medium text-success" : "font-medium text-warning"}>
+              <span className={sizeDiff > 0 ? "font-medium text-green-400" : "font-medium text-amber-400"}>
                 {sizeDiff > 0 ? "-" : "+"}{Math.abs(sizeDiff).toFixed(1)}%
               </span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-1 hover:bg-surface-hover transition-colors cursor-pointer"
+            className="rounded-full p-1 hover:bg-white/6 transition-colors duration-200 cursor-pointer"
           >
-            <X className="h-4 w-4 text-text-muted" />
+            <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
           </button>
         </div>
 

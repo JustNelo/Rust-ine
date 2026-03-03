@@ -60,7 +60,7 @@ fn encode_image_to_b64_jpeg(img: &image::DynamicImage, max_width: u32) -> Result
 
     let mut jpeg_buf: Vec<u8> = Vec::new();
     let mut cursor = Cursor::new(&mut jpeg_buf);
-    let encoder = JpegEncoder::new_with_quality(&mut cursor, 70);
+    let encoder = JpegEncoder::new_with_quality(&mut cursor, 50);
     to_encode
         .write_with_encoder(encoder)
         .map_err(|e| format!("JPEG encode failed: {}", e))?;
@@ -71,7 +71,7 @@ fn encode_image_to_b64_jpeg(img: &image::DynamicImage, max_width: u32) -> Result
 
 pub fn generate_image_thumbnail(path: &str) -> Result<PageThumbnail, String> {
     let img = image::open(path).map_err(|e| format!("Cannot open image '{}': {}", path, e))?;
-    let b64 = encode_image_to_b64_jpeg(&img, 200)?;
+    let b64 = encode_image_to_b64_jpeg(&img, 120)?;
     let filename = Path::new(path)
         .file_name()
         .and_then(|f| f.to_str())
@@ -89,6 +89,8 @@ pub fn generate_image_thumbnail(path: &str) -> Result<PageThumbnail, String> {
 fn generate_pdf_page_thumbnails(
     pdf_path: &str,
     pdfium: &Pdfium,
+    start_page: Option<usize>,
+    max_pages: Option<usize>,
 ) -> Result<Vec<PageThumbnail>, String> {
     let document = pdfium
         .load_pdf_from_file(pdf_path, None)
@@ -99,20 +101,33 @@ fn generate_pdf_page_thumbnails(
         .and_then(|s| s.to_str())
         .unwrap_or("pdf");
 
-    let page_count = document.pages().len();
-    let mut thumbnails: Vec<PageThumbnail> = Vec::with_capacity(page_count as usize);
+    let total_pages = document.pages().len() as usize;
+    // start_page is 1-indexed; default to 1
+    let start = start_page.unwrap_or(1).max(1);
+    let start_idx = start - 1; // 0-indexed
+    let limit = max_pages.unwrap_or(total_pages);
+    let end_idx = (start_idx + limit).min(total_pages);
+
+    let capacity = if end_idx > start_idx { end_idx - start_idx } else { 0 };
+    let mut thumbnails: Vec<PageThumbnail> = Vec::with_capacity(capacity);
 
     for (page_index, page) in document.pages().iter().enumerate() {
+        if page_index < start_idx {
+            continue;
+        }
+        if page_index >= end_idx {
+            break;
+        }
         let render_result = page.render_with_config(
             &PdfRenderConfig::new()
-                .set_target_width(200)
-                .set_maximum_height(400),
+                .set_target_width(120)
+                .set_maximum_height(240),
         );
 
         match render_result {
             Ok(bitmap) => {
                 let dynamic_image = bitmap.as_image();
-                match encode_image_to_b64_jpeg(&dynamic_image, 200) {
+                match encode_image_to_b64_jpeg(&dynamic_image, 120) {
                     Ok(b64) => {
                         thumbnails.push(PageThumbnail {
                             id: format!("pdf_{}_p{}", pdf_stem, page_index + 1),
@@ -160,9 +175,22 @@ fn generate_pdf_page_thumbnails(
     Ok(thumbnails)
 }
 
+/// Returns the page count of a PDF without rendering any thumbnails.
+pub fn get_pdf_page_count(pdf_path: &str, pdfium_lib_path: &str) -> Result<usize, String> {
+    let bindings = Pdfium::bind_to_library(pdfium_lib_path)
+        .map_err(|e| format!("Cannot load Pdfium library: {}", e))?;
+    let pdfium = Pdfium::new(bindings);
+    let document = pdfium
+        .load_pdf_from_file(pdf_path, None)
+        .map_err(|e| format!("Cannot open PDF '{}': {}", pdf_path, e))?;
+    Ok(document.pages().len() as usize)
+}
+
 pub fn generate_thumbnails_batch(
     file_paths: Vec<String>,
     pdfium_lib_path: &str,
+    start_page: Option<usize>,
+    max_pages: Option<usize>,
 ) -> Vec<PageThumbnail> {
     let mut image_paths: Vec<String> = Vec::new();
     let mut pdf_paths: Vec<String> = Vec::new();
@@ -193,7 +221,7 @@ pub fn generate_thumbnails_batch(
             Ok(bindings) => {
                 let pdfium = Pdfium::new(bindings);
                 for pdf_path in &pdf_paths {
-                    match generate_pdf_page_thumbnails(pdf_path, &pdfium) {
+                    match generate_pdf_page_thumbnails(pdf_path, &pdfium, start_page, max_pages) {
                         Ok(thumbs) => all_thumbnails.extend(thumbs),
                         Err(e) => eprintln!(
                             "Warning: PDF thumbnail generation failed for {}: {}",

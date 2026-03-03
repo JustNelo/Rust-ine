@@ -19,5 +19,14 @@ export function useFileSelection() {
     setFiles([]);
   }, []);
 
-  return { files, addFiles, removeFile, clearFiles, setFiles };
+  const reorderFiles = useCallback((fromIndex: number, toIndex: number) => {
+    setFiles((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  }, []);
+
+  return { files, addFiles, removeFile, clearFiles, reorderFiles, setFiles };
 }

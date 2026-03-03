@@ -1,19 +1,28 @@
-import { useState, useCallback } from "react";
-import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { Code, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { DropZone } from "./DropZone";
-import { FileList } from "./FileList";
+import { ImageGrid } from "./ImageGrid";
 import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useT } from "../i18n/i18n";
+import { safeAssetUrl } from "../lib/utils";
 
 export function Base64Tab() {
   const { t } = useT();
-  const { files, addFiles, removeFile, clearFiles } = useFileSelection();
+  const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const [loading, setLoading] = useState(false);
   const [dataUri, setDataUri] = useState("");
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timer on unmount to prevent setting state on unmounted component
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const handleFilesSelected = useCallback((paths: string[]) => {
     addFiles(paths.slice(0, 1));
@@ -52,7 +61,8 @@ export function Base64Tab() {
       await navigator.clipboard.writeText(dataUri);
       setCopied(true);
       toast.success(t("toast.copied"));
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Failed to copy");
     }
@@ -70,13 +80,13 @@ export function Base64Tab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <FileList files={files} onRemove={removeFile} onClear={handleClearFiles} />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       {/* Image preview */}
       {files.length > 0 && (
-        <div className="rounded-xl overflow-hidden border border-glass-border bg-black flex items-center justify-center max-h-40">
+        <div className="rounded-xl overflow-hidden border border-white/8 bg-neutral-950 flex items-center justify-center max-h-40">
           <img
-            src={convertFileSrc(files[0])}
+            src={safeAssetUrl(files[0])}
             alt=""
             className="max-h-40 object-contain"
           />
@@ -89,31 +99,31 @@ export function Base64Tab() {
         loading={loading}
         loadingText={t("status.converting")}
         text={t("action.to_base64")}
-        icon={<Code className="h-4 w-4" />}
+        icon={<Code className="h-4 w-4" strokeWidth={1.5} />}
       />
 
       {dataUri && (
         <div className="mt-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-medium text-text-primary">
+              <span className="text-xs font-medium text-white">
                 {t("result.base64_ready")}
               </span>
-              <span className="rounded-md bg-surface border border-border px-2 py-0.5 text-[10px] font-mono text-text-muted">
+              <span className="rounded-md bg-white/4 border border-white/8 px-2 py-0.5 text-[10px] font-mono text-neutral-500">
                 {charCount.toLocaleString()} chars · {sizeKb} KB
               </span>
             </div>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-hover transition-all cursor-pointer"
+              className="flex items-center gap-1.5 rounded-lg bg-white/5 border border-white/10 px-3 py-1.5 text-xs font-medium text-neutral-200 hover:bg-white/10 hover:border-white/20 transition-all duration-200 cursor-pointer"
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? <Check className="h-3.5 w-3.5 text-green-400" strokeWidth={1.5} /> : <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />}
               {copied ? t("label.copied") : t("label.copy")}
             </button>
           </div>
 
-          <div className="rounded-xl border border-glass-border bg-surface-card p-3 max-h-32 overflow-y-auto">
-            <code className="text-[10px] font-mono text-text-secondary break-all leading-relaxed">
+          <div className="rounded-xl border border-white/8 bg-white/2 backdrop-blur-xl p-3 max-h-32 overflow-y-auto">
+            <code className="text-[10px] font-mono text-neutral-300 break-all leading-relaxed">
               {dataUri.slice(0, 500)}{dataUri.length > 500 ? "…" : ""}
             </code>
           </div>

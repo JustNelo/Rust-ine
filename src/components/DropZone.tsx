@@ -79,27 +79,29 @@ export function DropZone({
     <div
       onClick={handleClick}
       className={cn(
-        "relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all duration-200",
+        "relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all duration-300 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]",
         isDragging
-          ? "border-accent/40 bg-accent/5 scale-[1.01] shadow-[0_0_24px_rgba(108,108,237,0.15)]"
-          : "border-accent/20 bg-accent/2 hover:bg-accent/5 hover:border-accent/30 hover:shadow-[0_0_20px_rgba(108,108,237,0.08)]"
+          ? "border-indigo-400/30 bg-indigo-500/5 scale-[1.01]"
+          : "border-white/10 bg-white/2 hover:bg-white/4 hover:border-white/15"
       )}
     >
+      <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
+      <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay rounded-2xl" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
       <div
         className={cn(
-          "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
-          isDragging ? "bg-accent/20 text-accent" : "bg-accent/10 text-accent/70"
+          "flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-300",
+          isDragging ? "bg-indigo-500/15 text-indigo-300" : "bg-white/6 text-neutral-400"
         )}
       >
-        <Upload className="h-6 w-6" />
+        <Upload className="h-6 w-6" strokeWidth={1.5} />
       </div>
       <div className="text-center">
-        <p className="text-sm font-medium text-text-primary">{label}</p>
+        <p className="text-sm font-medium text-white">{label}</p>
         {sublabel && (
-          <p className="mt-1 text-xs text-text-muted">{sublabel}</p>
+          <p className="mt-1 text-xs text-neutral-500">{sublabel}</p>
         )}
-        <p className="mt-1.5 text-[10px] text-text-muted/50">
-          <kbd className="rounded border border-glass-border bg-surface-card px-1 py-0.5 font-mono text-[10px]">Ctrl+O</kbd>
+        <p className="mt-1.5 text-[10px] text-neutral-600">
+          <kbd className="rounded border border-white/8 bg-white/4 px-1 py-0.5 font-mono text-[10px]">Ctrl+O</kbd>
         </p>
       </div>
     </div>

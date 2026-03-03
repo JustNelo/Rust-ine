@@ -30,6 +30,14 @@ export type ResizeMode = "exact" | "width" | "height" | "percentage";
 
 export type WatermarkPosition = "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | "tiled";
 
+export type PdfWatermarkPosition = WatermarkPosition | "diagonal";
+
+export interface PdfWatermarkResult {
+  output_path: string;
+  page_count: number;
+  errors: string[];
+}
+
 export interface MetadataEntry {
   tag: string;
   value: string;
@@ -44,7 +52,7 @@ export interface ImageMetadata {
   exif: MetadataEntry[];
 }
 
-export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "optimize" | "crop" | "palette" | "pdf" | "pdf-builder" | "pdf-to-images" | "pdf-split" | "pdf-compress" | "pdf-protect" | "favicon" | "animation" | "spritesheet" | "base64" | "qrcode" | "bulk-rename";
+export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "optimize" | "crop" | "palette" | "pdf-toolkit" | "favicon" | "animation" | "spritesheet" | "base64" | "qrcode" | "bulk-rename";
 
 export interface PageThumbnail {
   id: string;

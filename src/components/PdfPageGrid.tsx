@@ -1,4 +1,5 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { useT } from "../i18n/i18n";
 import {
   DndContext,
   closestCenter,
@@ -6,6 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  MeasuringStrategy,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -16,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Loader2 } from "lucide-react";
 import { PdfPageCard } from "./PdfPageCard";
-import type { BuilderPage } from "../hooks/usePdfBuilder";
+import type { BuilderPage } from "../hooks/usePdfWorkbench";
 
 interface PdfPageGridProps {
   pages: BuilderPage[];
@@ -25,18 +27,43 @@ interface PdfPageGridProps {
   onRemove: (id: string) => void;
 }
 
+// Reduce measuring frequency — only measure before dragging starts
+const MEASURING_CONFIG = {
+  droppable: { strategy: MeasuringStrategy.BeforeDragging },
+};
+
+// Min card width — CSS auto-fill handles column count responsively
+const CARD_MIN_W = 100;
+
 export function PdfPageGrid({
   pages,
   loadingThumbnails,
   onReorder,
   onRemove,
 }: PdfPageGridProps) {
+  const { t } = useT();
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const itemIds = useMemo(() => pages.map((p) => p.id), [pages]);
+
+  const sourcesSummary = useMemo(() => {
+    const pdfSources = new Set<string>();
+    let imageCount = 0;
+    for (const p of pages) {
+      if (p.sourceType === "pdf") pdfSources.add(p.sourcePath);
+      else imageCount++;
+    }
+    const pdfs = pdfSources.size;
+    if (pdfs > 0 && imageCount > 0) return t("pdf_tool.sources_summary", { pdfs, images: imageCount });
+    if (pdfs > 0) return `${pdfs} PDF(s)`;
+    if (imageCount > 0) return `${imageCount} image(s)`;
+    return "";
+  }, [pages, t]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -55,15 +82,17 @@ export function PdfPageGrid({
   if (pages.length === 0 && !loadingThumbnails) return null;
 
   return (
-    <div className="rounded-2xl border border-glass-border bg-surface-card p-3 space-y-3">
+    <div className="rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-text-secondary">
-          {pages.length} page{pages.length !== 1 ? "s" : ""} — drag to reorder
+        <span className="text-xs font-medium text-neutral-300">
+          {pages.length} {t("pdf_tool.pages_count")}
+          {sourcesSummary && <span className="text-neutral-500"> — {sourcesSummary}</span>}
+          {" — "}{t("pdf_tool.drag_hint")}
         </span>
         {loadingThumbnails && (
-          <span className="flex items-center gap-1.5 text-[10px] text-text-muted">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Loading pages...
+          <span className="flex items-center gap-1.5 text-[10px] text-neutral-500">
+            <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />
+            {t("pdf_tool.loading_pages")}
           </span>
         )}
       </div>
@@ -72,12 +101,20 @@ export function PdfPageGrid({
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
+        measuring={MEASURING_CONFIG}
       >
         <SortableContext
-          items={pages.map((p) => p.id)}
+          items={itemIds}
           strategy={rectSortingStrategy}
         >
-          <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto pr-1">
+          <div
+            className="max-h-[60vh] overflow-y-auto pr-1"
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(auto-fill, minmax(${CARD_MIN_W}px, 1fr))`,
+              gap: "6px",
+            }}
+          >
             {pages.map((page) => (
               <PdfPageCard
                 key={page.id}

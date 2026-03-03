@@ -17,16 +17,16 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-glass-border px-4 py-2" style={{ background: 'rgba(108,108,237,0.06)' }}>
+    <div className="relative z-20 flex items-center justify-between gap-3 border-b border-white/8 bg-white/2 backdrop-blur-xl px-4 py-2">
       <div className="flex items-center gap-2.5">
         {status === "downloading" ? (
-          <Loader2 className="h-3.5 w-3.5 text-accent animate-spin shrink-0" />
+          <Loader2 className="h-3.5 w-3.5 text-neutral-400 animate-spin shrink-0" strokeWidth={1.5} />
         ) : status === "error" ? (
-          <AlertCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+          <AlertCircle className="h-3.5 w-3.5 text-red-400 shrink-0" strokeWidth={1.5} />
         ) : (
-          <Download className="h-3.5 w-3.5 text-accent shrink-0" />
+          <Download className="h-3.5 w-3.5 text-neutral-400 shrink-0" strokeWidth={1.5} />
         )}
-        <span className="text-xs text-text-primary">
+        <span className="text-xs text-white">
           {status === "downloading"
             ? t("updater.downloading")
             : status === "error"
@@ -39,7 +39,7 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
         {status === "available" && (
           <button
             onClick={onInstall}
-            className="rounded-md bg-accent px-3 py-1 text-[11px] font-medium text-white shadow-[0_0_10px_rgba(108,108,237,0.25)] hover:bg-accent-hover transition-colors cursor-pointer"
+            className="rounded-md bg-neutral-100 px-3 py-1 text-[11px] font-medium text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:bg-white transition-colors duration-300 cursor-pointer"
           >
             {t("updater.download")}
           </button>
@@ -47,9 +47,9 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
         {status !== "downloading" && (
           <button
             onClick={onDismiss}
-            className="rounded-md p-1 text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors cursor-pointer"
+            className="rounded-md p-1 text-neutral-500 hover:text-white hover:bg-white/6 transition-colors duration-200 cursor-pointer"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-3.5 w-3.5" strokeWidth={1.5} />
           </button>
         )}
       </div>

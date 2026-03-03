@@ -105,7 +105,7 @@ export function WatermarkTab() {
 
       {/* Live watermark preview */}
       {files.length > 0 && text.trim() && (
-        <div className="relative rounded-xl overflow-hidden border border-glass-border bg-black aspect-video max-h-48">
+        <div className="relative rounded-xl overflow-hidden border border-white/8 bg-neutral-950 aspect-video max-h-48">
           <img
             src={safeAssetUrl(files[0])}
             alt=""
@@ -149,7 +149,7 @@ export function WatermarkTab() {
 
       <div className="space-y-3">
         <div>
-          <label className="text-xs font-medium text-text-secondary mb-1 block">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1 block">
             {t("label.watermark_text")}
           </label>
           <input
@@ -157,12 +157,12 @@ export function WatermarkTab() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={t("label.placeholder_watermark")}
-            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
+            className="w-full rounded-md border border-white/8 bg-white/4 px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-text-secondary mb-1.5 block">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1.5 block">
             {t("label.position")}
           </label>
           <div className="flex gap-2 flex-wrap">
@@ -170,10 +170,10 @@ export function WatermarkTab() {
               <button
                 key={opt.value}
                 onClick={() => setPosition(opt.value)}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer ${
                   position === opt.value
-                    ? "bg-accent-muted text-white border border-glass-border"
-                    : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
+                    ? "bg-indigo-500/10 text-indigo-300 border border-indigo-400/25"
+                    : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
                 }`}
               >
                 {t(opt.labelKey)}
@@ -206,7 +206,7 @@ export function WatermarkTab() {
         loading={loading}
         loadingText={t("status.watermarking")}
         text={files.length > 0 ? t("action.watermark_n", { n: files.length }) : t("action.watermark")}
-        icon={<Stamp className="h-4 w-4" />}
+        icon={<Stamp className="h-4 w-4" strokeWidth={1.5} />}
       />
 
       <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />

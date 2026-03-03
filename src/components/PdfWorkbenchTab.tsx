@@ -261,10 +261,10 @@ export function PdfWorkbenchTab() {
   // --- Action icon ---
   const actionIcon = useMemo(() => {
     const map: Record<PrimaryAction, React.ReactNode> = {
-      "build": <FileUp className="h-4 w-4" />,
-      "split": <Scissors className="h-4 w-4" />,
-      "export-images": <Image className="h-4 w-4" />,
-      "extract-images": <FileDown className="h-4 w-4" />,
+      "build": <FileUp className="h-4 w-4" strokeWidth={1.5} />,
+      "split": <Scissors className="h-4 w-4" strokeWidth={1.5} />,
+      "export-images": <Image className="h-4 w-4" strokeWidth={1.5} />,
+      "extract-images": <FileDown className="h-4 w-4" strokeWidth={1.5} />,
     };
     return map[activeTool];
   }, [activeTool]);
@@ -285,10 +285,10 @@ export function PdfWorkbenchTab() {
         <button
           onClick={() => setMode("workbench")}
           className={cn(
-            "flex-1 rounded-xl px-4 py-2.5 text-xs font-medium transition-all cursor-pointer border",
+            "flex-1 rounded-xl px-4 py-2.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
             mode === "workbench"
-              ? "bg-accent/15 text-white border-accent/40"
-              : "bg-surface-card text-text-secondary border-glass-border hover:bg-surface-hover"
+              ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+              : "bg-white/3 text-neutral-300 border-white/8 hover:bg-white/6"
           )}
         >
           {t("pdf_tool.workbench_mode")}
@@ -296,13 +296,13 @@ export function PdfWorkbenchTab() {
         <button
           onClick={() => setMode("unlock")}
           className={cn(
-            "flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium transition-all cursor-pointer border",
+            "flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
             mode === "unlock"
-              ? "bg-accent/15 text-white border-accent/40"
-              : "bg-surface-card text-text-secondary border-glass-border hover:bg-surface-hover"
+              ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+              : "bg-white/3 text-neutral-300 border-white/8 hover:bg-white/6"
           )}
         >
-          <Unlock className="h-3.5 w-3.5" />
+          <Unlock className="h-3.5 w-3.5" strokeWidth={1.5} />
           {t("pdf_tool.unlock_mode")}
         </button>
       </div>
@@ -313,27 +313,27 @@ export function PdfWorkbenchTab() {
           {/* Drop zone for unlock */}
           <div
             onClick={handleSelectUnlockFile}
-            className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-accent/20 bg-accent/2 p-8 cursor-pointer transition-all duration-200 hover:bg-accent/5 hover:border-accent/30"
+            className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/10 bg-white/2 p-8 cursor-pointer transition-all duration-300 hover:bg-white/4 hover:border-white/20"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent/70">
-              <Lock className="h-6 w-6" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/6 text-neutral-400">
+              <Lock className="h-6 w-6" strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-text-primary">{t("pdf_tool.drop_locked_pdf")}</p>
-              <p className="mt-1 text-xs text-text-muted">{t("pdf_tool.drop_locked_pdf_hint")}</p>
+              <p className="text-sm font-medium text-white">{t("pdf_tool.drop_locked_pdf")}</p>
+              <p className="mt-1 text-xs text-neutral-500">{t("pdf_tool.drop_locked_pdf_hint")}</p>
             </div>
           </div>
 
           {unlockFile && (
-            <div className="rounded-2xl border border-glass-border bg-surface-card p-4 space-y-3">
+            <div className="rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-accent" />
-                <span className="text-xs font-medium text-text-primary truncate">
+                <Lock className="h-4 w-4 text-neutral-400" strokeWidth={1.5} />
+                <span className="text-xs font-medium text-white truncate">
                   {unlockFile.split(/[\\/]/).pop()}
                 </span>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-text-secondary">
+                <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
                   {t("label.pdf_password")}
                 </label>
                 <input
@@ -341,7 +341,7 @@ export function PdfWorkbenchTab() {
                   value={unlockPassword}
                   onChange={(e) => setUnlockPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
                 />
               </div>
               <ActionButton
@@ -366,40 +366,40 @@ export function PdfWorkbenchTab() {
           {pages.length === 0 ? (
             <div
               onClick={handleAddMore}
-              className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-accent/20 bg-accent/2 p-8 cursor-pointer transition-all duration-200 hover:bg-accent/5 hover:border-accent/30 hover:shadow-[0_0_20px_rgba(108,108,237,0.08)]"
+              className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/10 bg-white/2 p-8 cursor-pointer transition-all duration-300 hover:bg-white/4 hover:border-white/20"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent/70">
-                <Upload className="h-6 w-6" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/6 text-neutral-400">
+                <Upload className="h-6 w-6" strokeWidth={1.5} />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-text-primary">{t("dropzone.pdf_workbench")}</p>
-                <p className="mt-1 text-xs text-text-muted">{t("dropzone.sublabel_pdf_workbench")}</p>
+                <p className="text-sm font-medium text-white">{t("dropzone.pdf_workbench")}</p>
+                <p className="mt-1 text-xs text-neutral-500">{t("dropzone.sublabel_pdf_workbench")}</p>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <button
                 onClick={handleAddMore}
-                className="flex items-center gap-2 rounded-xl border border-glass-border bg-surface-card px-4 py-2.5 text-xs font-medium text-text-secondary hover:bg-surface-hover hover:text-white transition-all cursor-pointer"
+                className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/3 px-4 py-2.5 text-xs font-medium text-neutral-300 hover:bg-white/6 hover:text-white transition-all duration-200 cursor-pointer"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4" strokeWidth={1.5} />
                 {t("label.add_files")}
               </button>
               {/* Grid modified indicator */}
               {gridModified && (
-                <span className="flex items-center gap-1 text-[10px] text-accent">
-                  <AlertTriangle className="h-3 w-3" />
+                <span className="flex items-center gap-1 text-[10px] text-amber-400">
+                  <AlertTriangle className="h-3 w-3" strokeWidth={1.5} />
                   {t("pdf_tool.grid_modified")}
                 </span>
               )}
-              <span className="text-[10px] text-text-muted ml-auto">
+              <span className="text-[10px] text-neutral-500 ml-auto">
                 {pages.length} {t("pdf_tool.pages_count")}
               </span>
               <button
                 onClick={clearAll}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-white hover:bg-surface-hover transition-all cursor-pointer"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-neutral-500 hover:text-white hover:bg-white/6 transition-all duration-200 cursor-pointer"
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-3 w-3" strokeWidth={1.5} />
                 {t("label.clear_all")}
               </button>
             </div>
@@ -418,7 +418,7 @@ export function PdfWorkbenchTab() {
             <>
               {/* Primary action selector */}
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">
                   {t("pdf_tool.primary_action")}
                 </p>
                 <div className="grid grid-cols-4 gap-2">
@@ -430,13 +430,13 @@ export function PdfWorkbenchTab() {
                         key={action.id}
                         onClick={() => setActiveTool(action.id)}
                         className={cn(
-                          "flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-medium transition-all cursor-pointer border",
+                          "flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-medium transition-all duration-300 cursor-pointer border",
                           isActive
-                            ? "bg-accent/15 text-white border-accent/40 shadow-[0_0_16px_rgba(108,108,237,0.2)]"
-                            : "bg-surface-card text-text-secondary border-glass-border hover:bg-surface-hover hover:text-text-primary"
+                            ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+                            : "bg-white/3 text-neutral-400 border-white/8 hover:bg-white/6 hover:text-white"
                         )}
                       >
-                        <Icon className={cn("h-4 w-4", isActive && "text-accent")} />
+                        <Icon className={cn("h-4 w-4")} strokeWidth={1.5} />
                         {t(action.labelKey)}
                       </button>
                     );
@@ -445,10 +445,10 @@ export function PdfWorkbenchTab() {
               </div>
 
               {/* Dynamic options panel */}
-              <div className="rounded-2xl border border-glass-border bg-surface-card p-4 space-y-4">
+              <div className="rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl p-4 space-y-4">
                 {activeTool === "build" && (
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-text-secondary">
+                    <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
                       {t("label.filename")}
                     </label>
                     <input
@@ -456,14 +456,14 @@ export function PdfWorkbenchTab() {
                       value={outputName}
                       onChange={(e) => setOutputName(e.target.value)}
                       placeholder={t("label.placeholder_filename")}
-                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-border-hover focus:outline-none"
+                      className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
                     />
                   </div>
                 )}
 
                 {activeTool === "split" && (
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-text-secondary">
+                    <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
                       {t("label.page_ranges")}
                     </label>
                     <input
@@ -471,9 +471,9 @@ export function PdfWorkbenchTab() {
                       value={ranges}
                       onChange={(e) => setRanges(e.target.value)}
                       placeholder="1-3, 4-10, 11-end"
-                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-border-hover focus:outline-none"
+                      className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
                     />
-                    <p className="text-[10px] text-text-muted">
+                    <p className="text-[10px] text-neutral-500">
                       {t("label.page_ranges_hint")}
                     </p>
                   </div>
@@ -482,7 +482,7 @@ export function PdfWorkbenchTab() {
                 {activeTool === "export-images" && (
                   <div className="space-y-3">
                     <div>
-                      <label className="text-xs font-medium text-text-secondary mb-2 block">
+                      <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-2 block">
                         {t("label.output_format_images")}
                       </label>
                       <div className="flex gap-2">
@@ -491,10 +491,10 @@ export function PdfWorkbenchTab() {
                             key={f}
                             onClick={() => setExportFormat(f)}
                             className={cn(
-                              "rounded-md px-4 py-1.5 text-xs font-medium uppercase transition-all cursor-pointer",
+                              "rounded-md px-4 py-1.5 text-xs font-medium uppercase transition-all duration-300 cursor-pointer border",
                               exportFormat === f
-                                ? "bg-accent-muted text-white border border-glass-border"
-                                : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
+                                ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+                                : "bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
                             )}
                           >
                             {f}
@@ -503,7 +503,7 @@ export function PdfWorkbenchTab() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-text-secondary mb-2 block">
+                      <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-2 block">
                         {t("label.dpi")}
                       </label>
                       <div className="flex gap-2">
@@ -512,10 +512,10 @@ export function PdfWorkbenchTab() {
                             key={d}
                             onClick={() => setExportDpi(d)}
                             className={cn(
-                              "rounded-md px-4 py-1.5 text-xs font-medium transition-all cursor-pointer",
+                              "rounded-md px-4 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
                               exportDpi === d
-                                ? "bg-accent-muted text-white border border-glass-border"
-                                : "bg-surface border border-border text-text-secondary hover:bg-surface-hover"
+                                ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+                                : "bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
                             )}
                           >
                             {d} DPI
@@ -527,15 +527,15 @@ export function PdfWorkbenchTab() {
                 )}
 
                 {activeTool === "extract-images" && (
-                  <p className="text-xs text-text-muted">
+                  <p className="text-xs text-neutral-500">
                     {t("pdf_tool.extract_images_hint")}
                   </p>
                 )}
 
                 {/* Post-processing toggles (only for PDF output actions) */}
                 {showPostProcessing && (
-                  <div className="border-t border-glass-border pt-3 space-y-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                  <div className="border-t border-white/8 pt-3 space-y-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
                       {t("pdf_tool.post_processing")}
                     </p>
 
@@ -544,21 +544,21 @@ export function PdfWorkbenchTab() {
                       <button
                         onClick={() => setPpCompress(!ppCompress)}
                         className={cn(
-                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer w-full border",
+                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer w-full border",
                           ppCompress
-                            ? "bg-accent/15 text-white border-accent/30"
-                            : "bg-surface text-text-secondary border-border hover:bg-surface-hover"
+                            ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+                            : "bg-white/3 text-neutral-300 border-white/8 hover:bg-white/6"
                         )}
                       >
-                        <Zap className={cn("h-3.5 w-3.5", ppCompress && "text-accent")} />
+                        <Zap className="h-3.5 w-3.5" strokeWidth={1.5} />
                         {t("pdf_tool.compress")}
                         <div className={cn(
                           "ml-auto h-4 w-7 rounded-full transition-all",
-                          ppCompress ? "bg-accent" : "bg-surface-hover"
+                          ppCompress ? "bg-indigo-400" : "bg-white/10"
                         )}>
                           <div className={cn(
-                            "h-3 w-3 rounded-full bg-white mt-0.5 transition-all",
-                            ppCompress ? "ml-3.5" : "ml-0.5"
+                            "h-3 w-3 rounded-full mt-0.5 transition-all",
+                            ppCompress ? "ml-3.5 bg-white" : "ml-0.5 bg-white/40"
                           )} />
                         </div>
                       </button>
@@ -582,21 +582,21 @@ export function PdfWorkbenchTab() {
                       <button
                         onClick={() => setPpProtect(!ppProtect)}
                         className={cn(
-                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all cursor-pointer w-full border",
+                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer w-full border",
                           ppProtect
-                            ? "bg-accent/15 text-white border-accent/30"
-                            : "bg-surface text-text-secondary border-border hover:bg-surface-hover"
+                            ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
+                            : "bg-white/3 text-neutral-300 border-white/8 hover:bg-white/6"
                         )}
                       >
-                        <Shield className={cn("h-3.5 w-3.5", ppProtect && "text-accent")} />
+                        <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
                         {t("pdf_tool.protect")}
                         <div className={cn(
                           "ml-auto h-4 w-7 rounded-full transition-all",
-                          ppProtect ? "bg-accent" : "bg-surface-hover"
+                          ppProtect ? "bg-indigo-400" : "bg-white/10"
                         )}>
                           <div className={cn(
-                            "h-3 w-3 rounded-full bg-white mt-0.5 transition-all",
-                            ppProtect ? "ml-3.5" : "ml-0.5"
+                            "h-3 w-3 rounded-full mt-0.5 transition-all",
+                            ppProtect ? "ml-3.5 bg-white" : "ml-0.5 bg-white/40"
                           )} />
                         </div>
                       </button>
@@ -607,7 +607,7 @@ export function PdfWorkbenchTab() {
                             value={ppPassword}
                             onChange={(e) => setPpPassword(e.target.value)}
                             placeholder="••••••••"
-                            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                            className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
                           />
                           {ppPassword && (
                             <div className="flex items-center gap-2">
@@ -617,7 +617,7 @@ export function PdfWorkbenchTab() {
                                     key={i}
                                     className={cn(
                                       "h-1 flex-1 rounded-full transition-all",
-                                      i <= ppPasswordStrength.level ? ppPasswordStrength.color : "bg-surface-hover"
+                                      i <= ppPasswordStrength.level ? ppPasswordStrength.color : "bg-white/10"
                                     )}
                                   />
                                 ))}
@@ -639,12 +639,12 @@ export function PdfWorkbenchTab() {
 
                 {/* Pipeline summary */}
                 {pipelineSummary.length > 1 && (
-                  <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
+                  <div className="flex items-center gap-1.5 text-[10px] text-neutral-500">
                     <span>{t("pdf_tool.pipeline")}:</span>
                     {pipelineSummary.map((step, i) => (
                       <span key={i} className="flex items-center gap-1.5">
-                        {i > 0 && <span className="text-accent">→</span>}
-                        <span className="text-text-secondary font-medium">{step}</span>
+                        {i > 0 && <span className="text-neutral-600">→</span>}
+                        <span className="text-neutral-300 font-medium">{step}</span>
                       </span>
                     ))}
                   </div>
@@ -652,8 +652,8 @@ export function PdfWorkbenchTab() {
 
                 {/* Pipeline progress indicator */}
                 {pipelineStep && (
-                  <div className="flex items-center gap-2 text-xs text-accent">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <div className="flex items-center gap-2 text-xs text-neutral-300">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
                     <span>{t(PIPELINE_STEP_LABELS[pipelineStep])}</span>
                   </div>
                 )}
@@ -730,15 +730,15 @@ function ResultPanel({ result, t }: ResultPanelProps) {
       if (d.original_size > 0 && d.output_path) {
         extraContent = (
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 rounded-full bg-surface overflow-hidden">
+            <div className="flex-1 h-2 rounded-full bg-white/8 overflow-hidden">
               <div
-                className="h-full rounded-full bg-accent transition-all"
+                className="h-full rounded-full bg-white transition-all"
                 style={{
                   width: `${Math.max(5, (d.compressed_size / d.original_size) * 100)}%`,
                 }}
               />
             </div>
-            <span className="text-[10px] font-mono text-text-muted">
+            <span className="text-[10px] font-mono text-neutral-500">
               {d.original_size > d.compressed_size
                 ? `-${(((d.original_size - d.compressed_size) / d.original_size) * 100).toFixed(1)}%`
                 : "No reduction"}
@@ -767,22 +767,23 @@ function ResultPanel({ result, t }: ResultPanelProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-glass-border bg-surface-card p-4 space-y-3">
-      <div className="flex items-center justify-between">
+    <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-3">
+      <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
+      <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-2">
           {successIcon ? (
-            <CheckCircle className="h-4 w-4 text-success" />
+            <CheckCircle className="h-4 w-4 text-green-400" strokeWidth={1.5} />
           ) : (
-            <XCircle className="h-4 w-4 text-warning" />
+            <XCircle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
           )}
-          <span className="text-xs font-medium text-text-primary">{mainText}</span>
+          <span className="text-xs font-medium text-white">{mainText}</span>
         </div>
         {result.outputDir && (
           <button
             onClick={() => revealItemInDir(result.outputDir)}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-text-secondary hover:bg-surface hover:text-text-primary transition-colors cursor-pointer"
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-neutral-400 hover:bg-white/6 hover:text-white transition-colors duration-200 cursor-pointer"
           >
-            <FolderOpen className="h-3 w-3" />
+            <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
             {t("label.open_output_folder")}
           </button>
         )}
@@ -793,8 +794,8 @@ function ResultPanel({ result, t }: ResultPanelProps) {
       {errors.length > 0 && (
         <div className="max-h-24 overflow-y-auto space-y-1">
           {errors.map((err, i) => (
-            <div key={i} className="flex items-start gap-2 text-xs text-error/80">
-              <XCircle className="h-3 w-3 shrink-0 mt-0.5" />
+            <div key={i} className="flex items-start gap-2 text-xs text-red-400/80">
+              <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
               <span>{err}</span>
             </div>
           ))}

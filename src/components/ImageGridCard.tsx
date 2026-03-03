@@ -44,7 +44,7 @@ export const ImageGridCard = memo(function ImageGridCard({
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative aspect-square rounded-xl overflow-hidden border border-glass-border bg-surface-card cursor-grab active:cursor-grabbing"
+      className="group relative aspect-square rounded-xl overflow-hidden border border-white/8 bg-white/3 cursor-grab active:cursor-grabbing"
     >
       {/* Remove button */}
       <button
@@ -52,7 +52,7 @@ export const ImageGridCard = memo(function ImageGridCard({
         onClick={() => onRemove(index)}
         className="absolute top-1 right-1 z-10 rounded-full bg-red-600/80 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-red-500"
       >
-        <X className="h-3 w-3 text-white" />
+        <X className="h-3 w-3 text-white" strokeWidth={1.5} />
       </button>
 
       {/* Preview button */}
@@ -61,7 +61,7 @@ export const ImageGridCard = memo(function ImageGridCard({
         onClick={() => onPreview(filePath)}
         className="absolute top-1 left-1 z-10 rounded-full bg-black/50 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 backdrop-blur-sm"
       >
-        <ZoomIn className="h-3 w-3 text-white" />
+        <ZoomIn className="h-3 w-3 text-white" strokeWidth={1.5} />
       </button>
 
       {/* Thumbnail */}

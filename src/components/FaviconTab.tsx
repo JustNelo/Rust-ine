@@ -81,25 +81,26 @@ export function FaviconTab() {
       <button
         onClick={handleGenerate}
         disabled={loading || files.length === 0}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-[0_0_20px_rgba(108,108,237,0.3)]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-900 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 cursor-pointer shadow-[0_0_20px_rgba(99,102,241,0.35)]"
       >
         {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
         ) : (
-          <Globe className="h-4 w-4" />
+          <Globe className="h-4 w-4" strokeWidth={1.5} />
         )}
         {loading ? t("status.generating_favicons") : t("action.generate_favicons")}
       </button>
 
       {result && (
-        <div className="mt-4 rounded-2xl border border-glass-border bg-surface-card p-4 space-y-3">
-          <div className="flex items-center gap-2">
+        <div className="mt-4 relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-3">
+          <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
+          <div className="relative flex items-center gap-2">
             {result.errors.length === 0 ? (
-              <CheckCircle className="h-4 w-4 text-success" />
+              <CheckCircle className="h-4 w-4 text-green-400" strokeWidth={1.5} />
             ) : (
-              <XCircle className="h-4 w-4 text-warning" />
+              <XCircle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
             )}
-            <span className="text-xs font-medium text-text-primary">
+            <span className="text-xs font-medium text-white">
               {t("result.favicons_generated")}
             </span>
           </div>
@@ -108,7 +109,7 @@ export function FaviconTab() {
             {result.generated_files.map((file) => (
               <span
                 key={file}
-                className="rounded-md bg-surface border border-border px-2 py-1 text-[10px] font-mono text-text-secondary"
+                className="rounded-md bg-white/4 border border-white/8 px-2 py-1 text-[10px] font-mono text-neutral-300"
               >
                 {file}
               </span>
@@ -118,8 +119,8 @@ export function FaviconTab() {
           {result.errors.length > 0 && (
             <div className="max-h-24 overflow-y-auto space-y-1">
               {result.errors.map((err, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs text-error/80">
-                  <XCircle className="h-3 w-3 shrink-0 mt-0.5" />
+                <div key={i} className="flex items-start gap-2 text-xs text-red-400/80">
+                  <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <span>{err}</span>
                 </div>
               ))}

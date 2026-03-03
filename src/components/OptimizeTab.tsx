@@ -43,7 +43,7 @@ export function OptimizeTab() {
         loading={loading}
         loadingText={t("status.optimizing")}
         text={files.length > 0 ? t("action.optimize_n", { n: files.length }) : t("action.optimize")}
-        icon={<Sparkles className="h-4 w-4" />}
+        icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
       />
 
       <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />

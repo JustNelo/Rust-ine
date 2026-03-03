@@ -34,7 +34,7 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative h-[160px] rounded-xl overflow-hidden border border-glass-border bg-surface-card cursor-grab active:cursor-grabbing"
+      className="group relative h-[160px] rounded-xl overflow-hidden border border-white/8 bg-white/3 cursor-grab active:cursor-grabbing"
     >
       {/* Remove button — stops drag activation */}
       <button
@@ -42,7 +42,7 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
         onClick={() => onRemove(page.id)}
         className="absolute top-1 right-1 z-10 rounded-full bg-red-600/80 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-red-500"
       >
-        <X className="h-3 w-3 text-white" />
+        <X className="h-3 w-3 text-white" strokeWidth={1.5} />
       </button>
 
       {/* Type badge */}
@@ -50,12 +50,12 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
         <span className="inline-flex items-center gap-0.5 rounded-md bg-black/50 px-1 py-0.5 text-[9px] font-medium text-white/80 backdrop-blur-sm">
           {page.sourceType === "pdf" ? (
             <>
-              <FileText className="h-2.5 w-2.5" />
+              <FileText className="h-2.5 w-2.5" strokeWidth={1.5} />
               PDF
             </>
           ) : (
             <>
-              <Image className="h-2.5 w-2.5" />
+              <Image className="h-2.5 w-2.5" strokeWidth={1.5} />
               IMG
             </>
           )}
@@ -63,7 +63,7 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
       </div>
 
       {/* Thumbnail — fixed area, image contained */}
-      <div className="absolute inset-0 bottom-[28px] flex items-center justify-center bg-accent/3">
+      <div className="absolute inset-0 bottom-[28px] flex items-center justify-center bg-white/2">
         {page.thumbnailLoaded && page.thumbnailSrc ? (
           <img
             src={page.thumbnailSrc}
@@ -77,13 +77,13 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
           />
         ) : !page.thumbnailLoaded ? (
           <div className="flex flex-col items-center justify-center gap-1 animate-pulse">
-            <FileText className="h-5 w-5 text-text-muted/40" />
+            <FileText className="h-5 w-5 text-neutral-600" strokeWidth={1.5} />
             {page.pageNumber > 0 && (
-              <span className="text-[9px] font-mono text-text-muted/50">{page.pageNumber}</span>
+              <span className="text-[9px] font-mono text-neutral-600">{page.pageNumber}</span>
             )}
           </div>
         ) : (
-          <FileText className="h-6 w-6 text-text-muted" />
+          <FileText className="h-6 w-6 text-neutral-500" strokeWidth={1.5} />
         )}
       </div>
 

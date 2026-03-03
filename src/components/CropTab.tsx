@@ -320,21 +320,21 @@ export function CropTab() {
       {files.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-muted">
+            <span className="text-[10px] text-neutral-500">
               {t("label.crop_draw_hint")}
             </span>
             <button
               onClick={resetSelection}
-              className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
+              className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-300 transition-colors duration-200 cursor-pointer"
             >
-              <RotateCcw className="h-3 w-3" />
+              <RotateCcw className="h-3 w-3" strokeWidth={1.5} />
               {t("label.reset")}
             </button>
           </div>
 
           <div
             ref={containerRef}
-            className="relative rounded-xl overflow-hidden border border-glass-border bg-black select-none touch-none"
+            className="relative rounded-xl overflow-hidden border border-white/8 bg-neutral-950 select-none touch-none"
             style={{ cursor }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -352,7 +352,7 @@ export function CropTab() {
             {/* Dark overlay with cut-out — positioned in px relative to rendered image */}
             {sel.w > 0 && sel.h > 0 && imgBounds && (
               <div
-                className="absolute border-2 border-accent/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] pointer-events-none"
+                className="absolute border-2 border-white/60 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] pointer-events-none"
                 style={{
                   left: imgBounds.oX + sel.x * imgBounds.rW,
                   top: imgBounds.oY + sel.y * imgBounds.rH,
@@ -370,15 +370,15 @@ export function CropTab() {
 
                 {/* 8 resize handles */}
                 {/* Corners */}
-                <div className="absolute -top-1.5 -left-1.5 h-3 w-3 border-2 border-white bg-accent rounded-sm" />
-                <div className="absolute -top-1.5 -right-1.5 h-3 w-3 border-2 border-white bg-accent rounded-sm" />
-                <div className="absolute -bottom-1.5 -left-1.5 h-3 w-3 border-2 border-white bg-accent rounded-sm" />
-                <div className="absolute -bottom-1.5 -right-1.5 h-3 w-3 border-2 border-white bg-accent rounded-sm" />
+                <div className="absolute -top-1.5 -left-1.5 h-3 w-3 border-2 border-white bg-white rounded-sm" />
+                <div className="absolute -top-1.5 -right-1.5 h-3 w-3 border-2 border-white bg-white rounded-sm" />
+                <div className="absolute -bottom-1.5 -left-1.5 h-3 w-3 border-2 border-white bg-white rounded-sm" />
+                <div className="absolute -bottom-1.5 -right-1.5 h-3 w-3 border-2 border-white bg-white rounded-sm" />
                 {/* Edge midpoints */}
-                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-2 w-5 bg-accent rounded-full" />
-                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-2 w-5 bg-accent rounded-full" />
-                <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2 h-5 bg-accent rounded-full" />
-                <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2 h-5 bg-accent rounded-full" />
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-2 w-5 bg-white rounded-full" />
+                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-2 w-5 bg-white rounded-full" />
+                <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2 h-5 bg-white rounded-full" />
+                <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2 h-5 bg-white rounded-full" />
               </div>
             )}
 
@@ -399,7 +399,7 @@ export function CropTab() {
                   const maxMap = { x: naturalSize.w, y: naturalSize.h, w: naturalSize.w, h: naturalSize.h };
                   return (
                     <div key={field} className="flex items-center gap-1">
-                      <label className="text-[10px] text-text-muted">{labelMap[field]}</label>
+                      <label className="text-[10px] text-neutral-500">{labelMap[field]}</label>
                       <input
                         type="number"
                         min={field === "w" || field === "h" ? 1 : 0}
@@ -414,16 +414,16 @@ export function CropTab() {
                             return { ...prev, h: Math.max(1 / naturalSize.h, v / naturalSize.h) };
                           });
                         }}
-                        className="w-16 rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] text-text-primary text-center focus:border-border-hover focus:outline-none"
+                        className="w-16 rounded-md border border-white/8 bg-white/4 px-1.5 py-0.5 text-[10px] text-white text-center focus:border-indigo-400/30 focus:outline-none"
                       />
                     </div>
                   );
                 })}
-                <span className="text-[10px] text-text-muted">px</span>
+                <span className="text-[10px] text-neutral-500">px</span>
               </div>
             )}
             {naturalSize && (
-              <div className="text-[10px] text-text-muted">
+              <div className="text-[10px] text-neutral-500">
                 {naturalSize.w} × {naturalSize.h}px
               </div>
             )}
@@ -437,7 +437,7 @@ export function CropTab() {
         loading={loading}
         loadingText={t("status.cropping")}
         text={files.length > 0 ? t("action.crop_n", { n: files.length }) : t("action.crop")}
-        icon={<Crop className="h-4 w-4" />}
+        icon={<Crop className="h-4 w-4" strokeWidth={1.5} />}
       />
 
       <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />

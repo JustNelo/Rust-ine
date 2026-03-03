@@ -25,27 +25,21 @@ export function GlobalProgressBar() {
 
   return (
     <div
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border border-glass-border px-4 py-2.5 min-w-72"
-      style={{
-        background: "rgba(108,108,237,0.08)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        boxShadow: "0 0 30px rgba(108,108,237,0.1), 0 0 60px rgba(0,0,0,0.3)",
-      }}
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] px-4 py-2.5 min-w-72"
     >
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-text-secondary font-medium">
+          <span className="text-neutral-300 font-medium">
             {t("status.processing", { completed: progress.completed, total: progress.total })}
           </span>
-          <span className="font-mono text-text-muted">{percent}%</span>
+          <span className="font-mono text-neutral-500">{percent}%</span>
         </div>
         {progress.current_file && (
-          <p className="text-[10px] text-text-muted truncate max-w-56">{progress.current_file}</p>
+          <p className="text-[10px] text-neutral-500 truncate max-w-56">{progress.current_file}</p>
         )}
-        <div className="h-1.5 w-full rounded-full bg-accent-muted overflow-hidden">
+        <div className="h-1.5 w-full rounded-full bg-white/8 overflow-hidden">
           <div
-            className="h-full rounded-full bg-linear-to-r from-accent to-[#8B8BF5] transition-all duration-300"
+            className="h-full rounded-full bg-indigo-400 transition-all duration-300"
             style={{ width: `${percent}%` }}
           />
         </div>
@@ -53,10 +47,10 @@ export function GlobalProgressBar() {
       <button
         onClick={handleCancel}
         data-cancel-button
-        className="rounded-lg p-1.5 text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors cursor-pointer"
+        className="rounded-lg p-1.5 text-neutral-500 hover:text-red-400 hover:bg-red-400/10 transition-colors duration-200 cursor-pointer"
         title={t("action.cancel")}
       >
-        <X className="h-4 w-4" />
+        <X className="h-4 w-4" strokeWidth={1.5} />
       </button>
     </div>
   );

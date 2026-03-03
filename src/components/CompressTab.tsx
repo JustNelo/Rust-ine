@@ -56,7 +56,7 @@ export function CompressTab() {
         loading={loading}
         loadingText={t("status.compressing")}
         text={files.length > 0 ? t("action.compress_n", { n: files.length }) : t("action.compress")}
-        icon={<Zap className="h-4 w-4" />}
+        icon={<Zap className="h-4 w-4" strokeWidth={1.5} />}
       />
 
       <ResultsBanner results={results} total={files.length} outputDir={lastOutputDir} />

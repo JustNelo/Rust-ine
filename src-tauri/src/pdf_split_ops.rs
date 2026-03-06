@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::progress::emit_progress_simple;
 use crate::utils::{ensure_output_dir, file_stem};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -135,6 +136,7 @@ pub fn split_pdf(
     ranges_str: &str,
     output_dir: &str,
     output_stem: Option<&str>,
+    app_handle: &tauri::AppHandle,
 ) -> PdfSplitResult {
     let mut result = PdfSplitResult {
         output_files: Vec::new(),
@@ -172,7 +174,9 @@ pub fn split_pdf(
         .unwrap_or_else(|| file_stem(pdf_path));
     let source_pages = source_doc.get_pages();
 
-    for (start, end) in &ranges {
+    let total_ranges = ranges.len();
+
+    for (idx, (start, end)) in ranges.iter().enumerate() {
         let mut new_doc = LopdfDocument::with_version("1.7");
         let pages_id = new_doc.new_object_id();
         let mut page_refs: Vec<Object> = Vec::new();
@@ -227,6 +231,7 @@ pub fn split_pdf(
                     .push(format!("Range {}-{}: failed to save — {}", start, end, e));
             }
         }
+        emit_progress_simple(app_handle, idx + 1, total_ranges, pdf_path);
     }
 
     result

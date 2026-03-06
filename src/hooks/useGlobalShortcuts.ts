@@ -6,10 +6,7 @@ interface UseGlobalShortcutsOptions {
   onFilesSelected: (paths: string[]) => void;
 }
 
-export function useGlobalShortcuts({
-  acceptExtensions,
-  onFilesSelected,
-}: UseGlobalShortcutsOptions) {
+export function useGlobalShortcuts({ acceptExtensions, onFilesSelected }: UseGlobalShortcutsOptions) {
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;

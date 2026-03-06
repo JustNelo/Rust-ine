@@ -8,13 +8,13 @@ import { useTabProcessor } from "../hooks/useTabProcessor";
 import { useT } from "../i18n/i18n";
 import type { OutputFormat } from "../types";
 
-const FORMAT_INFO: Record<string, { type: string; alpha: boolean }> = {
-  png: { type: "Lossless", alpha: true },
-  jpg: { type: "Lossy", alpha: false },
-  webp: { type: "Lossy/Lossless", alpha: true },
-  bmp: { type: "Uncompressed", alpha: false },
-  ico: { type: "Lossless", alpha: true },
-  tiff: { type: "Lossless", alpha: true },
+const FORMAT_INFO: Record<string, { typeKey: string; alpha: boolean }> = {
+  png: { typeKey: "format.lossless", alpha: true },
+  jpg: { typeKey: "format.lossy", alpha: false },
+  webp: { typeKey: "format.lossy_lossless", alpha: true },
+  bmp: { typeKey: "format.uncompressed", alpha: false },
+  ico: { typeKey: "format.lossless", alpha: true },
+  tiff: { typeKey: "format.lossless", alpha: true },
 };
 
 const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
@@ -29,8 +29,15 @@ const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
 export function ConvertTab() {
   const { t } = useT();
   const {
-    files, removeFile, reorderFiles, handleFilesSelected, handleClearFiles,
-    loading, results, lastOutputDir, process,
+    files,
+    removeFile,
+    reorderFiles,
+    handleFilesSelected,
+    handleClearFiles,
+    loading,
+    results,
+    lastOutputDir,
+    process,
   } = useTabProcessor({ tabId: "convert", command: "convert_images" });
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png");
 
@@ -51,16 +58,11 @@ export function ConvertTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <ImageGrid
-        files={files}
-        onReorder={reorderFiles}
-        onRemove={removeFile}
-        onClear={handleClearFiles}
-      />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-3">
         <div className="space-y-2">
-          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
             {t("label.output_format")}
           </label>
           <div className="flex gap-2">
@@ -68,11 +70,7 @@ export function ConvertTab() {
               <button
                 key={fmt.value}
                 onClick={() => setOutputFormat(fmt.value)}
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer ${
-                  outputFormat === fmt.value
-                    ? "bg-indigo-500/10 text-indigo-300 border border-indigo-400/25"
-                    : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
-                }`}
+                className={`btn-toggle ${outputFormat === fmt.value ? "btn-toggle-active" : ""}`}
               >
                 {fmt.label}
               </button>
@@ -82,21 +80,20 @@ export function ConvertTab() {
 
         {/* Format info badges */}
         <div className="flex items-center gap-2">
-          <span className="rounded-md bg-white/4 border border-white/8 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
-            {FORMAT_INFO[outputFormat]?.type}
+          <span className="rounded-md bg-black/4 dark:bg-white/4 border border-black/8 dark:border-white/8 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
+            {t(FORMAT_INFO[outputFormat]?.typeKey)}
           </span>
           {FORMAT_INFO[outputFormat]?.alpha && (
             <span className="rounded-md bg-green-500/10 border border-green-500/20 px-2 py-0.5 text-[10px] font-medium text-green-400">
-              Alpha ✓
+              {t("format.alpha_yes")}
             </span>
           )}
           {!FORMAT_INFO[outputFormat]?.alpha && (
-            <span className="rounded-md bg-white/4 border border-white/8 px-2 py-0.5 text-[10px] font-medium text-neutral-600">
-              No alpha
+            <span className="rounded-md bg-black/4 dark:bg-white/4 border border-black/8 dark:border-white/8 px-2 py-0.5 text-[10px] font-medium text-neutral-500 dark:text-neutral-600">
+              {t("format.alpha_no")}
             </span>
           )}
         </div>
-
       </div>
 
       <ActionButton
@@ -104,7 +101,11 @@ export function ConvertTab() {
         disabled={files.length === 0}
         loading={loading}
         loadingText={t("status.converting")}
-        text={files.length > 0 ? t("action.convert_n", { n: files.length, format: outputFormat.toUpperCase() }) : t("action.convert", { format: outputFormat.toUpperCase() })}
+        text={
+          files.length > 0
+            ? t("action.convert_n", { n: files.length, format: outputFormat.toUpperCase() })
+            : t("action.convert", { format: outputFormat.toUpperCase() })
+        }
         icon={<ArrowRightLeft className="h-4 w-4" strokeWidth={1.5} />}
       />
 

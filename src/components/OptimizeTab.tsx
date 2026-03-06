@@ -10,8 +10,15 @@ import { useT } from "../i18n/i18n";
 export function OptimizeTab() {
   const { t } = useT();
   const {
-    files, removeFile, reorderFiles, handleFilesSelected, handleClearFiles,
-    loading, results, lastOutputDir, process,
+    files,
+    removeFile,
+    reorderFiles,
+    handleFilesSelected,
+    handleClearFiles,
+    loading,
+    results,
+    lastOutputDir,
+    process,
   } = useTabProcessor({ tabId: "optimize", command: "optimize_images" });
 
   const handleOptimize = useCallback(async () => {
@@ -30,12 +37,7 @@ export function OptimizeTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <ImageGrid
-        files={files}
-        onReorder={reorderFiles}
-        onRemove={removeFile}
-        onClear={handleClearFiles}
-      />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <ActionButton
         onClick={handleOptimize}

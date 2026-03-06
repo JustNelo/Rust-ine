@@ -8,6 +8,7 @@ import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 import { safeAssetUrl } from "../lib/utils";
 import type { BatchProgress, ProcessingResult } from "../types";
@@ -47,6 +48,7 @@ export function CropTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [lastOutputDir, setLastOutputDir] = useState("");
@@ -98,7 +100,10 @@ export function CropTab() {
   const updateImgBounds = useCallback(() => {
     const img = imgRef.current;
     const container = containerRef.current;
-    if (!img || !container || !naturalSize) { setImgBounds(null); return; }
+    if (!img || !container || !naturalSize) {
+      setImgBounds(null);
+      return;
+    }
     const cR = container.getBoundingClientRect();
     const cW = cR.width;
     const cH = cR.height;
@@ -106,9 +111,15 @@ export function CropTab() {
     const cA = cW / cH;
     let rW: number, rH: number, oX: number, oY: number;
     if (iA > cA) {
-      rW = cW; rH = cW / iA; oX = 0; oY = (cH - rH) / 2;
+      rW = cW;
+      rH = cW / iA;
+      oX = 0;
+      oY = (cH - rH) / 2;
     } else {
-      rH = cH; rW = cH * iA; oX = (cW - rW) / 2; oY = 0;
+      rH = cH;
+      rW = cH * iA;
+      oX = (cW - rW) / 2;
+      oY = 0;
     }
     setImgBounds({ oX, oY, rW, rH });
   }, [naturalSize]);
@@ -235,14 +246,11 @@ export function CropTab() {
     [isDragging, hitTest, getRenderedBounds],
   );
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-      activeHandle.current = null;
-      setIsDragging(false);
-    },
-    [],
-  );
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    activeHandle.current = null;
+    setIsDragging(false);
+  }, []);
 
   // ── Pixel values ─────────────────────────────────────────────────────
   const pixelRect = naturalSize
@@ -288,12 +296,14 @@ export function CropTab() {
 
       setResults(result.results);
 
+      const successCount = result.results.filter((r) => r.success).length;
+      const failCount = result.results.filter((r) => !r.success).length;
+      addEntry({ tabId: "crop", filesCount: result.total, successCount, failCount, outputDir });
+
       if (result.completed === result.total) {
         toast.success(t("toast.crop_success", { n: result.completed }));
       } else if (result.completed > 0) {
-        toast.warning(
-          t("toast.partial", { completed: result.completed, total: result.total }),
-        );
+        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -302,7 +312,7 @@ export function CropTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, pixelRect, getOutputDir, t]);
+  }, [files, pixelRect, getOutputDir, addEntry, t]);
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
@@ -320,12 +330,10 @@ export function CropTab() {
       {files.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-neutral-500">
-              {t("label.crop_draw_hint")}
-            </span>
+            <span className="text-[10px] text-neutral-500">{t("label.crop_draw_hint")}</span>
             <button
               onClick={resetSelection}
-              className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-300 transition-colors duration-200 cursor-pointer"
+              className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors duration-200 cursor-pointer"
             >
               <RotateCcw className="h-3 w-3" strokeWidth={1.5} />
               {t("label.reset")}
@@ -334,7 +342,7 @@ export function CropTab() {
 
           <div
             ref={containerRef}
-            className="relative rounded-xl overflow-hidden border border-white/8 bg-neutral-950 select-none touch-none"
+            className="relative rounded-xl overflow-hidden border border-black/12 dark:border-white/8 bg-neutral-100 dark:bg-neutral-950 select-none touch-none"
             style={{ cursor }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -414,7 +422,7 @@ export function CropTab() {
                             return { ...prev, h: Math.max(1 / naturalSize.h, v / naturalSize.h) };
                           });
                         }}
-                        className="w-16 rounded-md border border-white/8 bg-white/4 px-1.5 py-0.5 text-[10px] text-white text-center focus:border-indigo-400/30 focus:outline-none"
+                        className="w-16 rounded-md border border-black/12 dark:border-white/8 bg-black/6 dark:bg-white/4 px-1.5 py-0.5 text-[10px] text-neutral-900 dark:text-white text-center focus:border-indigo-400/30 focus:outline-none"
                       />
                     </div>
                   );

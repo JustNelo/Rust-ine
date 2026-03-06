@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
-  ChevronRight, ChevronLeft, FolderOpen,
-  Zap, ArrowRightLeft, Scaling, Stamp, ShieldOff,
-  FileDown, Sparkles, Crop, Pipette,
-  Globe, Film, LayoutGrid, Code, QrCode, PenLine,
+  ChevronRight,
+  ChevronLeft,
+  FolderOpen,
+  ImageIcon,
+  FileText,
+  Code2,
+  Check,
+  Sun,
+  Moon,
+  Globe,
 } from "lucide-react";
 import { useT, type Lang } from "../i18n/i18n";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useTheme, type Theme } from "../hooks/useTheme";
 import { GlassModal } from "./ui/GlassModal";
 import appIcon from "../assets/icon.png";
 
@@ -14,219 +21,380 @@ interface OnboardingModalProps {
   onComplete: () => void;
 }
 
-interface FeatureSection {
+const TOTAL_STEPS = 4;
+
+const NOISE_SVG =
+  "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")";
+
+interface CategoryCard {
   titleKey: string;
-  features: { icon: typeof Zap; key: string }[];
+  subKey: string;
+  icon: typeof ImageIcon;
 }
 
-const FEATURE_SECTIONS: FeatureSection[] = [
-  {
-    titleKey: "onboarding.section_images",
-    features: [
-      { icon: Zap, key: "onboarding.feature_compress" },
-      { icon: ArrowRightLeft, key: "onboarding.feature_convert" },
-      { icon: Scaling, key: "onboarding.feature_resize" },
-      { icon: Crop, key: "onboarding.feature_crop" },
-      { icon: Sparkles, key: "onboarding.feature_optimize" },
-      { icon: Stamp, key: "onboarding.feature_watermark" },
-      { icon: ShieldOff, key: "onboarding.feature_strip" },
-      { icon: Pipette, key: "onboarding.feature_palette" },
-    ],
-  },
-  {
-    titleKey: "onboarding.section_pdf",
-    features: [
-      { icon: FileDown, key: "onboarding.feature_pdf_toolkit" },
-    ],
-  },
-  {
-    titleKey: "onboarding.section_dev",
-    features: [
-      { icon: Globe, key: "onboarding.feature_favicon" },
-      { icon: Film, key: "onboarding.feature_animation" },
-      { icon: LayoutGrid, key: "onboarding.feature_spritesheet" },
-      { icon: Code, key: "onboarding.feature_base64" },
-      { icon: QrCode, key: "onboarding.feature_qrcode" },
-      { icon: PenLine, key: "onboarding.feature_bulk_rename" },
-    ],
-  },
+const CATEGORIES: CategoryCard[] = [
+  { titleKey: "onboarding.category_images", subKey: "onboarding.category_images_sub", icon: ImageIcon },
+  { titleKey: "onboarding.category_pdf", subKey: "onboarding.category_pdf_sub", icon: FileText },
+  { titleKey: "onboarding.category_dev", subKey: "onboarding.category_dev_sub", icon: Code2 },
 ];
 
-const FOLDER_GROUPS = [
-  {
-    titleKey: "onboarding.section_images",
-    folders: ["compressed/", "converted/", "resized/", "cropped/", "optimized/", "watermarked/", "stripped/", "palettes/"],
-  },
-  {
-    titleKey: "onboarding.section_pdf",
-    folders: ["pdf-toolkit/"],
-  },
-  {
-    titleKey: "onboarding.section_dev",
-    folders: ["favicons/", "animations/", "spritesheets/", "base64/", "qrcodes/", "renamed/"],
-  },
-];
+/* ── Floating particles — dust in light effect ── */
+function ParticleLayer() {
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, i) => ({
+        id: i,
+        left: `${8 + Math.random() * 84}%`,
+        bottom: `${Math.random() * 30}%`,
+        size: 2 + Math.random() * 3,
+        opacity: 0.06 + Math.random() * 0.1,
+        travel: -(30 + Math.random() * 40),
+        duration: 5 + Math.random() * 5,
+        delay: Math.random() * 6,
+      })),
+    [],
+  );
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((p) => (
+        <span
+          key={p.id}
+          className="ob-particle"
+          style={
+            {
+              left: p.left,
+              bottom: p.bottom,
+              width: p.size,
+              height: p.size,
+              "--ob-p-opacity": p.opacity,
+              "--ob-p-travel": `${p.travel}px`,
+              "--ob-p-dur": `${p.duration}s`,
+              "--ob-p-delay": `${p.delay}s`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ── Orbit ring around logo ── */
+function OrbitRing() {
+  return (
+    <div className="absolute -inset-3" style={{ animation: "ob-orbit-spin 20s linear infinite" }}>
+      {/* Ring */}
+      <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="48" className="stroke-neutral-900/6 dark:stroke-white/6" strokeWidth="0.5" />
+      </svg>
+      {/* Glowing dot on the ring */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-indigo-400"
+        style={{ animation: "ob-orbit-dot-pulse 2s ease-in-out infinite", marginTop: "2px" }}
+      />
+    </div>
+  );
+}
+
+/* ── Word-by-word reveal ── */
+function WordReveal({ text, baseDelay = 200 }: { text: string; baseDelay?: number }) {
+  const words = text.split(" ");
+  return (
+    <span>
+      {words.map((word, i) => (
+        <span
+          key={i}
+          className="inline-block"
+          style={{
+            animation: `ob-word-reveal 400ms cubic-bezier(0.16, 1, 0.3, 1) ${baseDelay + i * 80}ms both`,
+          }}
+        >
+          {word}
+          {i < words.length - 1 ? "\u00a0" : ""}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/* ── Progress dots ── */
+function ProgressDots({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center justify-center gap-3">
+      {Array.from({ length: total }, (_, i) => {
+        const isCompleted = i < current;
+        const isActive = i === current;
+        return (
+          <div key={i} className="flex items-center gap-3">
+            <div
+              className={`rounded-full transition-all duration-500 ${
+                isActive
+                  ? "h-2 w-2 bg-indigo-400 ob-dot-active"
+                  : isCompleted
+                    ? "h-1.5 w-1.5 bg-indigo-400/50"
+                    : "h-1.5 w-1.5 bg-black/10 dark:bg-white/8"
+              }`}
+            />
+            {i < total - 1 && (
+              <div
+                className={`h-px w-6 transition-all duration-500 ${
+                  isCompleted ? "bg-indigo-400/30" : "bg-black/8 dark:bg-white/6"
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const { lang, setLang, t } = useT();
   const { workspace, selectWorkspace } = useWorkspace();
+  const { theme, toggleTheme } = useTheme();
   const [step, setStep] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+
+  const goNext = useCallback(() => {
+    setAnimKey((k) => k + 1);
+    setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
+  }, []);
+
+  const goBack = useCallback(() => {
+    setAnimKey((k) => k + 1);
+    setStep((s) => Math.max(s - 1, 0));
+  }, []);
 
   return (
-    <GlassModal maxWidth="max-w-lg" className="rounded-3xl p-8">
-        {/* Step indicators */}
-        <div className="relative flex items-center justify-center gap-2 mb-8">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === step ? "w-8 bg-indigo-400" : "w-1.5 bg-white/15"
-              }`}
-            />
-          ))}
+    <GlassModal maxWidth="max-w-xl" className="rounded-3xl p-0 overflow-hidden">
+      {/* Aurora mesh background */}
+      <div className="ob-aurora absolute inset-0 pointer-events-none" />
+
+      <div className="relative px-8 pt-7 pb-8">
+        {/* Progress dots */}
+        <div className="mb-7">
+          <ProgressDots current={step} total={TOTAL_STEPS} />
         </div>
 
-        {/* Step 0: Welcome + Language */}
+        {/* ── Step 0: Welcome + Language ── */}
         {step === 0 && (
-          <div className="relative flex flex-col items-center text-center">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 rounded-full bg-indigo-900 blur-xl opacity-30" />
-              <img src={appIcon} alt="Rust-ine" className="relative h-16 w-16" />
+          <div key={`s0-${animKey}`} className="ob-morph-in flex flex-col items-center text-center">
+            {/* Logo with orbit */}
+            <div className="relative mb-7 h-24 w-24 flex items-center justify-center">
+              <OrbitRing />
+              <div className="absolute inset-0 m-auto h-12 w-12 rounded-full bg-indigo-500/20 blur-xl ob-glow-pulse" />
+              <img
+                src={appIcon}
+                alt="Rust-ine"
+                className="relative h-16 w-16 drop-shadow-[0_4px_20px_rgba(99,102,241,0.25)]"
+              />
             </div>
-            <h2 className="text-xl font-light text-white">{t("onboarding.welcome")}</h2>
-            <p className="mt-2 text-sm text-neutral-500 max-w-xs">{t("onboarding.welcome_sub")}</p>
 
-            <div className="mt-8 w-full max-w-xs">
-              <p className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-3">{t("onboarding.language")}</p>
-              <div className="flex gap-2">
-                {(["en", "fr"] as Lang[]).map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 cursor-pointer ${
-                      lang === l
-                        ? "bg-neutral-100 text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)]"
-                        : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
-                    }`}
-                  >
-                    {l === "en" ? "English" : "Français"}
-                  </button>
-                ))}
+            <h2 className="text-2xl font-light text-neutral-900 dark:text-white tracking-tight">
+              <WordReveal text={t("onboarding.welcome")} baseDelay={100} />
+            </h2>
+            <p
+              className="mt-2.5 text-sm text-neutral-500 dark:text-neutral-400 max-w-xs"
+              style={{ animation: "ob-word-reveal 500ms cubic-bezier(0.16,1,0.3,1) 500ms both" }}
+            >
+              {t("onboarding.welcome_sub")}
+            </p>
+
+            {/* Language & Theme selectors */}
+            <div className="mt-8 w-full max-w-xs space-y-5">
+              {/* Language */}
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500 mb-3">
+                  {t("onboarding.language")}
+                </p>
+                <div className="flex gap-2">
+                  {(["en", "fr"] as Lang[]).map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLang(l)}
+                      className={`btn-toggle ${lang === l ? "btn-toggle-active" : ""}`}
+                    >
+                      <Globe className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      {l === "en" ? "English" : "Fran\u00e7ais"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Theme */}
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500 mb-3">
+                  {t("settings.theme")}
+                </p>
+                <div className="flex gap-2">
+                  {(["dark", "light"] as Theme[]).map((th) => (
+                    <button
+                      key={th}
+                      onClick={() => {
+                        if (theme !== th) toggleTheme();
+                      }}
+                      className={`btn-toggle ${theme === th ? "btn-toggle-active" : ""}`}
+                    >
+                      {th === "dark" ? (
+                        <Moon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      ) : (
+                        <Sun className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      )}
+                      {th === "dark" ? t("settings.theme_dark") : t("settings.theme_light")}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 1: Workspace */}
+        {/* ── Step 1: Workspace ── */}
         {step === 1 && (
-          <div className="relative flex flex-col items-center text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/6 mb-5">
-              <FolderOpen className="h-7 w-7 text-neutral-300" strokeWidth={1.5} />
+          <div key={`s1-${animKey}`} className="ob-morph-in flex flex-col items-center text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-black/4 dark:bg-white/3 border border-black/8 dark:border-white/8 mb-5">
+              <FolderOpen className="h-7 w-7 text-indigo-400/70" strokeWidth={1.5} />
             </div>
-            <h2 className="text-xl font-light text-white">{t("onboarding.workspace_title")}</h2>
-            <p className="mt-2 text-sm text-neutral-500 max-w-sm">{t("onboarding.workspace_sub")}</p>
 
-            <div className="mt-6 w-full max-w-xs">
+            <h2 className="text-2xl font-light text-neutral-900 dark:text-white tracking-tight">
+              {t("onboarding.workspace_title")}
+            </h2>
+            <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400 max-w-sm">
+              {t("onboarding.workspace_sub")}
+            </p>
+
+            <div className="mt-7 w-full max-w-xs">
               {workspace ? (
-                <div className="rounded-lg border border-white/10 bg-white/4 px-4 py-3">
-                  <p className="text-xs text-white truncate">{workspace}</p>
-                  <button
-                    onClick={selectWorkspace}
-                    className="mt-2 text-[10px] text-neutral-400 hover:text-white transition-colors duration-200 cursor-pointer"
-                  >
-                    {t("settings.change")}
-                  </button>
+                <div className="ob-scale-in relative rounded-xl border border-indigo-400/20 bg-indigo-500/5 px-4 py-3">
+                  <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/15 to-transparent" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-500/15">
+                      <Check className="h-3 w-3 text-indigo-400" strokeWidth={2.5} />
+                    </div>
+                    <p className="text-xs text-neutral-900 dark:text-white truncate flex-1 text-left font-medium">
+                      {workspace}
+                    </p>
+                    <button onClick={selectWorkspace} className="btn-pill shrink-0">
+                      {t("settings.change")}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button
                   onClick={selectWorkspace}
-                  className="w-full rounded-lg border-2 border-dashed border-white/15 bg-white/3 px-4 py-4 text-sm text-neutral-300 hover:border-white/25 hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                  className="group relative w-full overflow-hidden rounded-xl border-2 border-dashed border-black/12 dark:border-white/10 bg-black/3 dark:bg-white/2 px-4 py-5 transition-all duration-300 cursor-pointer hover:border-indigo-400/25 hover:bg-black/5 dark:hover:bg-white/3"
                 >
-                  {t("onboarding.choose_folder")}
+                  <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/10 to-transparent" />
+                  <div
+                    className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay rounded-xl"
+                    style={{ backgroundImage: NOISE_SVG }}
+                  />
+                  <FolderOpen
+                    className="relative h-6 w-6 text-neutral-400 dark:text-neutral-500 mx-auto mb-2 group-hover:text-indigo-400/70 transition-colors duration-300"
+                    strokeWidth={1.5}
+                  />
+                  <span className="relative text-sm text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300 transition-colors duration-300">
+                    {t("onboarding.choose_folder")}
+                  </span>
                 </button>
               )}
             </div>
 
-            <div className="mt-5 w-full max-w-sm text-left">
-              <p className="text-[10px] text-neutral-500 mb-1.5 font-medium">{t("onboarding.folders_auto")}</p>
-              <div className="rounded-lg bg-white/3 border border-white/8 px-3 py-2.5 space-y-2 max-h-40 overflow-y-auto">
-                {FOLDER_GROUPS.map((group) => (
-                  <div key={group.titleKey}>
-                    <p className="text-[9px] font-medium uppercase tracking-widest text-neutral-500 mb-0.5">{t(group.titleKey)}</p>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0">
-                      {group.folders.map((folder) => (
-                        <p key={folder} className="text-[10px] text-neutral-500 font-mono truncate">{folder}</p>
-                      ))}
+            <p className="mt-4 text-[11px] text-neutral-500 dark:text-neutral-500 max-w-xs">
+              {t("onboarding.workspace_auto")}
+            </p>
+          </div>
+        )}
+
+        {/* ── Step 2: Discover — 3 monochrome glass cards ── */}
+        {step === 2 && (
+          <div key={`s2-${animKey}`} className="ob-morph-in flex flex-col items-center text-center">
+            <h2 className="text-2xl font-light text-neutral-900 dark:text-white tracking-tight mb-5">
+              {t("onboarding.discover")}
+            </h2>
+
+            <div className="w-full max-w-sm space-y-2.5">
+              {CATEGORIES.map((cat, i) => {
+                const Icon = cat.icon;
+                return (
+                  <div
+                    key={cat.titleKey}
+                    className={`ob-stagger-${i + 1} relative flex items-center gap-4 rounded-xl border border-black/8 dark:border-white/8 bg-black/3 dark:bg-white/2 backdrop-blur-sm px-4 py-3.5 transition-all duration-300 hover:border-black/15 dark:hover:border-white/15 hover:bg-black/5 dark:hover:bg-white/4 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)]`}
+                  >
+                    <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/10 to-transparent" />
+                    <div
+                      className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay rounded-xl"
+                      style={{ backgroundImage: NOISE_SVG }}
+                    />
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black/4 dark:bg-white/4 border border-black/6 dark:border-white/6">
+                      <Icon className="h-5 w-5 text-indigo-400/60" strokeWidth={1.5} />
+                    </div>
+                    <div className="relative text-left min-w-0">
+                      <p className="text-sm font-medium text-neutral-900 dark:text-white">{t(cat.titleKey)}</p>
+                      <p className="text-[11px] text-neutral-400 dark:text-neutral-500 truncate">{t(cat.subKey)}</p>
                     </div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 3: Ready — premium finish ── */}
+        {step === 3 && (
+          <div key={`s3-${animKey}`} className="ob-morph-in relative flex flex-col items-center text-center py-6">
+            <ParticleLayer />
+
+            {/* Logo callback — full circle */}
+            <div className="ob-scale-in relative mb-6 h-24 w-24 flex items-center justify-center">
+              <div className="absolute inset-0 m-auto h-16 w-16 rounded-full bg-indigo-500/15 blur-2xl ob-glow-pulse" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-black/4 dark:bg-white/3 border border-black/8 dark:border-white/10 backdrop-blur-sm shadow-[0_4px_24px_rgba(99,102,241,0.15)]">
+                <img src={appIcon} alt="Rust-ine" className="h-11 w-11" />
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Step 2: Ready — features grouped by section */}
-        {step === 2 && (
-          <div className="relative flex flex-col items-center text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/6 mb-4">
-              <Zap className="h-6 w-6 text-white" strokeWidth={1.5} />
-            </div>
-            <h2 className="text-xl font-light text-white">{t("onboarding.ready_title")}</h2>
-            <p className="mt-2 text-sm text-neutral-500">{t("onboarding.ready_sub")}</p>
-
-            <div className="mt-5 w-full max-w-sm space-y-3 max-h-64 overflow-y-auto">
-              {FEATURE_SECTIONS.map((section) => (
-                <div key={section.titleKey}>
-                  <p className="text-[9px] font-medium uppercase tracking-widest text-neutral-500 mb-1 text-left px-1">{t(section.titleKey)}</p>
-                  <div className="grid grid-cols-2 gap-1">
-                    {section.features.map((f) => {
-                      const Icon = f.icon;
-                      return (
-                        <div key={f.key} className="flex items-center gap-2 rounded-lg bg-white/3 border border-white/6 px-2.5 py-1.5">
-                          <Icon className="h-3.5 w-3.5 text-indigo-400/60 shrink-0" strokeWidth={1.5} />
-                          <span className="text-[11px] text-neutral-200 truncate">{t(f.key)}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <div className="relative flex items-center justify-between mt-8">
-          {step > 0 ? (
-            <button
-              onClick={() => setStep(step - 1)}
-              className="flex items-center gap-1 rounded-lg px-4 py-2 text-xs text-neutral-400 hover:text-white hover:bg-white/4 transition-all duration-200 cursor-pointer"
+            <h2
+              className="ob-scale-in text-2xl font-light text-neutral-900 dark:text-white tracking-tight"
+              style={{ animationDelay: "120ms" }}
             >
-              <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.5} />
-              {t("onboarding.back")}
-            </button>
-          ) : (
-            <div />
-          )}
+              {t("onboarding.ready_title")}
+            </h2>
+            <p
+              className="ob-scale-in mt-2 text-sm text-neutral-500 dark:text-neutral-400"
+              style={{ animationDelay: "220ms" }}
+            >
+              {t("onboarding.ready_sub")}
+            </p>
 
-          {step < 2 ? (
-            <button
-              onClick={() => setStep(step + 1)}
-              className="flex items-center gap-1 rounded-lg bg-neutral-100 px-5 py-2 text-xs font-medium text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:bg-white transition-all duration-300 cursor-pointer"
-            >
-              {t("onboarding.next")}
-              <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-            </button>
-          ) : (
-            <button
-              onClick={onComplete}
-              className="flex items-center gap-1 rounded-lg bg-neutral-100 px-5 py-2.5 text-xs font-medium text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:bg-white transition-all duration-300 cursor-pointer"
-            >
+            <button onClick={onComplete} className="btn-primary ob-scale-in mt-8" style={{ animationDelay: "380ms" }}>
               {t("onboarding.lets_go")}
-              <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <ChevronRight className="h-4 w-4" strokeWidth={2} />
             </button>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* ── Navigation — hidden on last step ── */}
+        {step < TOTAL_STEPS - 1 && (
+          <div className="relative flex items-center justify-between mt-8">
+            {step > 0 ? (
+              <button onClick={goBack} className="btn-ghost">
+                <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.5} />
+                {t("onboarding.back")}
+              </button>
+            ) : (
+              <button onClick={onComplete} className="btn-ghost">
+                {t("onboarding.skip")}
+              </button>
+            )}
+
+            <button onClick={goNext} className="btn-primary">
+              {t("onboarding.next")}
+              <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          </div>
+        )}
+      </div>
     </GlassModal>
   );
 }

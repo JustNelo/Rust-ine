@@ -7,22 +7,15 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
-use tauri::Emitter;
 use webp::Encoder;
 
+use crate::progress::emit_progress;
 use crate::utils::{ensure_output_dir, file_size, file_stem, get_extension};
 
 /// Pixel margin from image edges for watermark placement.
 const WATERMARK_MARGIN_PX: i32 = 20;
 /// Pixel spacing between tiles in tiled watermark mode.
 const WATERMARK_TILE_SPACING_PX: i32 = 80;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct ProgressPayload {
-    completed: usize,
-    total: usize,
-    current_file: String,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProcessingResult {
@@ -100,6 +93,39 @@ pub fn compress_to_webp(
             let output_path = out_dir.join(format!("{}-compressed.webp", stem));
             fs::write(&output_path, &*webp_data)
                 .map_err(|e| format!("Cannot write WebP file: {}", e))?;
+
+            Ok((output_path.to_string_lossy().to_string(), None))
+        },
+    )
+}
+
+pub fn compress_to_jpeg(
+    input_paths: Vec<String>,
+    quality: u8,
+    output_dir: String,
+    app_handle: tauri::AppHandle,
+    cancel: Arc<AtomicBool>,
+) -> BatchProgress {
+    let quality = quality.clamp(1, 100);
+
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let rgb = img.to_rgb8();
+
+            let stem = file_stem(input_path);
+            let output_path = out_dir.join(format!("{}-compressed.jpg", stem));
+
+            let file = fs::File::create(&output_path)
+                .map_err(|e| format!("Cannot create JPEG file: {}", e))?;
+            let mut writer = std::io::BufWriter::new(file);
+            let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut writer, quality);
+            rgb.write_with_encoder(encoder)
+                .map_err(|e| format!("Cannot encode JPEG: {}", e))?;
 
             Ok((output_path.to_string_lossy().to_string(), None))
         },
@@ -247,27 +273,7 @@ fn build_result(
     }
 }
 
-fn emit_progress(
-    app_handle: &tauri::AppHandle,
-    processed: &AtomicUsize,
-    total: usize,
-    current_file: &str,
-) {
-    let done = processed.fetch_add(1, Ordering::Relaxed) + 1;
-    let filename = std::path::Path::new(current_file)
-        .file_name()
-        .and_then(|f| f.to_str())
-        .unwrap_or(current_file)
-        .to_string();
-    let _ = app_handle.emit(
-        "processing-progress",
-        ProgressPayload {
-            completed: done,
-            total,
-            current_file: filename,
-        },
-    );
-}
+// emit_progress is imported from crate::progress
 
 /// Generic batch processor — handles output dir creation, parallel iteration,
 /// progress events, and result aggregation. Each caller only provides its
@@ -616,8 +622,8 @@ pub fn add_image_watermark(
                 image::imageops::FilterType::Lanczos3,
             );
 
-            // Apply opacity to the watermark alpha channel
-            let mut wm_with_opacity = resized_wm.clone();
+            // Apply opacity to the watermark alpha channel (mutate in-place, no clone needed)
+            let mut wm_with_opacity = resized_wm;
             for pixel in wm_with_opacity.pixels_mut() {
                 pixel[3] = (pixel[3] as f32 * opacity_clamped) as u8;
             }

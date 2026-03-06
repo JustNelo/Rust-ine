@@ -37,9 +37,7 @@ export type PipelineStep =
   | "compress"
   | "protect";
 
-const IMAGE_EXTENSIONS = new Set([
-  "png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp",
-]);
+const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp"]);
 
 const THUMBNAIL_BATCH_SIZE = 30;
 
@@ -141,7 +139,9 @@ export function usePdfWorkbench() {
   const initialSnapshotRef = useRef<string>("");
 
   const pagesRef = useRef(pages);
-  useEffect(() => { pagesRef.current = pages; }, [pages]);
+  useEffect(() => {
+    pagesRef.current = pages;
+  }, [pages]);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -188,137 +188,139 @@ export function usePdfWorkbench() {
 
   // --- Page management ---
 
-  const addFiles = useCallback(async (paths: string[]) => {
-    setResult(null);
+  const addFiles = useCallback(
+    async (paths: string[]) => {
+      setResult(null);
 
-    // Cancel any in-progress thumbnail loading
-    if (abortRef.current) {
-      abortRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortRef.current = controller;
+      // Cancel any in-progress thumbnail loading
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    const imagePaths = paths.filter(isImageFile);
-    const pdfPaths = paths.filter(isPdfFile);
+      const imagePaths = paths.filter(isImageFile);
+      const pdfPaths = paths.filter(isPdfFile);
 
-    // Images are always added immediately → grid is dirty if pages already exist
-    const willHaveMultipleSources = pagesRef.current.length > 0;
+      // Images are always added immediately → grid is dirty if pages already exist
+      const willHaveMultipleSources = pagesRef.current.length > 0;
 
-    const imagePages: BuilderPage[] = imagePaths.map((path, index) => {
-      const fileName = path.split(/[\\/]/).pop() || path;
-      return {
-        id: `img_${Date.now()}_${index}_${fileName}`,
-        sourcePath: path,
-        pageNumber: 0,
-        sourceType: "image" as const,
-        thumbnailSrc: safeAssetUrl(path),
-        fileName,
-        thumbnailLoaded: true,
-      };
-    });
+      const imagePages: BuilderPage[] = imagePaths.map((path, index) => {
+        const fileName = path.split(/[\\/]/).pop() || path;
+        return {
+          id: `img_${Date.now()}_${index}_${fileName}`,
+          sourcePath: path,
+          pageNumber: 0,
+          sourceType: "image" as const,
+          thumbnailSrc: safeAssetUrl(path),
+          fileName,
+          thumbnailLoaded: true,
+        };
+      });
 
-    if (imagePages.length > 0) {
-      setPages((prev) => [...prev, ...imagePages]);
-    }
+      if (imagePages.length > 0) {
+        setPages((prev) => [...prev, ...imagePages]);
+      }
 
-    // For PDFs: use paginated thumbnail loading
-    for (const pdfPath of pdfPaths) {
-      if (controller.signal.aborted) break;
-      setLoadingThumbnails(true);
-      try {
-        // Get page count first (instant)
-        const pageCount = await invoke<number>("get_pdf_page_count", {
-          pdfPath,
-        });
-
-        const fileName = pdfPath.split(/[\\/]/).pop() || pdfPath;
-
-        // Create placeholder pages immediately
-        const placeholders: BuilderPage[] = [];
-        for (let i = 1; i <= pageCount; i++) {
-          placeholders.push({
-            id: `pdf_${fileName}_p${i}_${Date.now()}`,
-            sourcePath: pdfPath,
-            pageNumber: i,
-            sourceType: "pdf",
-            thumbnailSrc: "",
-            fileName,
-            thumbnailLoaded: false,
+      // For PDFs: use paginated thumbnail loading
+      for (const pdfPath of pdfPaths) {
+        if (controller.signal.aborted) break;
+        setLoadingThumbnails(true);
+        try {
+          // Get page count first (instant)
+          const pageCount = await invoke<number>("get_pdf_page_count", {
+            pdfPath,
           });
-        }
-        setPages((prev) => [...prev, ...placeholders]);
 
-        // Load thumbnails in batches
-        for (let batch = 0; batch < pageCount; batch += THUMBNAIL_BATCH_SIZE) {
-          if (controller.signal.aborted) break;
-          const startPage = batch + 1;
-          const maxPages = Math.min(THUMBNAIL_BATCH_SIZE, pageCount - batch);
-          try {
-            const thumbnails = await invoke<PageThumbnail[]>(
-              "generate_pdf_thumbnails",
-              {
+          const fileName = pdfPath.split(/[\\/]/).pop() || pdfPath;
+
+          // Create placeholder pages immediately
+          const placeholders: BuilderPage[] = [];
+          for (let i = 1; i <= pageCount; i++) {
+            placeholders.push({
+              id: `pdf_${fileName}_p${i}_${Date.now()}`,
+              sourcePath: pdfPath,
+              pageNumber: i,
+              sourceType: "pdf",
+              thumbnailSrc: "",
+              fileName,
+              thumbnailLoaded: false,
+            });
+          }
+          setPages((prev) => [...prev, ...placeholders]);
+
+          // Load thumbnails in batches
+          for (let batch = 0; batch < pageCount; batch += THUMBNAIL_BATCH_SIZE) {
+            if (controller.signal.aborted) break;
+            const startPage = batch + 1;
+            const maxPages = Math.min(THUMBNAIL_BATCH_SIZE, pageCount - batch);
+            try {
+              const thumbnails = await invoke<PageThumbnail[]>("generate_pdf_thumbnails", {
                 filePaths: [pdfPath],
                 startPage,
                 maxPages,
-              }
-            );
+              });
 
-            // Update placeholders with real thumbnails
-            setPages((prev) =>
-              prev.map((page) => {
-                if (page.sourcePath !== pdfPath || page.thumbnailLoaded) return page;
-                const match = thumbnails.find(
-                  (t) =>
-                    t.source_path === pdfPath &&
-                    t.page_number === page.pageNumber
-                );
-                if (match) {
-                  return {
-                    ...page,
-                    thumbnailSrc: match.thumbnail_b64
-                      ? `data:image/jpeg;base64,${match.thumbnail_b64}`
-                      : "",
-                    thumbnailLoaded: true,
-                  };
+              // Update placeholders with real thumbnails (O(1) lookup via Map)
+              const thumbMap = new Map<number, string>();
+              for (const t of thumbnails) {
+                if (t.source_path === pdfPath && t.thumbnail_b64) {
+                  thumbMap.set(t.page_number, `data:image/jpeg;base64,${t.thumbnail_b64}`);
                 }
-                return page;
-              })
-            );
-          } catch (batchErr) {
-            console.error(`Thumbnail batch error (pages ${startPage}-${startPage + maxPages}):`, batchErr);
+              }
+              setPages((prev) =>
+                prev.map((page) => {
+                  if (page.sourcePath !== pdfPath || page.thumbnailLoaded) return page;
+                  const src = thumbMap.get(page.pageNumber);
+                  if (src !== undefined) {
+                    return { ...page, thumbnailSrc: src, thumbnailLoaded: true };
+                  }
+                  return page;
+                }),
+              );
+            } catch (batchErr) {
+              console.error(`Thumbnail batch error (pages ${startPage}-${startPage + maxPages}):`, batchErr);
+            }
           }
+        } catch (err) {
+          toast.error(`Failed to load PDF: ${err}`);
         }
-      } catch (err) {
-        toast.error(`Failed to load PDF: ${err}`);
       }
-    }
-    setLoadingThumbnails(false);
+      setLoadingThumbnails(false);
 
-    // Capture snapshot if this is the first load, otherwise mark as dirty
-    setPages((currentPages) => {
-      if (!willHaveMultipleSources && pdfPaths.length <= 1 && imagePaths.length === 0) {
-        // Single PDF load — capture as initial snapshot
-        captureSnapshot(currentPages);
-      } else if (willHaveMultipleSources || pdfPaths.length > 1 || (pdfPaths.length > 0 && imagePaths.length > 0)) {
-        setGridModified(true);
-      }
-      return currentPages;
-    });
-  }, [captureSnapshot]);
+      // Capture snapshot if this is the first load, otherwise mark as dirty
+      setPages((currentPages) => {
+        if (!willHaveMultipleSources && pdfPaths.length <= 1 && imagePaths.length === 0) {
+          // Single PDF load — capture as initial snapshot
+          captureSnapshot(currentPages);
+        } else if (willHaveMultipleSources || pdfPaths.length > 1 || (pdfPaths.length > 0 && imagePaths.length > 0)) {
+          setGridModified(true);
+        }
+        return currentPages;
+      });
+    },
+    [captureSnapshot],
+  );
 
-  const removePage = useCallback((id: string) => {
-    setPages((prev) => {
-      const next = prev.filter((p) => p.id !== id);
-      checkIfModified(next);
-      return next;
-    });
-    setResult(null);
-  }, [checkIfModified]);
+  const removePage = useCallback(
+    (id: string) => {
+      setPages((prev) => {
+        const next = prev.filter((p) => p.id !== id);
+        checkIfModified(next);
+        return next;
+      });
+      setResult(null);
+    },
+    [checkIfModified],
+  );
 
-  const reorderPages = useCallback((reordered: BuilderPage[]) => {
-    setPages(reordered);
-    checkIfModified(reordered);
-  }, [checkIfModified]);
+  const reorderPages = useCallback(
+    (reordered: BuilderPage[]) => {
+      setPages(reordered);
+      checkIfModified(reordered);
+    },
+    [checkIfModified],
+  );
 
   const clearAll = useCallback(() => {
     if (abortRef.current) {
@@ -369,7 +371,7 @@ export function usePdfWorkbench() {
       }
       return tempPath;
     },
-    [gridModified, getSingleSourcePdf]
+    [gridModified, getSingleSourcePdf],
   );
 
   // --- Temp file cleanup ---
@@ -398,7 +400,7 @@ export function usePdfWorkbench() {
         exportFormat?: ExportFormat;
         exportDpi?: ExportDpi;
       },
-      postProcessing: PostProcessing
+      postProcessing: PostProcessing,
     ) => {
       const currentPages = pagesRef.current;
       if (currentPages.length === 0) {
@@ -472,7 +474,6 @@ export function usePdfWorkbench() {
             setPipelineStep(null);
             return;
           }
-
         } else if (primaryAction === "split") {
           // Materialize first if grid was modified
           materializedPath = await materializeGrid(outputDir);
@@ -503,7 +504,6 @@ export function usePdfWorkbench() {
           setLoading(false);
           setPipelineStep(null);
           return;
-
         } else if (primaryAction === "export-images") {
           materializedPath = await materializeGrid(outputDir);
           if (!materializedPath) {
@@ -538,7 +538,6 @@ export function usePdfWorkbench() {
           setLoading(false);
           setPipelineStep(null);
           return;
-
         } else if (primaryAction === "extract-images") {
           materializedPath = await materializeGrid(outputDir);
           if (!materializedPath) {
@@ -646,7 +645,12 @@ export function usePdfWorkbench() {
         if (pipelineErrors.length === 0) {
           toast.success(t("result.pipeline_complete", { steps: pipelineSteps.join(" → ") }));
         } else {
-          toast.warning(t("toast.partial", { completed: pipelineSteps.length, total: pipelineSteps.length + pipelineErrors.length }));
+          toast.warning(
+            t("toast.partial", {
+              completed: pipelineSteps.length,
+              total: pipelineSteps.length + pipelineErrors.length,
+            }),
+          );
         }
       } catch (err) {
         toast.error(`${err}`);
@@ -659,7 +663,7 @@ export function usePdfWorkbench() {
         setPipelineStep(null);
       }
     },
-    [materializeGrid, cleanupTemp, getOutputStem, t]
+    [materializeGrid, cleanupTemp, getOutputStem, t],
   );
 
   // --- Standalone: Watermark PDF ---
@@ -675,7 +679,7 @@ export function usePdfWorkbench() {
         fontSize?: number;
         color?: string;
         scale?: number;
-      }
+      },
     ) => {
       const currentPages = pagesRef.current;
       if (currentPages.length === 0) {
@@ -751,16 +755,12 @@ export function usePdfWorkbench() {
         setPipelineStep(null);
       }
     },
-    [materializeGrid, cleanupTemp, t]
+    [materializeGrid, cleanupTemp, t],
   );
 
   // --- Standalone: Unlock PDF (no grid interaction) ---
   const unlockPdf = useCallback(
-    async (
-      pdfPath: string,
-      password: string,
-      outputDir: string
-    ) => {
+    async (pdfPath: string, password: string, outputDir: string) => {
       if (!password.trim()) {
         toast.error(t("toast.enter_password"));
         return;
@@ -800,7 +800,7 @@ export function usePdfWorkbench() {
         setLoading(false);
       }
     },
-    [t]
+    [t],
   );
 
   return {

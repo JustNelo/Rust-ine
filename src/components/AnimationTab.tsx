@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { DropZone } from "./DropZone";
 import { ActionButton } from "./ui/ActionButton";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 import { safeAssetUrl } from "../lib/utils";
 
@@ -18,6 +19,7 @@ interface AnimationResult {
 export function AnimationTab() {
   const { t } = useT();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [frames, setFrames] = useState<string[]>([]);
   const [delayMs, setDelayMs] = useState(100);
   const [loopCount, setLoopCount] = useState(0);
@@ -72,6 +74,15 @@ export function AnimationTab() {
 
       setResult(res);
 
+      const successCount = res.frame_count > 0 ? 1 : 0;
+      addEntry({
+        tabId: "animation",
+        filesCount: frames.length,
+        successCount,
+        failCount: res.errors.length,
+        outputDir,
+      });
+
       if (res.frame_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.animation_success", { frames: res.frame_count }));
       } else if (res.frame_count > 0) {
@@ -84,7 +95,7 @@ export function AnimationTab() {
     } finally {
       setLoading(false);
     }
-  }, [frames, delayMs, loopCount, getOutputDir, t]);
+  }, [frames, delayMs, loopCount, getOutputDir, addEntry, t]);
 
   const getFilename = (path: string) => {
     const parts = path.replace(/\\/g, "/").split("/");
@@ -103,7 +114,7 @@ export function AnimationTab() {
       {frames.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-neutral-300">
+            <p className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
               {t("result.files_selected", { n: frames.length })}
             </p>
             <button
@@ -113,40 +124,40 @@ export function AnimationTab() {
               {t("label.clear_all")}
             </button>
           </div>
-          <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl border border-white/8 bg-white/2 backdrop-blur-xl p-2">
+          <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl p-2">
             {frames.map((path, index) => (
               <div
                 key={`${path}-${index}`}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-neutral-300 bg-white/3 hover:bg-white/6 transition-colors duration-200 group"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-neutral-600 dark:text-neutral-300 bg-black/3 dark:bg-white/3 hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 group"
               >
-                <span className="text-[10px] font-mono text-neutral-500 w-5 text-right shrink-0">
-                  {index + 1}
-                </span>
+                <span className="text-[10px] font-mono text-neutral-500 w-5 text-right shrink-0">{index + 1}</span>
                 <img
                   src={safeAssetUrl(path)}
                   alt=""
-                  className="h-7 w-7 rounded object-cover shrink-0 border border-white/8"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  className="h-7 w-7 rounded object-cover shrink-0 border border-black/8 dark:border-white/8"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
                 />
                 <span className="flex-1 truncate">{getFilename(path)}</span>
                 <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => moveFrame(index, -1)}
                     disabled={index === 0}
-                    className="p-0.5 rounded hover:bg-white/6 disabled:opacity-30 cursor-pointer"
+                    className="p-0.5 rounded hover:bg-black/6 dark:hover:bg-white/6 disabled:opacity-30 cursor-pointer"
                   >
                     <ArrowUp className="h-3 w-3" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => moveFrame(index, 1)}
                     disabled={index === frames.length - 1}
-                    className="p-0.5 rounded hover:bg-white/6 disabled:opacity-30 cursor-pointer"
+                    className="p-0.5 rounded hover:bg-black/6 dark:hover:bg-white/6 disabled:opacity-30 cursor-pointer"
                   >
                     <ArrowDown className="h-3 w-3" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => removeFrame(index)}
-                    className="p-0.5 rounded hover:bg-white/6 text-neutral-500 hover:text-red-400 cursor-pointer"
+                    className="p-0.5 rounded hover:bg-black/6 dark:hover:bg-white/6 text-neutral-500 hover:text-red-400 cursor-pointer"
                   >
                     <Trash2 className="h-3 w-3" strokeWidth={1.5} />
                   </button>
@@ -159,7 +170,7 @@ export function AnimationTab() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
             {t("label.frame_delay")}
           </label>
           <input
@@ -168,11 +179,11 @@ export function AnimationTab() {
             max={5000}
             value={delayMs}
             onChange={(e) => setDelayMs(Number(e.target.value))}
-            className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
+            className="w-full rounded-lg border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
             {t("label.loop_count")}
           </label>
           <input
@@ -181,7 +192,7 @@ export function AnimationTab() {
             max={9999}
             value={loopCount}
             onChange={(e) => setLoopCount(Number(e.target.value))}
-            className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
+            className="w-full rounded-lg border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
           />
         </div>
       </div>
@@ -196,7 +207,7 @@ export function AnimationTab() {
       />
 
       {result && result.frame_count > 0 && (
-        <div className="mt-4 relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-2">
+        <div className="mt-4 relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-2">
           <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
           <div className="relative flex items-center gap-2">
             {result.errors.length === 0 ? (
@@ -204,13 +215,13 @@ export function AnimationTab() {
             ) : (
               <XCircle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
             )}
-            <span className="text-xs font-medium text-white">
+            <span className="text-xs font-medium text-neutral-900 dark:text-white">
               {t("result.animation_created", { frames: result.frame_count, format: "GIF" })}
             </span>
           </div>
           {/* GIF preview */}
           {result.output_path && (
-            <div className="rounded-xl overflow-hidden border border-white/8 bg-neutral-950 flex items-center justify-center max-h-48">
+            <div className="rounded-xl overflow-hidden border border-black/8 dark:border-white/8 bg-neutral-100 dark:bg-neutral-950 flex items-center justify-center max-h-48">
               <img
                 src={safeAssetUrl(result.output_path, true)}
                 alt="Generated GIF"

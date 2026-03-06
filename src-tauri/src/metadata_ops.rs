@@ -1,4 +1,5 @@
 use exif::{In, Tag};
+use image::ImageDecoder;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -16,6 +17,9 @@ pub struct ImageMetadata {
     pub height: u32,
     pub format: String,
     pub file_size: u64,
+    pub bit_depth: Option<String>,
+    pub color_type: Option<String>,
+    pub dpi: Option<(u32, u32)>,
     pub exif: Vec<MetadataEntry>,
 }
 
@@ -66,12 +70,55 @@ pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
 
     let size = fs::metadata(path).map(|m| m.len()).unwrap_or(0);
 
+    // Extract color type and bit depth from the decoder header — avoids full pixel decode
+    let (bit_depth, color_type) = match image::ImageReader::open(path)
+        .and_then(|r| r.with_guessed_format())
+        .and_then(|r| {
+            r.into_decoder()
+                .map_err(std::io::Error::other)
+        }) {
+        Ok(decoder) => {
+            let ct = match decoder.color_type() {
+                image::ColorType::L8 => ("8", "Grayscale"),
+                image::ColorType::La8 => ("8", "Grayscale+Alpha"),
+                image::ColorType::Rgb8 => ("8", "RGB"),
+                image::ColorType::Rgba8 => ("8", "RGBA"),
+                image::ColorType::L16 => ("16", "Grayscale"),
+                image::ColorType::La16 => ("16", "Grayscale+Alpha"),
+                image::ColorType::Rgb16 => ("16", "RGB"),
+                image::ColorType::Rgba16 => ("16", "RGBA"),
+                image::ColorType::Rgb32F => ("32", "RGB Float"),
+                image::ColorType::Rgba32F => ("32", "RGBA Float"),
+                _ => ("?", "Unknown"),
+            };
+            (Some(ct.0.to_string()), Some(ct.1.to_string()))
+        }
+        Err(_) => (None, None),
+    };
+
+    // Extract DPI from EXIF resolution tags
+    let mut dpi: Option<(u32, u32)> = None;
     let mut exif_entries: Vec<MetadataEntry> = Vec::new();
 
     let file = fs::File::open(path).map_err(|e| format!("Cannot open file: {}", e))?;
     let mut buf_reader = std::io::BufReader::new(&file);
 
     if let Ok(exif_data) = exif::Reader::new().read_from_container(&mut buf_reader) {
+        // Try to extract DPI from XResolution / YResolution
+        let x_res = exif_data.get_field(Tag::XResolution, In::PRIMARY);
+        let y_res = exif_data.get_field(Tag::YResolution, In::PRIMARY);
+        if let (Some(xf), Some(yf)) = (x_res, y_res) {
+            let x_str = xf.display_value().to_string();
+            let y_str = yf.display_value().to_string();
+            if let (Ok(x_val), Ok(y_val)) =
+                (x_str.trim().parse::<f64>(), y_str.trim().parse::<f64>())
+            {
+                if x_val > 0.0 && y_val > 0.0 {
+                    dpi = Some((x_val.round() as u32, y_val.round() as u32));
+                }
+            }
+        }
+
         for &(tag, label) in EXIF_TAGS {
             if let Some(field) = exif_data.get_field(tag, In::PRIMARY) {
                 let value = field.display_value().with_unit(&exif_data).to_string();
@@ -91,6 +138,9 @@ pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
         height,
         format: ext,
         file_size: size,
+        bit_depth,
+        color_type,
+        dpi,
         exif: exif_entries,
     })
 }

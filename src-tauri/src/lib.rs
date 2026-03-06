@@ -7,9 +7,11 @@ mod pdf_builder_ops;
 mod pdf_ops;
 mod pdf_split_ops;
 mod pdf_watermark_ops;
+mod progress;
 mod qr_ops;
 mod rename_ops;
 mod sprite_ops;
+mod svg_ops;
 mod utils;
 
 use color_ops::PaletteResult;
@@ -28,7 +30,8 @@ use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
 use std::path::{Component, Path};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
+use svg_ops::SvgRasterizeResult;
 use tauri::Manager;
 
 /// Resolved pdfium library path, computed once at startup and shared via tauri::State.
@@ -80,7 +83,8 @@ fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> 
 
 /// Returns the set of base directories the app is allowed to access.
 /// Mirrors the `assetProtocol.scope` from `tauri.conf.json`.
-fn allowed_base_dirs() -> Vec<std::path::PathBuf> {
+/// Computed once and cached for the lifetime of the process.
+static ALLOWED_BASE_DIRS: LazyLock<Vec<std::path::PathBuf>> = LazyLock::new(|| {
     let mut dirs = Vec::new();
     if let Some(home) = dirs::home_dir() {
         dirs.push(home);
@@ -95,7 +99,7 @@ fn allowed_base_dirs() -> Vec<std::path::PathBuf> {
     dirs.into_iter()
         .filter_map(|d| std::fs::canonicalize(&d).ok().or(Some(d)))
         .collect()
-}
+});
 
 fn validate_path(path: &str) -> Result<(), String> {
     let p = Path::new(path);
@@ -108,8 +112,9 @@ fn validate_path(path: &str) -> Result<(), String> {
     // If the path already exists, resolve symlinks and verify it's within allowed directories
     if p.exists() {
         if let Ok(canonical) = std::fs::canonicalize(p) {
-            let allowed = allowed_base_dirs();
-            let is_allowed = allowed.iter().any(|base| canonical.starts_with(base));
+            let is_allowed = ALLOWED_BASE_DIRS
+                .iter()
+                .any(|base| canonical.starts_with(base));
             if !is_allowed {
                 return Err(format!(
                     "Path resolves outside allowed directories: {}",
@@ -149,6 +154,26 @@ async fn compress_webp(
 }
 
 #[tauri::command]
+async fn compress_jpeg(
+    app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
+    input_paths: Vec<String>,
+    quality: u8,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    validate_paths(&input_paths)?;
+    let cancel = (*token).0.clone();
+    cancel.store(false, Ordering::Relaxed);
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::compress_to_jpeg(input_paths, quality, output_dir, app_handle, cancel)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
 async fn convert_images(
     app_handle: tauri::AppHandle,
     token: tauri::State<'_, CancellationToken>,
@@ -170,6 +195,7 @@ async fn convert_images(
 
 #[tauri::command]
 async fn extract_pdf_images(
+    app_handle: tauri::AppHandle,
     pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     output_dir: String,
@@ -186,6 +212,7 @@ async fn extract_pdf_images(
             &output_dir,
             &pdfium_lib_path,
             output_stem.as_deref(),
+            &app_handle,
         )
     })
     .await
@@ -320,15 +347,17 @@ async fn add_image_watermark(
 
 #[tauri::command]
 async fn images_to_pdf(
+    app_handle: tauri::AppHandle,
     input_paths: Vec<String>,
     output_path: String,
 ) -> Result<ImagesToPdfResult, String> {
     validate_path(&output_path)?;
     validate_paths(&input_paths)?;
-    let result =
-        tokio::task::spawn_blocking(move || pdf_ops::images_to_pdf(input_paths, &output_path))
-            .await
-            .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::images_to_pdf(input_paths, &output_path, &app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -378,15 +407,18 @@ async fn generate_pdf_thumbnails(
 
 #[tauri::command]
 async fn merge_to_pdf(
+    app_handle: tauri::AppHandle,
     items: Vec<PdfBuilderItem>,
     options: MergePdfOptions,
 ) -> Result<MergePdfResult, String> {
     validate_path(&options.output_path)?;
     let item_paths: Vec<String> = items.iter().map(|i| i.source_path.clone()).collect();
     validate_paths(&item_paths)?;
-    let result = tokio::task::spawn_blocking(move || pdf_builder_ops::merge_to_pdf(items, options))
-        .await
-        .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_builder_ops::merge_to_pdf(items, options, &app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -450,6 +482,7 @@ async fn crop_images(
 
 #[tauri::command]
 async fn pdf_to_images(
+    app_handle: tauri::AppHandle,
     pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     output_dir: String,
@@ -469,6 +502,7 @@ async fn pdf_to_images(
             &format,
             dpi,
             output_stem.as_deref(),
+            &app_handle,
         )
     })
     .await
@@ -478,6 +512,7 @@ async fn pdf_to_images(
 
 #[tauri::command]
 async fn split_pdf(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     ranges: String,
     output_dir: String,
@@ -486,7 +521,13 @@ async fn split_pdf(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir, output_stem.as_deref())
+        pdf_split_ops::split_pdf(
+            &pdf_path,
+            &ranges,
+            &output_dir,
+            output_stem.as_deref(),
+            &app_handle,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -503,28 +544,31 @@ async fn extract_palette(image_path: String, num_colors: usize) -> Result<Palett
 
 #[tauri::command]
 async fn compress_pdf_cmd(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     quality: u8,
     output_dir: String,
 ) -> Result<PdfCompressResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let result =
-        tokio::task::spawn_blocking(move || pdf_ops::compress_pdf(&pdf_path, quality, &output_dir))
-            .await
-            .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::compress_pdf(&pdf_path, quality, &output_dir, &app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
 #[tauri::command]
 async fn generate_favicons(
+    app_handle: tauri::AppHandle,
     image_path: String,
     output_dir: String,
 ) -> Result<FaviconResult, String> {
     validate_path(&image_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        favicon_ops::generate_favicons(&image_path, &output_dir)
+        favicon_ops::generate_favicons(&image_path, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -533,6 +577,7 @@ async fn generate_favicons(
 
 #[tauri::command]
 async fn create_gif(
+    app_handle: tauri::AppHandle,
     image_paths: Vec<String>,
     delay_ms: u16,
     loop_count: u16,
@@ -542,7 +587,7 @@ async fn create_gif(
     validate_path(&output_dir)?;
     let delay_ms = delay_ms.max(10);
     let result = tokio::task::spawn_blocking(move || {
-        gif_ops::create_gif(&image_paths, delay_ms, loop_count, &output_dir)
+        gif_ops::create_gif(&image_paths, delay_ms, loop_count, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -551,6 +596,7 @@ async fn create_gif(
 
 #[tauri::command]
 async fn generate_spritesheet(
+    app_handle: tauri::AppHandle,
     image_paths: Vec<String>,
     columns: u32,
     padding: u32,
@@ -561,7 +607,7 @@ async fn generate_spritesheet(
     let columns = columns.clamp(1, 100);
     let padding = padding.min(200);
     let result = tokio::task::spawn_blocking(move || {
-        sprite_ops::generate_spritesheet(&image_paths, columns, padding, &output_dir)
+        sprite_ops::generate_spritesheet(&image_paths, columns, padding, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -570,6 +616,7 @@ async fn generate_spritesheet(
 
 #[tauri::command]
 async fn protect_pdf_cmd(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     password: String,
     output_dir: String,
@@ -577,7 +624,7 @@ async fn protect_pdf_cmd(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::protect_pdf(&pdf_path, &password, &output_dir)
+        pdf_ops::protect_pdf(&pdf_path, &password, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -605,6 +652,7 @@ async fn unlock_pdf_cmd(
 #[allow(clippy::too_many_arguments)]
 #[tauri::command]
 async fn watermark_pdf_text_cmd(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     text: String,
     position: String,
@@ -624,6 +672,7 @@ async fn watermark_pdf_text_cmd(
             font_size,
             &color,
             &output_dir,
+            &app_handle,
         )
     })
     .await
@@ -633,6 +682,7 @@ async fn watermark_pdf_text_cmd(
 
 #[tauri::command]
 async fn watermark_pdf_image_cmd(
+    app_handle: tauri::AppHandle,
     image_path: String,
     pdf_path: String,
     position: String,
@@ -651,6 +701,7 @@ async fn watermark_pdf_image_cmd(
             opacity,
             scale,
             &output_dir,
+            &app_handle,
         )
     })
     .await
@@ -660,6 +711,7 @@ async fn watermark_pdf_image_cmd(
 
 #[tauri::command]
 async fn bulk_rename_cmd(
+    app_handle: tauri::AppHandle,
     input_paths: Vec<String>,
     pattern: String,
     start_index: u32,
@@ -668,7 +720,13 @@ async fn bulk_rename_cmd(
     validate_paths(&input_paths)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        rename_ops::bulk_rename(&input_paths, &pattern, start_index, &output_dir)
+        rename_ops::bulk_rename(
+            &input_paths,
+            &pattern,
+            start_index,
+            &output_dir,
+            &app_handle,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -683,6 +741,24 @@ async fn generate_qr_cmd(text: String, size: u32, output_dir: String) -> Result<
         .await
         .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
+}
+
+#[tauri::command]
+async fn rasterize_svg_cmd(
+    input_path: String,
+    target_width: u32,
+    output_format: String,
+    output_dir: String,
+) -> Result<SvgRasterizeResult, String> {
+    validate_path(&input_path)?;
+    validate_path(&output_dir)?;
+    let target_width = target_width.clamp(16, 8192);
+    let result = tokio::task::spawn_blocking(move || {
+        svg_ops::rasterize_svg(&input_path, target_width, &output_format, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    result
 }
 
 #[tauri::command]
@@ -733,6 +809,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             compress_webp,
+            compress_jpeg,
             convert_images,
             extract_pdf_images,
             resize_images,
@@ -760,6 +837,7 @@ pub fn run() {
             image_to_base64,
             generate_qr_cmd,
             bulk_rename_cmd,
+            rasterize_svg_cmd,
             cancel_processing,
             reset_cancel
         ])

@@ -10,12 +10,7 @@ import {
   MeasuringStrategy,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from "@dnd-kit/sortable";
 import { Loader2 } from "lucide-react";
 import { PdfPageCard } from "./PdfPageCard";
 import type { BuilderPage } from "../hooks/usePdfWorkbench";
@@ -35,18 +30,13 @@ const MEASURING_CONFIG = {
 // Min card width — CSS auto-fill handles column count responsively
 const CARD_MIN_W = 100;
 
-export function PdfPageGrid({
-  pages,
-  loadingThumbnails,
-  onReorder,
-  onRemove,
-}: PdfPageGridProps) {
+export function PdfPageGrid({ pages, loadingThumbnails, onReorder, onRemove }: PdfPageGridProps) {
   const { t } = useT();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const itemIds = useMemo(() => pages.map((p) => p.id), [pages]);
@@ -60,8 +50,8 @@ export function PdfPageGrid({
     }
     const pdfs = pdfSources.size;
     if (pdfs > 0 && imageCount > 0) return t("pdf_tool.sources_summary", { pdfs, images: imageCount });
-    if (pdfs > 0) return `${pdfs} PDF(s)`;
-    if (imageCount > 0) return `${imageCount} image(s)`;
+    if (pdfs > 0) return t("label.n_pdfs", { n: pdfs });
+    if (imageCount > 0) return t("label.n_images_count", { n: imageCount });
     return "";
   }, [pages, t]);
 
@@ -76,18 +66,19 @@ export function PdfPageGrid({
         }
       }
     },
-    [pages, onReorder]
+    [pages, onReorder],
   );
 
   if (pages.length === 0 && !loadingThumbnails) return null;
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl p-3 space-y-3">
+    <div className="rounded-2xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-neutral-300">
+        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
           {pages.length} {t("pdf_tool.pages_count")}
           {sourcesSummary && <span className="text-neutral-500"> — {sourcesSummary}</span>}
-          {" — "}{t("pdf_tool.drag_hint")}
+          {" — "}
+          {t("pdf_tool.drag_hint")}
         </span>
         {loadingThumbnails && (
           <span className="flex items-center gap-1.5 text-[10px] text-neutral-500">
@@ -103,10 +94,7 @@ export function PdfPageGrid({
         onDragEnd={handleDragEnd}
         measuring={MEASURING_CONFIG}
       >
-        <SortableContext
-          items={itemIds}
-          strategy={rectSortingStrategy}
-        >
+        <SortableContext items={itemIds} strategy={rectSortingStrategy}>
           <div
             className="max-h-[60vh] overflow-y-auto pr-1"
             style={{
@@ -116,11 +104,7 @@ export function PdfPageGrid({
             }}
           >
             {pages.map((page) => (
-              <PdfPageCard
-                key={page.id}
-                page={page}
-                onRemove={onRemove}
-              />
+              <PdfPageCard key={page.id} page={page} onRemove={onRemove} />
             ))}
           </div>
         </SortableContext>

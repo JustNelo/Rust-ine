@@ -22,6 +22,7 @@ const SUB_FOLDERS: Partial<Record<TabId, string>> = {
   base64: "base64",
   qrcode: "qrcodes",
   "bulk-rename": "renamed",
+  "svg-rasterize": "svg-rasterized",
 };
 
 interface WorkspaceContextValue {
@@ -77,7 +78,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       return outputDir;
     },
-    [workspace]
+    [workspace],
   );
 
   const openInExplorer = useCallback(async () => {
@@ -101,12 +102,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         console.error("Cannot open output dir:", err);
       }
     },
-    [workspace]
+    [workspace],
   );
 
   const value = useMemo(
     () => ({ workspace, selectWorkspace, getOutputDir, openInExplorer, openOutputDir }),
-    [workspace, selectWorkspace, getOutputDir, openInExplorer, openOutputDir]
+    [workspace, selectWorkspace, getOutputDir, openInExplorer, openOutputDir],
   );
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;

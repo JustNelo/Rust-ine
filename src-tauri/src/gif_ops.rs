@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::path::PathBuf;
 
+use crate::progress::emit_progress_simple;
 use crate::utils::ensure_output_dir;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -21,6 +22,7 @@ pub fn create_gif(
     delay_ms: u16,
     loop_count: u16,
     output_dir: &str,
+    app_handle: &tauri::AppHandle,
 ) -> AnimationResult {
     let mut result = AnimationResult {
         output_path: String::new(),
@@ -131,6 +133,7 @@ pub fn create_gif(
         }
 
         result.frame_count += 1;
+        emit_progress_simple(app_handle, i + 1, image_paths.len(), path);
     }
 
     result.output_path = output_path.to_string_lossy().to_string();

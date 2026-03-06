@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::Path;
 
+use crate::progress::emit_progress_simple;
 use crate::utils::{embed_image_as_pdf_page, ensure_output_dir, filename_or_default};
 
 // --- Structs ---
@@ -381,7 +382,11 @@ fn clone_object_recursive(
     }
 }
 
-pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> MergePdfResult {
+pub fn merge_to_pdf(
+    items: Vec<PdfBuilderItem>,
+    options: MergePdfOptions,
+    app_handle: &tauri::AppHandle,
+) -> MergePdfResult {
     let mut result = MergePdfResult {
         output_path: options.output_path.clone(),
         page_count: 0,
@@ -417,7 +422,9 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
         }
     }
 
-    for item in &items {
+    let total_items = items.len();
+
+    for (idx, item) in items.iter().enumerate() {
         match item.source_type.as_str() {
             "image" => match add_image_page(&mut doc, pages_id, &item.source_path, &options) {
                 Ok(page_id) => {
@@ -475,6 +482,7 @@ pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions) -> Mer
                     .push(format!("Unknown source type: {}", other));
             }
         }
+        emit_progress_simple(app_handle, idx + 1, total_items, &item.source_path);
     }
 
     if result.page_count == 0 {

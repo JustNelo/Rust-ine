@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use time::OffsetDateTime;
 
+use crate::progress::emit_progress_simple;
 use crate::utils::ensure_output_dir;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -38,6 +39,7 @@ pub fn bulk_rename(
     pattern: &str,
     start_index: u32,
     output_dir: &str,
+    app_handle: &tauri::AppHandle,
 ) -> RenameResult {
     let mut result = RenameResult {
         renamed_count: 0,
@@ -53,6 +55,7 @@ pub fn bulk_rename(
 
     let today = today_date();
 
+    let total = input_paths.len();
     for (i, input_path) in input_paths.iter().enumerate() {
         let path = Path::new(input_path);
         let original_stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("file");
@@ -100,6 +103,7 @@ pub fn bulk_rename(
                     .push(format!("Failed to copy '{}': {}", input_path, e));
             }
         }
+        emit_progress_simple(app_handle, i + 1, total, input_path);
     }
 
     result

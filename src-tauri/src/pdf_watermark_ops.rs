@@ -7,6 +7,11 @@ use std::path::PathBuf;
 
 use crate::utils::{ensure_output_dir, file_stem};
 
+/// Point margin from page edges for watermark placement.
+const WATERMARK_MARGIN_PT: f32 = 20.0;
+/// Point spacing between tiles in tiled watermark mode.
+const WATERMARK_TILE_SPACING_PT: f32 = 80.0;
+
 /// Parse a hex color string (#RRGGBB or RRGGBB) into (r, g, b) floats in 0.0–1.0.
 /// Falls back to light grey (0.7, 0.7, 0.7) on invalid input.
 fn hex_to_rgb_f32(hex: &str) -> (f32, f32, f32) {
@@ -279,7 +284,7 @@ pub fn watermark_pdf_image(
         // Compute watermark draw dimensions
         let draw_w = page_w * scale_clamped;
         let draw_h = draw_w * aspect_ratio;
-        let margin = 20.0_f32;
+        let margin = WATERMARK_MARGIN_PT;
 
         let operations =
             build_image_watermark_ops(position, draw_w, draw_h, page_w, page_h, margin);
@@ -507,7 +512,7 @@ fn build_text_watermark_ops(
     color_g: f32,
     color_b: f32,
 ) -> Vec<Operation> {
-    let margin = 20.0_f32;
+    let margin = WATERMARK_MARGIN_PT;
 
     // For diagonal mode: rotate 45° across the page center
     if position == "diagonal" {
@@ -579,20 +584,12 @@ fn build_text_watermark_ops(
             ),
         ];
 
-        let step_x = text_width + 80.0;
-        let step_y = text_height + 80.0;
+        let step_x = text_width + WATERMARK_TILE_SPACING_PT;
+        let step_y = text_height + WATERMARK_TILE_SPACING_PT;
         let mut y = margin;
         while y < page_h {
             let mut x = margin;
             while x < page_w {
-                ops.push(Operation::new(
-                    "Td",
-                    vec![
-                        Object::Real(if x == margin && y == margin { x } else { 0.0 }),
-                        Object::Real(0.0),
-                    ],
-                ));
-                // Use Tm for absolute positioning
                 ops.push(Operation::new(
                     "Tm",
                     vec![

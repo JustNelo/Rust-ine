@@ -12,6 +12,11 @@ use webp::Encoder;
 
 use crate::utils::{ensure_output_dir, file_size, file_stem, get_extension};
 
+/// Pixel margin from image edges for watermark placement.
+const WATERMARK_MARGIN_PX: i32 = 20;
+/// Pixel spacing between tiles in tiled watermark mode.
+const WATERMARK_TILE_SPACING_PX: i32 = 80;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ProgressPayload {
     completed: usize,
@@ -492,7 +497,7 @@ pub fn add_watermark(
 
             let text_width = (font_size * text.len() as f32 * 0.55) as i32;
             let text_height = font_size as i32;
-            let margin = 20i32;
+            let margin = WATERMARK_MARGIN_PX;
 
             match position.as_str() {
                 "center" => {
@@ -517,8 +522,8 @@ pub fn add_watermark(
                     draw_text_mut(&mut base, color, x, y, scale, &font, &text);
                 }
                 "tiled" => {
-                    let step_x = text_width + 80;
-                    let step_y = text_height + 80;
+                    let step_x = text_width + WATERMARK_TILE_SPACING_PX;
+                    let step_y = text_height + WATERMARK_TILE_SPACING_PX;
                     let mut y = margin;
                     while y < img_h as i32 {
                         let mut x = margin;
@@ -617,7 +622,7 @@ pub fn add_image_watermark(
                 pixel[3] = (pixel[3] as f32 * opacity_clamped) as u8;
             }
 
-            let margin = 20i64;
+            let margin = WATERMARK_MARGIN_PX as i64;
 
             let overlay_at = |base_img: &mut image::RgbaImage, x: i64, y: i64| {
                 image::imageops::overlay(base_img, &wm_with_opacity, x, y);
@@ -646,8 +651,8 @@ pub fn add_image_watermark(
                     overlay_at(&mut base, x, y);
                 }
                 "tiled" => {
-                    let step_x = target_wm_w as i64 + 80;
-                    let step_y = target_wm_h as i64 + 80;
+                    let step_x = target_wm_w as i64 + WATERMARK_TILE_SPACING_PX as i64;
+                    let step_y = target_wm_h as i64 + WATERMARK_TILE_SPACING_PX as i64;
                     let mut y = margin;
                     while y < img_h as i64 {
                         let mut x = margin;

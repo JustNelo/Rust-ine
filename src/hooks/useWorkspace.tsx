@@ -46,17 +46,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const selectWorkspace = useCallback(async () => {
     try {
       const selected = await open({ directory: true, multiple: false });
-      if (selected) {
-        const dir = selected as string;
-        setWorkspace(dir);
+      if (typeof selected === "string") {
+        setWorkspace(selected);
         try {
-          localStorage.setItem(STORAGE_KEY, dir);
+          localStorage.setItem(STORAGE_KEY, selected);
         } catch {
           // localStorage may be unavailable
         }
       }
-    } catch (err) {
-      console.error("Dialog error:", err);
+    } catch {
+      // Dialog cancelled or errored — no user notification needed for cancel
     }
   }, []);
 

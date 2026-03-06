@@ -4,6 +4,7 @@ import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { useT, type Lang } from "../i18n/i18n";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { GlassModal } from "./ui/GlassModal";
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -54,11 +55,7 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
   }, [foundUpdate]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-6">
-        <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
-
+    <GlassModal>
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-10 rounded-lg p-1 text-neutral-500 hover:text-white hover:bg-white/6 transition-colors duration-200 cursor-pointer"
@@ -176,7 +173,6 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
           </div>
 
         </div>
-      </div>
-    </div>
+    </GlassModal>
   );
 }

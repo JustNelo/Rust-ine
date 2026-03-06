@@ -53,9 +53,18 @@ pub fn create_gif(
 
     let (width, height) = first_img.dimensions();
 
-    // GIF dimensions are u16
-    let gif_width = width.min(u16::MAX as u32) as u16;
-    let gif_height = height.min(u16::MAX as u32) as u16;
+    if width > u16::MAX as u32 || height > u16::MAX as u32 {
+        result.errors.push(format!(
+            "Image dimensions {}x{} exceed GIF maximum of {}x{}",
+            width,
+            height,
+            u16::MAX,
+            u16::MAX
+        ));
+        return result;
+    }
+    let gif_width = width as u16;
+    let gif_height = height as u16;
 
     let output_path = out_dir.join("animation.gif");
     let file = match File::create(&output_path) {

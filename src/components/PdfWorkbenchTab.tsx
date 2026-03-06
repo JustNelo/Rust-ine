@@ -39,6 +39,7 @@ import {
   type PipelineStep,
   type WorkbenchResult,
 } from "../hooks/usePdfWorkbench";
+import type { PdfWatermarkPosition } from "../types";
 
 const ACCEPTED_EXTENSIONS = new Set([
   "png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf",
@@ -145,14 +146,21 @@ export function PdfWorkbenchTab() {
   const ppPasswordStrength = useMemo(() => getPasswordStrength(ppPassword), [ppPassword]);
 
   // Watermark options
-  const [wmMode, setWmMode] = useState<PdfWmMode>("text");
-  const [wmText, setWmText] = useState("");
-  const [wmPosition, setWmPosition] = useState<string>("center");
-  const [wmOpacity, setWmOpacity] = useState(30);
-  const [wmFontSize, setWmFontSize] = useState(48);
-  const [wmColor, setWmColor] = useState("#B3B3B3");
-  const [wmLogoPath, setWmLogoPath] = useState<string | null>(null);
-  const [wmScale, setWmScale] = useState(25);
+  const [wm, setWm] = useState({
+    mode: "text" as PdfWmMode,
+    text: "",
+    position: "center" as PdfWatermarkPosition,
+    opacity: 30,
+    fontSize: 48,
+    color: "#B3B3B3",
+    logoPath: null as string | null,
+    scale: 25,
+  });
+  const updateWm = useCallback(
+    <K extends keyof typeof wm>(key: K, value: (typeof wm)[K]) =>
+      setWm((prev) => ({ ...prev, [key]: value })),
+    []
+  );
 
   // Unlock mode state
   const [unlockFile, setUnlockFile] = useState<string | null>(null);
@@ -205,9 +213,9 @@ export function PdfWorkbenchTab() {
       const paths = Array.isArray(selected) ? selected : [selected];
       if (paths.length > 0) addFiles(paths);
     } catch (err) {
-      console.error("Dialog error:", err);
+      toast.error(`${t("toast.error_prefix")} ${err}`);
     }
-  }, [addFiles]);
+  }, [addFiles, t]);
 
   const handleSelectUnlockFile = useCallback(async () => {
     try {
@@ -217,9 +225,9 @@ export function PdfWorkbenchTab() {
       });
       if (selected && typeof selected === "string") setUnlockFile(selected);
     } catch (err) {
-      console.error("Dialog error:", err);
+      toast.error(`${t("toast.error_prefix")} ${err}`);
     }
-  }, []);
+  }, [t]);
 
   const handleSelectWmLogo = useCallback(async () => {
     try {
@@ -227,11 +235,11 @@ export function PdfWorkbenchTab() {
         multiple: false,
         filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "svg"] }],
       });
-      if (selected) setWmLogoPath(selected as string);
+      if (typeof selected === "string") updateWm("logoPath", selected);
     } catch (err) {
-      console.error("Dialog error:", err);
+      toast.error(`${t("toast.error_prefix")} ${err}`);
     }
-  }, []);
+  }, [t]);
 
   // --- Pipeline execute ---
   const handleExecute = useCallback(async () => {
@@ -243,14 +251,14 @@ export function PdfWorkbenchTab() {
 
     // Watermark action uses its own path
     if (activeTool === "watermark") {
-      await watermarkPdf(outputDir, wmMode, {
-        text: wmText.trim(),
-        imagePath: wmLogoPath || undefined,
-        position: wmPosition as import("../types").PdfWatermarkPosition,
-        opacity: wmOpacity / 100,
-        fontSize: wmFontSize,
-        color: wmColor,
-        scale: wmScale / 100,
+      await watermarkPdf(outputDir, wm.mode, {
+        text: wm.text.trim(),
+        imagePath: wm.logoPath || undefined,
+        position: wm.position,
+        opacity: wm.opacity / 100,
+        fontSize: wm.fontSize,
+        color: wm.color,
+        scale: wm.scale / 100,
       });
       return;
     }
@@ -277,7 +285,7 @@ export function PdfWorkbenchTab() {
     activeTool, outputName, ranges, exportFormat, exportDpi,
     ppCompress, ppCompressQuality, ppProtect, ppPassword,
     showPostProcessing, getOutputDir, executePipeline,
-    watermarkPdf, wmMode, wmText, wmLogoPath, wmPosition, wmOpacity, wmFontSize, wmColor, wmScale,
+    watermarkPdf, wm,
   ]);
 
   // --- Unlock execute ---
@@ -293,13 +301,13 @@ export function PdfWorkbenchTab() {
     if (loading) return true;
     if (pages.length === 0) return true;
     if (activeTool === "watermark") {
-      if (wmMode === "text" && !wmText.trim()) return true;
-      if (wmMode === "image" && !wmLogoPath) return true;
+      if (wm.mode === "text" && !wm.text.trim()) return true;
+      if (wm.mode === "image" && !wm.logoPath) return true;
       return false;
     }
     if (ppProtect && showPostProcessing && !ppPassword.trim()) return true;
     return false;
-  }, [loading, pages.length, ppProtect, ppPassword, showPostProcessing, activeTool, wmMode, wmText, wmLogoPath]);
+  }, [loading, pages.length, ppProtect, ppPassword, showPostProcessing, activeTool, wm.mode, wm.text, wm.logoPath]);
 
   // --- Action button text ---
   const actionButtonText = useMemo(() => {
@@ -601,10 +609,10 @@ export function PdfWorkbenchTab() {
                       {(["text", "image"] as PdfWmMode[]).map((m) => (
                         <button
                           key={m}
-                          onClick={() => setWmMode(m)}
+                          onClick={() => updateWm("mode", m)}
                           className={cn(
                             "flex items-center gap-2 flex-1 justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer border",
-                            wmMode === m
+                            wm.mode === m
                               ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
                               : "bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
                           )}
@@ -620,7 +628,7 @@ export function PdfWorkbenchTab() {
                     </div>
 
                     {/* Text-specific */}
-                    {wmMode === "text" && (
+                    {wm.mode === "text" && (
                       <>
                         <div>
                           <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1 block">
@@ -628,19 +636,19 @@ export function PdfWorkbenchTab() {
                           </label>
                           <input
                             type="text"
-                            value={wmText}
-                            onChange={(e) => setWmText(e.target.value)}
+                            value={wm.text}
+                            onChange={(e) => updateWm("text", e.target.value)}
                             placeholder={t("label.placeholder_watermark")}
                             className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
                           />
                         </div>
                         <Slider
                           label={t("label.font_size")}
-                          value={wmFontSize}
+                          value={wm.fontSize}
                           min={8}
                           max={200}
                           unit="px"
-                          onChange={setWmFontSize}
+                          onChange={(v) => updateWm("fontSize", v)}
                         />
                         <div>
                           <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1 block">
@@ -650,19 +658,19 @@ export function PdfWorkbenchTab() {
                             <label className="relative cursor-pointer">
                               <input
                                 type="color"
-                                value={wmColor}
-                                onChange={(e) => setWmColor(e.target.value)}
+                                value={wm.color}
+                                onChange={(e) => updateWm("color", e.target.value)}
                                 className="absolute inset-0 opacity-0 w-0 h-0 cursor-pointer"
                               />
                               <div
                                 className="h-8 w-8 rounded-md border border-white/15 cursor-pointer transition-colors duration-200 hover:border-white/30"
-                                style={{ backgroundColor: wmColor }}
+                                style={{ backgroundColor: wm.color }}
                               />
                             </label>
                             <input
                               type="text"
-                              value={wmColor}
-                              onChange={(e) => setWmColor(e.target.value)}
+                              value={wm.color}
+                              onChange={(e) => updateWm("color", e.target.value)}
                               maxLength={7}
                               className="w-24 rounded-md border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white font-mono placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
                             />
@@ -672,7 +680,7 @@ export function PdfWorkbenchTab() {
                     )}
 
                     {/* Image-specific */}
-                    {wmMode === "image" && (
+                    {wm.mode === "image" && (
                       <>
                         <div>
                           <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-1 block">
@@ -683,30 +691,30 @@ export function PdfWorkbenchTab() {
                             className="flex items-center gap-2 w-full rounded-lg border border-dashed border-white/15 bg-white/3 px-3 py-3 text-xs text-neutral-400 hover:text-white hover:border-white/25 transition-colors duration-200 cursor-pointer"
                           >
                             <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
-                            {wmLogoPath
-                              ? wmLogoPath.split(/[\\/]/).pop()
+                            {wm.logoPath
+                              ? wm.logoPath.split(/[\\/]/).pop()
                               : t("label.select_logo")}
                           </button>
-                          {wmLogoPath && (
+                          {wm.logoPath && (
                             <div className="mt-2 flex items-center gap-2 rounded-lg border border-white/8 bg-white/3 p-2">
                               <img
-                                src={safeAssetUrl(wmLogoPath)}
+                                src={safeAssetUrl(wm.logoPath)}
                                 alt="Logo"
                                 className="h-8 w-8 rounded object-contain bg-white/5"
                               />
                               <span className="text-[10px] text-neutral-500 truncate flex-1">
-                                {wmLogoPath.split(/[\\/]/).pop()}
+                                {wm.logoPath.split(/[\\/]/).pop()}
                               </span>
                             </div>
                           )}
                         </div>
                         <Slider
                           label={t("label.watermark_scale")}
-                          value={wmScale}
+                          value={wm.scale}
                           min={5}
                           max={80}
                           unit="%"
-                          onChange={setWmScale}
+                          onChange={(v) => updateWm("scale", v)}
                         />
                       </>
                     )}
@@ -720,10 +728,10 @@ export function PdfWorkbenchTab() {
                         {PDF_WM_POSITIONS.map((opt) => (
                           <button
                             key={opt.value}
-                            onClick={() => setWmPosition(opt.value)}
+                            onClick={() => updateWm("position", opt.value)}
                             className={cn(
                               "rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
-                              wmPosition === opt.value
+                              wm.position === opt.value
                                 ? "bg-indigo-500/10 text-indigo-300 border-indigo-400/25"
                                 : "bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
                             )}
@@ -737,10 +745,10 @@ export function PdfWorkbenchTab() {
                     {/* Opacity */}
                     <Slider
                       label={t("label.opacity")}
-                      value={wmOpacity}
+                      value={wm.opacity}
                       min={5}
                       max={100}
-                      onChange={setWmOpacity}
+                      onChange={(v) => updateWm("opacity", v)}
                     />
                   </div>
                 )}

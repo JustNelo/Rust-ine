@@ -78,6 +78,25 @@ fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> 
     ))
 }
 
+/// Returns the set of base directories the app is allowed to access.
+/// Mirrors the `assetProtocol.scope` from `tauri.conf.json`.
+fn allowed_base_dirs() -> Vec<std::path::PathBuf> {
+    let mut dirs = Vec::new();
+    if let Some(home) = dirs::home_dir() {
+        dirs.push(home);
+    }
+    if let Some(tmp) = std::env::var_os("TEMP")
+        .or_else(|| std::env::var_os("TMPDIR"))
+        .map(std::path::PathBuf::from)
+    {
+        dirs.push(tmp);
+    }
+    dirs.push(std::env::temp_dir());
+    dirs.into_iter()
+        .filter_map(|d| std::fs::canonicalize(&d).ok().or(Some(d)))
+        .collect()
+}
+
 fn validate_path(path: &str) -> Result<(), String> {
     let p = Path::new(path);
     if p.components().any(|c| matches!(c, Component::ParentDir)) {
@@ -86,14 +105,16 @@ fn validate_path(path: &str) -> Result<(), String> {
     if !p.is_absolute() {
         return Err(format!("Only absolute paths are allowed: {}", path));
     }
-    // If the path already exists, resolve symlinks and re-validate
+    // If the path already exists, resolve symlinks and verify it's within allowed directories
     if p.exists() {
         if let Ok(canonical) = std::fs::canonicalize(p) {
-            if canonical
-                .components()
-                .any(|c| matches!(c, Component::ParentDir))
-            {
-                return Err(format!("Symlink traversal detected: {}", path));
+            let allowed = allowed_base_dirs();
+            let is_allowed = allowed.iter().any(|base| canonical.starts_with(base));
+            if !is_allowed {
+                return Err(format!(
+                    "Path resolves outside allowed directories: {}",
+                    path
+                ));
             }
         }
     }
@@ -239,6 +260,8 @@ async fn add_watermark(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let font_size = font_size.clamp(1.0, 500.0);
+    let opacity = opacity.clamp(0.0, 1.0);
     let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
@@ -274,6 +297,8 @@ async fn add_image_watermark(
     validate_path(&output_dir)?;
     validate_path(&watermark_path)?;
     validate_paths(&input_paths)?;
+    let opacity = opacity.clamp(0.0, 1.0);
+    let scale = scale.clamp(0.01, 10.0);
     let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
@@ -400,6 +425,8 @@ async fn crop_images(
 ) -> Result<BatchProgress, String> {
     validate_path(&output_dir)?;
     validate_paths(&input_paths)?;
+    let width = width.max(1);
+    let height = height.max(1);
     let cancel = (*token).0.clone();
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
@@ -432,6 +459,7 @@ async fn pdf_to_images(
 ) -> Result<PdfToImagesResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
+    let dpi = dpi.clamp(72, 1200);
     let pdfium_lib_path = (*pdfium).0.clone();
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::pdf_to_images(
@@ -512,6 +540,7 @@ async fn create_gif(
 ) -> Result<AnimationResult, String> {
     validate_paths(&image_paths)?;
     validate_path(&output_dir)?;
+    let delay_ms = delay_ms.max(10);
     let result = tokio::task::spawn_blocking(move || {
         gif_ops::create_gif(&image_paths, delay_ms, loop_count, &output_dir)
     })
@@ -529,6 +558,8 @@ async fn generate_spritesheet(
 ) -> Result<SpriteSheetResult, String> {
     validate_paths(&image_paths)?;
     validate_path(&output_dir)?;
+    let columns = columns.clamp(1, 100);
+    let padding = padding.min(200);
     let result = tokio::task::spawn_blocking(move || {
         sprite_ops::generate_spritesheet(&image_paths, columns, padding, &output_dir)
     })
@@ -647,6 +678,7 @@ async fn bulk_rename_cmd(
 #[tauri::command]
 async fn generate_qr_cmd(text: String, size: u32, output_dir: String) -> Result<QrResult, String> {
     validate_path(&output_dir)?;
+    let size = size.clamp(64, 4096);
     let result = tokio::task::spawn_blocking(move || qr_ops::generate_qr(&text, size, &output_dir))
         .await
         .map_err(|e| format!("Task failed: {}", e))?;

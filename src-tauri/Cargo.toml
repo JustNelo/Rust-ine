@@ -1,6 +1,6 @@
 [package]
 name = "rustine"
-version = "2.0.1"
+version = "2.1.1"
 description = "Rust-ine - Desktop image compression & PDF extraction tool"
 authors = ["Léon Gallet"]
 edition = "2021"

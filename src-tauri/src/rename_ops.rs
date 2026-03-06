@@ -17,6 +17,19 @@ pub struct RenameEntry {
     pub new_name: String,
 }
 
+fn sanitize_filename(name: &str) -> Result<(), String> {
+    if name.contains('/') || name.contains('\\') || name.contains("..") {
+        return Err(format!(
+            "Generated filename '{}' contains invalid characters",
+            name
+        ));
+    }
+    if name.is_empty() {
+        return Err("Generated filename is empty".to_string());
+    }
+    Ok(())
+}
+
 /// Bulk rename files using a pattern.
 /// Supported tokens: {name} (original stem), {index} (counter), {date} (YYYY-MM-DD), {ext} (extension).
 /// Files are copied (not moved) to the output directory with the new name.
@@ -61,6 +74,11 @@ pub fn bulk_rename(
             new_stem
         };
 
+        if let Err(e) = sanitize_filename(&new_filename) {
+            result.errors.push(e);
+            continue;
+        }
+
         let output_path = out_dir.join(&new_filename);
 
         match std::fs::copy(input_path, &output_path) {
@@ -101,6 +119,14 @@ fn today_date() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sanitize_rejects_path_separators() {
+        assert!(sanitize_filename("hello/world").is_err());
+        assert!(sanitize_filename("..\\etc\\passwd").is_err());
+        assert!(sanitize_filename("normal-file.png").is_ok());
+        assert!(sanitize_filename("").is_err());
+    }
 
     #[test]
     fn today_date_format() {

@@ -7,11 +7,11 @@ mod pdf_builder_ops;
 mod pdf_ops;
 mod pdf_split_ops;
 mod pdf_watermark_ops;
+mod progress;
 mod qr_ops;
 mod rename_ops;
 mod sprite_ops;
 mod svg_ops;
-mod progress;
 mod utils;
 
 use color_ops::PaletteResult;
@@ -28,10 +28,10 @@ use pdf_watermark_ops::PdfWatermarkResult;
 use qr_ops::QrResult;
 use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
-use svg_ops::SvgRasterizeResult;
 use std::path::{Component, Path};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock};
+use svg_ops::SvgRasterizeResult;
 use tauri::Manager;
 
 /// Resolved pdfium library path, computed once at startup and shared via tauri::State.
@@ -112,7 +112,9 @@ fn validate_path(path: &str) -> Result<(), String> {
     // If the path already exists, resolve symlinks and verify it's within allowed directories
     if p.exists() {
         if let Ok(canonical) = std::fs::canonicalize(p) {
-            let is_allowed = ALLOWED_BASE_DIRS.iter().any(|base| canonical.starts_with(base));
+            let is_allowed = ALLOWED_BASE_DIRS
+                .iter()
+                .any(|base| canonical.starts_with(base));
             if !is_allowed {
                 return Err(format!(
                     "Path resolves outside allowed directories: {}",
@@ -351,10 +353,11 @@ async fn images_to_pdf(
 ) -> Result<ImagesToPdfResult, String> {
     validate_path(&output_path)?;
     validate_paths(&input_paths)?;
-    let result =
-        tokio::task::spawn_blocking(move || pdf_ops::images_to_pdf(input_paths, &output_path, &app_handle))
-            .await
-            .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::images_to_pdf(input_paths, &output_path, &app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -411,9 +414,11 @@ async fn merge_to_pdf(
     validate_path(&options.output_path)?;
     let item_paths: Vec<String> = items.iter().map(|i| i.source_path.clone()).collect();
     validate_paths(&item_paths)?;
-    let result = tokio::task::spawn_blocking(move || pdf_builder_ops::merge_to_pdf(items, options, &app_handle))
-        .await
-        .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_builder_ops::merge_to_pdf(items, options, &app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -516,7 +521,13 @@ async fn split_pdf(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir, output_stem.as_deref(), &app_handle)
+        pdf_split_ops::split_pdf(
+            &pdf_path,
+            &ranges,
+            &output_dir,
+            output_stem.as_deref(),
+            &app_handle,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -540,10 +551,11 @@ async fn compress_pdf_cmd(
 ) -> Result<PdfCompressResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let result =
-        tokio::task::spawn_blocking(move || pdf_ops::compress_pdf(&pdf_path, quality, &output_dir, &app_handle))
-            .await
-            .map_err(|e| format!("Task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || {
+        pdf_ops::compress_pdf(&pdf_path, quality, &output_dir, &app_handle)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
 }
 
@@ -708,7 +720,13 @@ async fn bulk_rename_cmd(
     validate_paths(&input_paths)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        rename_ops::bulk_rename(&input_paths, &pattern, start_index, &output_dir, &app_handle)
+        rename_ops::bulk_rename(
+            &input_paths,
+            &pattern,
+            start_index,
+            &output_dir,
+            &app_handle,
+        )
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;

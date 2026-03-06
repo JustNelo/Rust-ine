@@ -48,7 +48,7 @@ export function WatermarkTab() {
       addFiles(paths);
       setResults([]);
     },
-    [addFiles]
+    [addFiles],
   );
 
   const handleClearFiles = useCallback(() => {
@@ -153,11 +153,7 @@ export function WatermarkTab() {
       {/* Mode toggle: Text / Image */}
       <div className="flex gap-2">
         {(["text", "image"] as WatermarkMode[]).map((m) => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            className={cn("btn-toggle", mode === m && "btn-toggle-active")}
-          >
+          <button key={m} onClick={() => setMode(m)} className={cn("btn-toggle", mode === m && "btn-toggle-active")}>
             {m === "text" ? (
               <Type className="h-3.5 w-3.5" strokeWidth={1.5} />
             ) : (
@@ -184,14 +180,7 @@ export function WatermarkTab() {
                 className="w-full rounded-md border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-2 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
               />
             </div>
-            <Slider
-              label={t("label.font_size")}
-              value={fontSize}
-              min={8}
-              max={200}
-              unit="px"
-              onChange={setFontSize}
-            />
+            <Slider label={t("label.font_size")} value={fontSize} min={8} max={200} unit="px" onChange={setFontSize} />
             <div>
               <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1 block">
                 {t("label.watermark_color")}
@@ -233,9 +222,7 @@ export function WatermarkTab() {
                 className="flex items-center gap-2 w-full rounded-lg border border-dashed border-black/15 dark:border-white/15 bg-black/3 dark:bg-white/3 px-3 py-3 text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:border-black/25 dark:hover:border-white/25 transition-colors duration-200 cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
-                {logoPath
-                  ? logoPath.split(/[\\/]/).pop()
-                  : t("label.select_logo")}
+                {logoPath ? logoPath.split(/[\\/]/).pop() : t("label.select_logo")}
               </button>
               {logoPath && (
                 <div className="mt-2 flex items-center gap-2 rounded-lg border border-black/8 dark:border-white/8 bg-black/3 dark:bg-white/3 p-2">
@@ -244,9 +231,7 @@ export function WatermarkTab() {
                     alt="Logo"
                     className="h-8 w-8 rounded object-contain bg-black/5 dark:bg-white/5"
                   />
-                  <span className="text-[10px] text-neutral-500 truncate flex-1">
-                    {logoPath.split(/[\\/]/).pop()}
-                  </span>
+                  <span className="text-[10px] text-neutral-500 truncate flex-1">{logoPath.split(/[\\/]/).pop()}</span>
                 </div>
               )}
             </div>
@@ -279,13 +264,7 @@ export function WatermarkTab() {
           </div>
         </div>
 
-        <Slider
-          label={t("label.opacity")}
-          value={opacity}
-          min={5}
-          max={100}
-          onChange={setOpacity}
-        />
+        <Slider label={t("label.opacity")} value={opacity} min={5} max={100} onChange={setOpacity} />
       </div>
 
       <ActionButton

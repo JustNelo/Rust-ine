@@ -20,8 +20,7 @@ pub fn rasterize_svg(
 ) -> Result<SvgRasterizeResult, String> {
     ensure_output_dir(Path::new(output_dir))?;
 
-    let svg_data = fs::read(input_path)
-        .map_err(|e| format!("Cannot read SVG file: {}", e))?;
+    let svg_data = fs::read(input_path).map_err(|e| format!("Cannot read SVG file: {}", e))?;
 
     let tree = resvg::usvg::Tree::from_data(&svg_data, &resvg::usvg::Options::default())
         .map_err(|e| format!("Cannot parse SVG: {}", e))?;

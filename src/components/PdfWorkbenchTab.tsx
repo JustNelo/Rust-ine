@@ -41,9 +41,7 @@ import {
 } from "../hooks/usePdfWorkbench";
 import type { PdfWatermarkPosition } from "../types";
 
-const ACCEPTED_EXTENSIONS = new Set([
-  "png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf",
-]);
+const ACCEPTED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf"]);
 
 // --- Password strength helper ---
 function getPasswordStrength(pw: string): { level: number; label: string; color: string } {
@@ -157,9 +155,8 @@ export function PdfWorkbenchTab() {
     scale: 25,
   });
   const updateWm = useCallback(
-    <K extends keyof typeof wm>(key: K, value: (typeof wm)[K]) =>
-      setWm((prev) => ({ ...prev, [key]: value })),
-    []
+    <K extends keyof typeof wm>(key: K, value: (typeof wm)[K]) => setWm((prev) => ({ ...prev, [key]: value })),
+    [],
   );
 
   // Unlock mode state
@@ -193,7 +190,9 @@ export function PdfWorkbenchTab() {
         }
       }
     });
-    return () => { unlisten.then((fn) => fn()); };
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, [filterPaths, addFiles, mode]);
 
   const handleAddMore = useCallback(async () => {
@@ -203,9 +202,7 @@ export function PdfWorkbenchTab() {
         filters: [
           {
             name: "Images & PDFs",
-            extensions: [
-              "png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf",
-            ],
+            extensions: ["png", "jpg", "jpeg", "bmp", "ico", "tiff", "tif", "webp", "pdf"],
           },
         ],
       });
@@ -279,13 +276,23 @@ export function PdfWorkbenchTab() {
         exportFormat,
         exportDpi,
       },
-      postProcessing
+      postProcessing,
     );
   }, [
-    activeTool, outputName, ranges, exportFormat, exportDpi,
-    ppCompress, ppCompressQuality, ppProtect, ppPassword,
-    showPostProcessing, getOutputDir, executePipeline,
-    watermarkPdf, wm,
+    activeTool,
+    outputName,
+    ranges,
+    exportFormat,
+    exportDpi,
+    ppCompress,
+    ppCompressQuality,
+    ppProtect,
+    ppPassword,
+    showPostProcessing,
+    getOutputDir,
+    executePipeline,
+    watermarkPdf,
+    wm,
   ]);
 
   // --- Unlock execute ---
@@ -318,11 +325,11 @@ export function PdfWorkbenchTab() {
       };
     }
     const map: Record<PrimaryAction, { text: string; loadingText: string }> = {
-      "build": { text: t("action.build_pdf"), loadingText: t("status.building") },
-      "split": { text: t("action.pdf_split"), loadingText: t("status.splitting") },
+      build: { text: t("action.build_pdf"), loadingText: t("status.building") },
+      split: { text: t("action.pdf_split"), loadingText: t("status.splitting") },
       "export-images": { text: t("action.pdf_to_images"), loadingText: t("status.exporting_pages") },
       "extract-images": { text: t("action.extract"), loadingText: t("status.extracting") },
-      "watermark": { text: t("action.pdf_watermark"), loadingText: t("status.watermarking_pdf") },
+      watermark: { text: t("action.pdf_watermark"), loadingText: t("status.watermarking_pdf") },
     };
     return map[activeTool];
   }, [activeTool, pipelineStep, t]);
@@ -330,11 +337,11 @@ export function PdfWorkbenchTab() {
   // --- Action icon ---
   const actionIcon = useMemo(() => {
     const map: Record<PrimaryAction, React.ReactNode> = {
-      "build": <FileUp className="h-4 w-4" strokeWidth={1.5} />,
-      "split": <Scissors className="h-4 w-4" strokeWidth={1.5} />,
+      build: <FileUp className="h-4 w-4" strokeWidth={1.5} />,
+      split: <Scissors className="h-4 w-4" strokeWidth={1.5} />,
       "export-images": <Image className="h-4 w-4" strokeWidth={1.5} />,
       "extract-images": <FileDown className="h-4 w-4" strokeWidth={1.5} />,
-      "watermark": <Stamp className="h-4 w-4" strokeWidth={1.5} />,
+      watermark: <Stamp className="h-4 w-4" strokeWidth={1.5} />,
     };
     return map[activeTool];
   }, [activeTool]);
@@ -489,7 +496,10 @@ export function PdfWorkbenchTab() {
                       <button
                         key={action.id}
                         onClick={() => setActiveTool(action.id)}
-                        className={cn("btn-toggle flex-col gap-1.5! py-3! text-[11px]!", isActive && "btn-toggle-active")}
+                        className={cn(
+                          "btn-toggle flex-col gap-1.5! py-3! text-[11px]!",
+                          isActive && "btn-toggle-active",
+                        )}
                       >
                         <Icon className={cn("h-4 w-4")} strokeWidth={1.5} />
                         {t(action.labelKey)}
@@ -528,9 +538,7 @@ export function PdfWorkbenchTab() {
                       placeholder="1-3, 4-10, 11-end"
                       className="w-full rounded-lg border border-black/12 dark:border-white/8 bg-black/6 dark:bg-white/4 px-3 py-2 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:border-indigo-400/30 focus:outline-none"
                     />
-                    <p className="text-[10px] text-neutral-500">
-                      {t("label.page_ranges_hint")}
-                    </p>
+                    <p className="text-[10px] text-neutral-500">{t("label.page_ranges_hint")}</p>
                   </div>
                 )}
 
@@ -572,9 +580,7 @@ export function PdfWorkbenchTab() {
                 )}
 
                 {activeTool === "extract-images" && (
-                  <p className="text-xs text-neutral-500">
-                    {t("pdf_tool.extract_images_hint")}
-                  </p>
+                  <p className="text-xs text-neutral-500">{t("pdf_tool.extract_images_hint")}</p>
                 )}
 
                 {activeTool === "watermark" && (
@@ -661,9 +667,7 @@ export function PdfWorkbenchTab() {
                             className="flex items-center gap-2 w-full rounded-lg border border-dashed border-black/20 dark:border-white/15 bg-black/5 dark:bg-white/3 px-3 py-3 text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:border-black/30 dark:hover:border-white/25 transition-colors duration-200 cursor-pointer"
                           >
                             <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
-                            {wm.logoPath
-                              ? wm.logoPath.split(/[\\/]/).pop()
-                              : t("label.select_logo")}
+                            {wm.logoPath ? wm.logoPath.split(/[\\/]/).pop() : t("label.select_logo")}
                           </button>
                           {wm.logoPath && (
                             <div className="mt-2 flex items-center gap-2 rounded-lg border border-black/12 dark:border-white/8 bg-black/5 dark:bg-white/3 p-2">
@@ -733,14 +737,18 @@ export function PdfWorkbenchTab() {
                       >
                         <Zap className="h-3.5 w-3.5" strokeWidth={1.5} />
                         {t("pdf_tool.compress")}
-                        <div className={cn(
-                          "ml-auto h-4 w-7 rounded-full transition-all",
-                          ppCompress ? "bg-indigo-400" : "bg-black/12 dark:bg-white/10"
-                        )}>
-                          <div className={cn(
-                            "h-3 w-3 rounded-full mt-0.5 transition-all",
-                            ppCompress ? "ml-3.5 bg-white" : "ml-0.5 bg-black/40 dark:bg-white/40"
-                          )} />
+                        <div
+                          className={cn(
+                            "ml-auto h-4 w-7 rounded-full transition-all",
+                            ppCompress ? "bg-indigo-400" : "bg-black/12 dark:bg-white/10",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "h-3 w-3 rounded-full mt-0.5 transition-all",
+                              ppCompress ? "ml-3.5 bg-white" : "ml-0.5 bg-black/40 dark:bg-white/40",
+                            )}
+                          />
                         </div>
                       </button>
                       {ppCompress && (
@@ -766,14 +774,18 @@ export function PdfWorkbenchTab() {
                       >
                         <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
                         {t("pdf_tool.protect")}
-                        <div className={cn(
-                          "ml-auto h-4 w-7 rounded-full transition-all",
-                          ppProtect ? "bg-indigo-400" : "bg-black/12 dark:bg-white/10"
-                        )}>
-                          <div className={cn(
-                            "h-3 w-3 rounded-full mt-0.5 transition-all",
-                            ppProtect ? "ml-3.5 bg-white" : "ml-0.5 bg-black/40 dark:bg-white/40"
-                          )} />
+                        <div
+                          className={cn(
+                            "ml-auto h-4 w-7 rounded-full transition-all",
+                            ppProtect ? "bg-indigo-400" : "bg-black/12 dark:bg-white/10",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "h-3 w-3 rounded-full mt-0.5 transition-all",
+                              ppProtect ? "ml-3.5 bg-white" : "ml-0.5 bg-black/40 dark:bg-white/40",
+                            )}
+                          />
                         </div>
                       </button>
                       {ppProtect && (
@@ -793,16 +805,23 @@ export function PdfWorkbenchTab() {
                                     key={i}
                                     className={cn(
                                       "h-1 flex-1 rounded-full transition-all",
-                                      i <= ppPasswordStrength.level ? ppPasswordStrength.color : "bg-black/12 dark:bg-white/10"
+                                      i <= ppPasswordStrength.level
+                                        ? ppPasswordStrength.color
+                                        : "bg-black/12 dark:bg-white/10",
                                     )}
                                   />
                                 ))}
                               </div>
-                              <span className={cn(
-                                "text-[10px] font-medium",
-                                ppPasswordStrength.level <= 1 ? "text-red-400" :
-                                ppPasswordStrength.level <= 2 ? "text-yellow-400" : "text-green-400"
-                              )}>
+                              <span
+                                className={cn(
+                                  "text-[10px] font-medium",
+                                  ppPasswordStrength.level <= 1
+                                    ? "text-red-400"
+                                    : ppPasswordStrength.level <= 2
+                                      ? "text-yellow-400"
+                                      : "text-green-400",
+                                )}
+                              >
                                 {t(ppPasswordStrength.label)}
                               </span>
                             </div>

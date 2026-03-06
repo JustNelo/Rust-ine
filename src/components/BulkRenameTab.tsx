@@ -33,10 +33,13 @@ export function BulkRenameTab() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RenameResult | null>(null);
 
-  const handleFilesSelected = useCallback((paths: string[]) => {
-    addFiles(paths);
-    setResult(null);
-  }, [addFiles]);
+  const handleFilesSelected = useCallback(
+    (paths: string[]) => {
+      addFiles(paths);
+      setResult(null);
+    },
+    [addFiles],
+  );
 
   const handleClearFiles = useCallback(() => {
     clearFiles();
@@ -92,7 +95,13 @@ export function BulkRenameTab() {
 
       setResult(res);
 
-      addEntry({ tabId: "bulk-rename", filesCount: files.length, successCount: res.renamed_count, failCount: res.errors.length, outputDir });
+      addEntry({
+        tabId: "bulk-rename",
+        filesCount: files.length,
+        successCount: res.renamed_count,
+        failCount: res.errors.length,
+        outputDir,
+      });
 
       if (res.renamed_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.rename_success", { n: res.renamed_count }));
@@ -127,7 +136,10 @@ export function BulkRenameTab() {
         <input
           type="text"
           value={pattern}
-          onChange={(e) => { setPattern(e.target.value); setResult(null); }}
+          onChange={(e) => {
+            setPattern(e.target.value);
+            setResult(null);
+          }}
           placeholder="{name}_{index}"
           className="w-full rounded-lg border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-2 text-xs text-neutral-900 dark:text-white font-mono placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
         />
@@ -173,9 +185,7 @@ export function BulkRenameTab() {
             </div>
           ))}
           {files.length > 5 && (
-            <span className="text-[10px] text-neutral-500">
-              {t("label.more_files", { n: files.length - 5 })}
-            </span>
+            <span className="text-[10px] text-neutral-500">{t("label.more_files", { n: files.length - 5 })}</span>
           )}
         </div>
       )}
@@ -209,7 +219,9 @@ export function BulkRenameTab() {
                 <div key={i} className="flex items-center gap-2 text-[10px]">
                   <span className="text-neutral-500 truncate flex-1">{entry.original_name}</span>
                   <span className="text-neutral-500 shrink-0">&rarr;</span>
-                  <span className="text-neutral-900 dark:text-white font-mono truncate flex-1 text-right">{entry.new_name}</span>
+                  <span className="text-neutral-900 dark:text-white font-mono truncate flex-1 text-right">
+                    {entry.new_name}
+                  </span>
                 </div>
               ))}
             </div>

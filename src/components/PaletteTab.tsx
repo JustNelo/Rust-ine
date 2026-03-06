@@ -68,20 +68,12 @@ function ColorCard({
         style={{ backgroundColor: color.hex }}
       />
       <div className="flex-1 text-left min-w-0">
-        <p className="text-xs font-mono font-medium text-neutral-900 dark:text-white">
-          {color.hex}
-        </p>
+        <p className="text-xs font-mono font-medium text-neutral-900 dark:text-white">{color.hex}</p>
         <p className="text-[10px] text-neutral-500 truncate">
           rgb({color.r}, {color.g}, {color.b})
         </p>
-        <p className="text-[10px] text-neutral-600 truncate">
-          {hsl}
-        </p>
-        {color.percentage > 0 && (
-          <p className="text-[10px] text-neutral-600">
-            {color.percentage}%
-          </p>
-        )}
+        <p className="text-[10px] text-neutral-600 truncate">{hsl}</p>
+        {color.percentage > 0 && <p className="text-[10px] text-neutral-600">{color.percentage}%</p>}
       </div>
       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
         {copiedIndex === index ? (
@@ -114,11 +106,14 @@ export function PaletteTab() {
     };
   }, []);
 
-  const handleFilesSelected = useCallback((paths: string[]) => {
-    addFiles(paths.slice(0, 1));
-    setPalette([]);
-    setPickedColor(null);
-  }, [addFiles]);
+  const handleFilesSelected = useCallback(
+    (paths: string[]) => {
+      addFiles(paths.slice(0, 1));
+      setPalette([]);
+      setPickedColor(null);
+    },
+    [addFiles],
+  );
 
   const handleClearFiles = useCallback(() => {
     clearFiles();
@@ -223,7 +218,7 @@ export function PaletteTab() {
         percentage: c.percentage,
       })),
       null,
-      2
+      2,
     );
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -297,9 +292,7 @@ export function PaletteTab() {
                 onChange={(e) => setNumColors(Number(e.target.value))}
                 className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-black/8 dark:bg-white/8 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-400 [&::-webkit-slider-thumb]:shadow-[0_0_12px_rgba(129,140,248,0.5)]"
               />
-              <span className="text-xs font-mono text-neutral-500 w-6 text-right">
-                {numColors}
-              </span>
+              <span className="text-xs font-mono text-neutral-500 w-6 text-right">{numColors}</span>
             </div>
           </div>
 
@@ -323,11 +316,7 @@ export function PaletteTab() {
         <div className="space-y-3">
           <p className="text-xs text-neutral-500">{t("label.eyedropper_hint")}</p>
           <div className="relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
-            <canvas
-              ref={canvasRef}
-              onClick={handleCanvasClick}
-              className="w-full cursor-crosshair"
-            />
+            <canvas ref={canvasRef} onClick={handleCanvasClick} className="w-full cursor-crosshair" />
           </div>
 
           {pickedColor && (
@@ -370,24 +359,14 @@ export function PaletteTab() {
 
             <div className="grid grid-cols-2 gap-2">
               {palette.map((color, index) => (
-                <ColorCard
-                  key={index}
-                  color={color}
-                  index={index}
-                  copiedIndex={copiedIndex}
-                  onCopy={copyHex}
-                />
+                <ColorCard key={index} color={color} index={index} copiedIndex={copiedIndex} onCopy={copyHex} />
               ))}
             </div>
 
             {/* Color bar preview */}
             <div className="flex h-8 rounded-lg overflow-hidden border border-black/8 dark:border-white/8">
               {palette.map((color, index) => (
-                <div
-                  key={index}
-                  className="flex-1"
-                  style={{ backgroundColor: color.hex }}
-                />
+                <div key={index} className="flex-1" style={{ backgroundColor: color.hex }} />
               ))}
             </div>
           </div>

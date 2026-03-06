@@ -107,7 +107,11 @@ pub struct ImagesToPdfResult {
     pub errors: Vec<String>,
 }
 
-pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str, app_handle: &tauri::AppHandle) -> ImagesToPdfResult {
+pub fn images_to_pdf(
+    input_paths: Vec<String>,
+    output_path: &str,
+    app_handle: &tauri::AppHandle,
+) -> ImagesToPdfResult {
     let mut result = ImagesToPdfResult {
         output_path: output_path.to_string(),
         page_count: 0,
@@ -123,7 +127,7 @@ pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str, app_handle: &t
     for (idx, input_path) in input_paths.iter().enumerate() {
         // Read dimensions from image header only — avoids full pixel decode
         let (width, height) = match image::ImageReader::open(input_path)
-            .and_then(|r| Ok(r.with_guessed_format()?))
+            .and_then(|r| r.with_guessed_format())
             .map_err(|e| e.to_string())
             .and_then(|r| r.into_dimensions().map_err(|e| e.to_string()))
         {
@@ -299,7 +303,12 @@ pub struct PdfCompressResult {
 ///   from raw pixel data using Width/Height/ColorSpace → encode as JPEG
 ///
 /// Size guard: if the output is larger than the original, copies the original.
-pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str, app_handle: &tauri::AppHandle) -> PdfCompressResult {
+pub fn compress_pdf(
+    pdf_path: &str,
+    quality: u8,
+    output_dir: &str,
+    app_handle: &tauri::AppHandle,
+) -> PdfCompressResult {
     let mut result = PdfCompressResult {
         output_path: String::new(),
         original_size: 0,
@@ -618,7 +627,12 @@ fn encrypt_dictionary(dict: &mut lopdf::Dictionary, obj_key: &[u8]) {
 /// Implements Algorithms 1-4 from PDF 1.7 spec (R=2, V=1, 40-bit RC4).
 /// All indirect-object strings and streams are RC4-encrypted with per-object keys
 /// so that readers can actually decrypt and display the content.
-pub fn protect_pdf(pdf_path: &str, password: &str, output_dir: &str, app_handle: &tauri::AppHandle) -> PdfProtectResult {
+pub fn protect_pdf(
+    pdf_path: &str,
+    password: &str,
+    output_dir: &str,
+    app_handle: &tauri::AppHandle,
+) -> PdfProtectResult {
     let mut result = PdfProtectResult {
         output_path: String::new(),
         success: false,

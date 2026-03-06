@@ -48,7 +48,13 @@ export function QrCodeTab() {
 
       setResult(res);
 
-      addEntry({ tabId: "qrcode", filesCount: 1, successCount: res.output_path ? 1 : 0, failCount: res.errors.length, outputDir });
+      addEntry({
+        tabId: "qrcode",
+        filesCount: 1,
+        successCount: res.output_path ? 1 : 0,
+        failCount: res.errors.length,
+        outputDir,
+      });
 
       if (res.output_path && res.errors.length === 0) {
         toast.success(t("toast.qr_success"));
@@ -71,7 +77,10 @@ export function QrCodeTab() {
         </label>
         <textarea
           value={text}
-          onChange={(e) => { setText(e.target.value); setResult(null); }}
+          onChange={(e) => {
+            setText(e.target.value);
+            setResult(null);
+          }}
           placeholder={t("label.qr_placeholder")}
           rows={3}
           className="w-full rounded-xl border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-2 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30 resize-none"
@@ -113,11 +122,7 @@ export function QrCodeTab() {
         <div className="mt-4 relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 flex flex-col items-center gap-3">
           <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
           <div className="relative rounded-xl overflow-hidden border border-black/8 dark:border-white/8 bg-white p-2">
-            <img
-              src={safeAssetUrl(result.output_path, true)}
-              alt="QR Code"
-              className="w-40 h-40 object-contain"
-            />
+            <img src={safeAssetUrl(result.output_path, true)} alt="QR Code" className="w-40 h-40 object-contain" />
           </div>
           <span className="relative text-[10px] font-mono text-neutral-500">
             {result.size}×{result.size}px

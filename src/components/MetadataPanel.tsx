@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Camera,
-  MapPin,
-  Info,
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  Monitor,
-} from "lucide-react";
+import { Camera, MapPin, Info, ChevronDown, ChevronUp, Eye, Monitor } from "lucide-react";
 import { formatSize } from "../lib/utils";
 import { useT } from "../i18n/i18n";
 import type { ImageMetadata } from "../types";
@@ -17,32 +9,25 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
   const [expanded, setExpanded] = useState(true);
   const fileName = metadata.path.split(/[\\/]/).pop() || "";
 
-  const gpsEntries = metadata.exif.filter((e) =>
-    e.tag.startsWith("GPS")
+  const gpsEntries = metadata.exif.filter((e) => e.tag.startsWith("GPS"));
+  const cameraEntries = metadata.exif.filter((e) =>
+    ["Camera Make", "Camera Model", "Lens Model", "Software"].includes(e.tag),
   );
-  const cameraEntries = metadata.exif.filter(
-    (e) =>
-      ["Camera Make", "Camera Model", "Lens Model", "Software"].includes(e.tag)
-  );
-  const shootingEntries = metadata.exif.filter(
-    (e) =>
-      [
-        "Exposure Time",
-        "F-Number",
-        "ISO Speed",
-        "Focal Length",
-        "Focal Length (35mm)",
-        "Flash",
-        "Metering Mode",
-        "White Balance",
-        "Exposure Mode",
-      ].includes(e.tag)
+  const shootingEntries = metadata.exif.filter((e) =>
+    [
+      "Exposure Time",
+      "F-Number",
+      "ISO Speed",
+      "Focal Length",
+      "Focal Length (35mm)",
+      "Flash",
+      "Metering Mode",
+      "White Balance",
+      "Exposure Mode",
+    ].includes(e.tag),
   );
   const otherEntries = metadata.exif.filter(
-    (e) =>
-      !gpsEntries.includes(e) &&
-      !cameraEntries.includes(e) &&
-      !shootingEntries.includes(e)
+    (e) => !gpsEntries.includes(e) && !cameraEntries.includes(e) && !shootingEntries.includes(e),
   );
 
   const hasDetails = metadata.bit_depth || metadata.color_type || metadata.dpi;
@@ -55,21 +40,16 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
       >
         <div className="flex items-center gap-2 min-w-0">
           <Eye className="h-3.5 w-3.5 text-neutral-400 shrink-0" strokeWidth={1.5} />
-          <span className="text-xs font-medium text-neutral-900 dark:text-white truncate">
-            {fileName}
-          </span>
+          <span className="text-xs font-medium text-neutral-900 dark:text-white truncate">{fileName}</span>
           <span className="text-[10px] text-neutral-500 shrink-0">
-            {metadata.width}×{metadata.height} · {metadata.format} ·{" "}
-            {formatSize(metadata.file_size)}
+            {metadata.width}×{metadata.height} · {metadata.format} · {formatSize(metadata.file_size)}
           </span>
           {metadata.exif.length > 0 ? (
             <span className="text-[10px] font-medium text-neutral-300 shrink-0">
               {t("exif.n_fields", { n: metadata.exif.length })}
             </span>
           ) : (
-            <span className="text-[10px] font-medium text-neutral-500 shrink-0">
-              {t("exif.no_metadata")}
-            </span>
+            <span className="text-[10px] font-medium text-neutral-500 shrink-0">{t("exif.no_metadata")}</span>
           )}
         </div>
         {(metadata.exif.length > 0 || hasDetails) &&
@@ -205,9 +185,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
           )}
 
           {!hasDetails && metadata.exif.length === 0 && (
-            <p className="text-[10px] text-neutral-500 text-center py-1">
-              {t("exif.no_metadata")}
-            </p>
+            <p className="text-[10px] text-neutral-500 text-center py-1">{t("exif.no_metadata")}</p>
           )}
         </div>
       )}

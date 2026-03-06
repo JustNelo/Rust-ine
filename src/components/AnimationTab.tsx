@@ -75,7 +75,13 @@ export function AnimationTab() {
       setResult(res);
 
       const successCount = res.frame_count > 0 ? 1 : 0;
-      addEntry({ tabId: "animation", filesCount: frames.length, successCount, failCount: res.errors.length, outputDir });
+      addEntry({
+        tabId: "animation",
+        filesCount: frames.length,
+        successCount,
+        failCount: res.errors.length,
+        outputDir,
+      });
 
       if (res.frame_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.animation_success", { frames: res.frame_count }));
@@ -124,14 +130,14 @@ export function AnimationTab() {
                 key={`${path}-${index}`}
                 className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-neutral-600 dark:text-neutral-300 bg-black/3 dark:bg-white/3 hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 group"
               >
-                <span className="text-[10px] font-mono text-neutral-500 w-5 text-right shrink-0">
-                  {index + 1}
-                </span>
+                <span className="text-[10px] font-mono text-neutral-500 w-5 text-right shrink-0">{index + 1}</span>
                 <img
                   src={safeAssetUrl(path)}
                   alt=""
                   className="h-7 w-7 rounded object-cover shrink-0 border border-black/8 dark:border-white/8"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
                 />
                 <span className="flex-1 truncate">{getFilename(path)}</span>
                 <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

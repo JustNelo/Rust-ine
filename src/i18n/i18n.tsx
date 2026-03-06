@@ -50,16 +50,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       }
       return value;
     },
-    [lang]
+    [lang],
   );
 
   const contextValue = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
 
-  return (
-    <I18nContext.Provider value={contextValue}>
-      {children}
-    </I18nContext.Provider>
-  );
+  return <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>;
 }
 
 export function useT() {

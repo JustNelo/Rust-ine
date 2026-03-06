@@ -72,9 +72,11 @@ pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
 
     // Extract color type and bit depth from the decoder header — avoids full pixel decode
     let (bit_depth, color_type) = match image::ImageReader::open(path)
-        .and_then(|r| Ok(r.with_guessed_format()?))
-        .and_then(|r| r.into_decoder().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)))
-    {
+        .and_then(|r| r.with_guessed_format())
+        .and_then(|r| {
+            r.into_decoder()
+                .map_err(std::io::Error::other)
+        }) {
         Ok(decoder) => {
             let ct = match decoder.color_type() {
                 image::ColorType::L8 => ("8", "Grayscale"),
@@ -108,10 +110,9 @@ pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
         if let (Some(xf), Some(yf)) = (x_res, y_res) {
             let x_str = xf.display_value().to_string();
             let y_str = yf.display_value().to_string();
-            if let (Ok(x_val), Ok(y_val)) = (
-                x_str.trim().parse::<f64>(),
-                y_str.trim().parse::<f64>(),
-            ) {
+            if let (Ok(x_val), Ok(y_val)) =
+                (x_str.trim().parse::<f64>(), y_str.trim().parse::<f64>())
+            {
                 if x_val > 0.0 && y_val > 0.0 {
                     dpi = Some((x_val.round() as u32, y_val.round() as u32));
                 }

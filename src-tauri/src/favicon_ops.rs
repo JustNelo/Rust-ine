@@ -103,7 +103,11 @@ fn generate_webmanifest() -> String {
     .to_string()
 }
 
-pub fn generate_favicons(image_path: &str, output_dir: &str, app_handle: &tauri::AppHandle) -> FaviconResult {
+pub fn generate_favicons(
+    image_path: &str,
+    output_dir: &str,
+    app_handle: &tauri::AppHandle,
+) -> FaviconResult {
     let mut result = FaviconResult {
         zip_path: String::new(),
         generated_files: Vec::new(),

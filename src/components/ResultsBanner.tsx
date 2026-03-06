@@ -25,7 +25,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
   const sizeStats = useMemo(() => {
     const totalInput = successResults.reduce((acc, r) => acc + r.input_size, 0);
     const totalOutput = successResults.reduce((acc, r) => acc + r.output_size, 0);
-    const saved = totalInput > 0 ? ((1 - totalOutput / totalInput) * 100) : 0;
+    const saved = totalInput > 0 ? (1 - totalOutput / totalInput) * 100 : 0;
     return { totalInput, totalOutput, saved };
   }, [results]);
 
@@ -35,7 +35,13 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
     <>
       <div className="relative mt-4 overflow-hidden rounded-2xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-3 space-y-3">
         <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
+        <div
+          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
+          }}
+        />
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-2">
             {failed === 0 ? (
@@ -50,10 +56,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
             </span>
           </div>
           {outputDir && (
-            <button
-              onClick={() => revealItemInDir(outputDir)}
-              className="btn-ghost"
-            >
+            <button onClick={() => revealItemInDir(outputDir)} className="btn-ghost">
               <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
               {t("label.open_output_folder")}
             </button>
@@ -66,14 +69,10 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
             <span className="text-neutral-500">→</span>
             <span>{formatSize(sizeStats.totalOutput)}</span>
             {sizeStats.saved > 0 && (
-              <span className="ml-auto font-medium text-green-400">
-                -{sizeStats.saved.toFixed(1)}%
-              </span>
+              <span className="ml-auto font-medium text-green-400">-{sizeStats.saved.toFixed(1)}%</span>
             )}
             {sizeStats.saved < 0 && (
-              <span className="ml-auto font-medium text-amber-400">
-                +{Math.abs(sizeStats.saved).toFixed(1)}%
-              </span>
+              <span className="ml-auto font-medium text-amber-400">+{Math.abs(sizeStats.saved).toFixed(1)}%</span>
             )}
           </div>
         )}
@@ -119,12 +118,8 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
                   )}
 
                   <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent px-1.5 py-1">
-                    <span className="text-[10px] text-neutral-200 truncate block">
-                      {outName}
-                    </span>
-                    <span className="text-[9px] text-neutral-500">
-                      {formatSize(r.output_size)}
-                    </span>
+                    <span className="text-[10px] text-neutral-200 truncate block">{outName}</span>
+                    <span className="text-[9px] text-neutral-500">{formatSize(r.output_size)}</span>
                   </div>
                 </div>
               );
@@ -148,9 +143,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
         )}
       </div>
 
-      {previewResult && (
-        <BeforeAfterSlider result={previewResult} onClose={closePreview} />
-      )}
+      {previewResult && <BeforeAfterSlider result={previewResult} onClose={closePreview} />}
     </>
   );
 });

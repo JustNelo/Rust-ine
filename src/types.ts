@@ -55,7 +55,23 @@ export interface ImageMetadata {
   exif: MetadataEntry[];
 }
 
-export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "optimize" | "crop" | "palette" | "pdf-toolkit" | "favicon" | "animation" | "spritesheet" | "base64" | "qrcode" | "bulk-rename" | "svg-rasterize";
+export type TabId =
+  | "compress"
+  | "convert"
+  | "resize"
+  | "watermark"
+  | "strip"
+  | "optimize"
+  | "crop"
+  | "palette"
+  | "pdf-toolkit"
+  | "favicon"
+  | "animation"
+  | "spritesheet"
+  | "base64"
+  | "qrcode"
+  | "bulk-rename"
+  | "svg-rasterize";
 
 export interface PageThumbnail {
   id: string;

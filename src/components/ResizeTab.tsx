@@ -47,7 +47,7 @@ export function ResizeTab() {
       addFiles(paths);
       setResults([]);
     },
-    [addFiles]
+    [addFiles],
   );
 
   const handleClearFiles = useCallback(() => {

@@ -382,7 +382,11 @@ fn clone_object_recursive(
     }
 }
 
-pub fn merge_to_pdf(items: Vec<PdfBuilderItem>, options: MergePdfOptions, app_handle: &tauri::AppHandle) -> MergePdfResult {
+pub fn merge_to_pdf(
+    items: Vec<PdfBuilderItem>,
+    options: MergePdfOptions,
+    app_handle: &tauri::AppHandle,
+) -> MergePdfResult {
     let mut result = MergePdfResult {
         output_path: options.output_path.clone(),
         page_count: 0,

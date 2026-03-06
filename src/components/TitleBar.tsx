@@ -18,11 +18,14 @@ export function TitleBar() {
     await appWindow.close();
   }, [appWindow]);
 
-  const handleMouseDown = useCallback(async (e: React.MouseEvent) => {
-    if (e.button === 0 && e.detail === 1) {
-      await appWindow.startDragging();
-    }
-  }, [appWindow]);
+  const handleMouseDown = useCallback(
+    async (e: React.MouseEvent) => {
+      if (e.button === 0 && e.detail === 1) {
+        await appWindow.startDragging();
+      }
+    },
+    [appWindow],
+  );
 
   const handleDoubleClick = useCallback(async () => {
     await appWindow.toggleMaximize();
@@ -35,13 +38,17 @@ export function TitleBar() {
       className="relative z-20 flex h-9 shrink-0 items-center justify-between border-b border-indigo-400/10 bg-white/80 dark:bg-white/2 backdrop-blur-xl select-none"
     >
       <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-      <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
+        }}
+      />
 
       <div className="flex items-center gap-2 px-3 pointer-events-none">
         <img src={icon} alt="Icon" className="h-4 w-4" />
-        <span className="text-xs font-semibold text-neutral-900 dark:text-white tracking-tight">
-          Rust-ine
-        </span>
+        <span className="text-xs font-semibold text-neutral-900 dark:text-white tracking-tight">Rust-ine</span>
       </div>
 
       <div className="flex h-full">

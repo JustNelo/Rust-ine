@@ -51,21 +51,18 @@ export { HistoryContext };
 export function useHistoryProvider(): HistoryContextValue {
   const [entries, setEntries] = useState<HistoryEntry[]>(loadHistory);
 
-  const addEntry = useCallback(
-    (partial: Omit<HistoryEntry, "id" | "timestamp">) => {
-      setEntries((prev) => {
-        const entry: HistoryEntry = {
-          ...partial,
-          id: generateId(),
-          timestamp: Date.now(),
-        };
-        const updated = [entry, ...prev].slice(0, MAX_ENTRIES);
-        saveHistory(updated);
-        return updated;
-      });
-    },
-    []
-  );
+  const addEntry = useCallback((partial: Omit<HistoryEntry, "id" | "timestamp">) => {
+    setEntries((prev) => {
+      const entry: HistoryEntry = {
+        ...partial,
+        id: generateId(),
+        timestamp: Date.now(),
+      };
+      const updated = [entry, ...prev].slice(0, MAX_ENTRIES);
+      saveHistory(updated);
+      return updated;
+    });
+  }, []);
 
   const clearHistory = useCallback(() => {
     setEntries([]);

@@ -9,10 +9,7 @@ interface BeforeAfterSliderProps {
   onClose: () => void;
 }
 
-export const BeforeAfterSlider = memo(function BeforeAfterSlider({
-  result,
-  onClose,
-}: BeforeAfterSliderProps) {
+export const BeforeAfterSlider = memo(function BeforeAfterSlider({ result, onClose }: BeforeAfterSliderProps) {
   const { t } = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
@@ -25,46 +22,41 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
     if (lineRef.current) lineRef.current.style.left = v;
   }, []);
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    dragging.current = true;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    updateSlider(Math.max(2, Math.min(98, x)));
-  }, [updateSlider]);
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      dragging.current = true;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      updateSlider(Math.max(2, Math.min(98, x)));
+    },
+    [updateSlider],
+  );
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     dragging.current = false;
     e.currentTarget.releasePointerCapture(e.pointerId);
   }, []);
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragging.current || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    updateSlider(Math.max(2, Math.min(98, x)));
-  }, [updateSlider]);
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      updateSlider(Math.max(2, Math.min(98, x)));
+    },
+    [updateSlider],
+  );
 
-  const sizeDiff = result.input_size > 0
-    ? ((1 - result.output_size / result.input_size) * 100)
-    : 0;
+  const sizeDiff = result.input_size > 0 ? (1 - result.output_size / result.input_size) * 100 : 0;
 
   // Stable URLs — computed once per result, never during drag
-  const beforeSrc = useMemo(
-    () => safeAssetUrl(result.input_path),
-    [result.input_path],
-  );
-  const afterSrc = useMemo(
-    () => safeAssetUrl(result.output_path, true),
-    [result.output_path],
-  );
+  const beforeSrc = useMemo(() => safeAssetUrl(result.input_path), [result.input_path]);
+  const afterSrc = useMemo(() => safeAssetUrl(result.output_path, true), [result.output_path]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
         className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
         onClick={(e) => e.stopPropagation()}
@@ -79,7 +71,8 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
             <span className="text-neutral-500">{formatSize(result.output_size)}</span>
             {sizeDiff !== 0 && (
               <span className={sizeDiff > 0 ? "font-medium text-green-400" : "font-medium text-amber-400"}>
-                {sizeDiff > 0 ? "-" : "+"}{Math.abs(sizeDiff).toFixed(1)}%
+                {sizeDiff > 0 ? "-" : "+"}
+                {Math.abs(sizeDiff).toFixed(1)}%
               </span>
             )}
           </div>
@@ -109,11 +102,7 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
           />
 
           {/* Before image (clipped) — width driven by ref, no React re-render */}
-          <div
-            ref={clipRef}
-            className="absolute top-0 left-0 bottom-0 overflow-hidden"
-            style={{ width: "50%" }}
-          >
+          <div ref={clipRef} className="absolute top-0 left-0 bottom-0 overflow-hidden" style={{ width: "50%" }}>
             <img
               src={beforeSrc}
               alt="Before"
@@ -130,7 +119,13 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
           >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 border-2 border-white flex items-center justify-center shadow-lg">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M4 3L1 7L4 11M10 3L13 7L10 11" stroke="#333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M4 3L1 7L4 11M10 3L13 7L10 11"
+                  stroke="#333"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
           </div>

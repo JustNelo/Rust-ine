@@ -24,9 +24,12 @@ export const Slider = memo(function Slider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">{label}</label>
+        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
+          {label}
+        </label>
         <span className="text-sm font-light text-neutral-900 dark:text-white font-mono">
-          {value}{unit}
+          {value}
+          {unit}
         </span>
       </div>
       <input

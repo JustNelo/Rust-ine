@@ -33,7 +33,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
       fileSelection.addFiles(paths);
       setResults([]);
     },
-    [fileSelection.addFiles]
+    [fileSelection.addFiles],
   );
 
   const handleClearFiles = useCallback(() => {
@@ -77,7 +77,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
             t("toast.partial", {
               completed: result.completed,
               total: result.total,
-            })
+            }),
           );
         } else {
           toast.error(t("toast.all_failed"));
@@ -88,7 +88,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
         setLoading(false);
       }
     },
-    [fileSelection.files, command, tabId, getOutputDir, acceptToast, addEntry, t]
+    [fileSelection.files, command, tabId, getOutputDir, acceptToast, addEntry, t],
   );
 
   return {

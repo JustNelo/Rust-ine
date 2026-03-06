@@ -23,10 +23,13 @@ export function FaviconTab() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FaviconResult | null>(null);
 
-  const handleFilesSelected = useCallback((paths: string[]) => {
-    addFiles(paths.slice(0, 1));
-    setResult(null);
-  }, [addFiles]);
+  const handleFilesSelected = useCallback(
+    (paths: string[]) => {
+      addFiles(paths.slice(0, 1));
+      setResult(null);
+    },
+    [addFiles],
+  );
 
   const handleClearFiles = useCallback(() => {
     clearFiles();
@@ -55,12 +58,23 @@ export function FaviconTab() {
 
       setResult(res);
 
-      addEntry({ tabId: "favicon", filesCount: 1, successCount: res.generated_files.length > 0 ? 1 : 0, failCount: res.errors.length, outputDir });
+      addEntry({
+        tabId: "favicon",
+        filesCount: 1,
+        successCount: res.generated_files.length > 0 ? 1 : 0,
+        failCount: res.errors.length,
+        outputDir,
+      });
 
       if (res.generated_files.length > 0 && res.errors.length === 0) {
         toast.success(t("toast.favicon_success"));
       } else if (res.generated_files.length > 0) {
-        toast.warning(t("toast.partial", { completed: res.generated_files.length, total: res.generated_files.length + res.errors.length }));
+        toast.warning(
+          t("toast.partial", {
+            completed: res.generated_files.length,
+            total: res.generated_files.length + res.errors.length,
+          }),
+        );
       } else {
         toast.error(t("toast.all_failed"));
       }

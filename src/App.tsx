@@ -100,9 +100,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
   },
   {
     titleKey: "section.pdf_tools",
-    tabs: [
-      { id: "pdf-toolkit", labelKey: "tab.pdf_toolkit", icon: FileDown },
-    ],
+    tabs: [{ id: "pdf-toolkit", labelKey: "tab.pdf_toolkit", icon: FileDown }],
   },
   {
     titleKey: "section.dev_tools",
@@ -157,7 +155,12 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
 
 function App() {
   const { t } = useT();
-  const { status: updateStatus, version: updateVersion, install: installUpdate, dismiss: dismissUpdate } = useAutoUpdate();
+  const {
+    status: updateStatus,
+    version: updateVersion,
+    install: installUpdate,
+    dismiss: dismissUpdate,
+  } = useAutoUpdate();
   const { theme } = useTheme();
   const [appVersion, setAppVersion] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("compress");
@@ -165,12 +168,18 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => {
-    try { return localStorage.getItem("rustine_onboarded") !== "1"; } catch { return true; }
+    try {
+      return localStorage.getItem("rustine_onboarded") !== "1";
+    } catch {
+      return true;
+    }
   });
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1200);
-    getVersion().then((v) => setAppVersion(v)).catch(() => {});
+    getVersion()
+      .then((v) => setAppVersion(v))
+      .catch(() => {});
     return () => clearTimeout(timer);
   }, []);
 
@@ -178,9 +187,7 @@ function App() {
 
   const handleShortcutFiles = useCallback((paths: string[]) => {
     // Dispatch a custom event that tab components can listen to
-    window.dispatchEvent(
-      new CustomEvent("rustine-shortcut-files", { detail: paths })
-    );
+    window.dispatchEvent(new CustomEvent("rustine-shortcut-files", { detail: paths }));
   }, []);
 
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -221,30 +228,41 @@ function App() {
                     <span className="text-[9px] font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500 transition-colors group-hover:text-neutral-600 dark:group-hover:text-neutral-400">
                       {t(section.titleKey)}
                     </span>
-                    <ChevronDown className={cn(
-                      "h-3 w-3 text-neutral-400 dark:text-neutral-600 transition-transform duration-200",
-                      isCollapsed && "-rotate-90"
-                    )} />
+                    <ChevronDown
+                      className={cn(
+                        "h-3 w-3 text-neutral-400 dark:text-neutral-600 transition-transform duration-200",
+                        isCollapsed && "-rotate-90",
+                      )}
+                    />
                   </button>
-                  {!isCollapsed && section.tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    const isActive = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={cn(
-                          "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer w-full",
-                          isActive
-                            ? "bg-indigo-500/15 text-indigo-900 dark:text-white border-l-2 border-indigo-400"
-                            : "text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-800 dark:hover:text-neutral-200 border-l-2 border-transparent"
-                        )}
-                      >
-                        <Icon className={cn("h-3.5 w-3.5", isActive ? "text-indigo-500 dark:text-indigo-400" : "text-neutral-400 dark:text-neutral-500")} strokeWidth={1.5} />
-                        {t(tab.labelKey)}
-                      </button>
-                    );
-                  })}
+                  {!isCollapsed &&
+                    section.tabs.map((tab) => {
+                      const Icon = tab.icon;
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={cn(
+                            "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer w-full",
+                            isActive
+                              ? "bg-indigo-500/15 text-indigo-900 dark:text-white border-l-2 border-indigo-400"
+                              : "text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-800 dark:hover:text-neutral-200 border-l-2 border-transparent",
+                          )}
+                        >
+                          <Icon
+                            className={cn(
+                              "h-3.5 w-3.5",
+                              isActive
+                                ? "text-indigo-500 dark:text-indigo-400"
+                                : "text-neutral-400 dark:text-neutral-500",
+                            )}
+                            strokeWidth={1.5}
+                          />
+                          {t(tab.labelKey)}
+                        </button>
+                      );
+                    })}
                 </div>
               );
             })}
@@ -267,9 +285,7 @@ function App() {
             </button>
             <div className="relative overflow-hidden rounded-xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 px-3 py-2">
               <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/25 to-transparent" />
-              <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-relaxed">
-                {t("sidebar.hint")}
-              </p>
+              <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-relaxed">{t("sidebar.hint")}</p>
               {appVersion && <p className="text-[9px] text-neutral-400 dark:text-neutral-600 mt-1">v{appVersion}</p>}
             </div>
           </div>
@@ -279,12 +295,8 @@ function App() {
         <main className="flex-1 overflow-y-auto p-6 bg-transparent">
           <div className="mx-auto max-w-xl">
             <div className="mb-6">
-              <h2 className="text-lg font-light text-neutral-900 dark:text-white">
-                {t(TAB_LABEL_KEYS[activeTab])}
-              </h2>
-              <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
-                {t(TAB_DESC_KEYS[activeTab])}
-              </p>
+              <h2 className="text-lg font-light text-neutral-900 dark:text-white">{t(TAB_LABEL_KEYS[activeTab])}</h2>
+              <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">{t(TAB_DESC_KEYS[activeTab])}</p>
             </div>
 
             {activeTab === "compress" && <CompressTab />}
@@ -311,22 +323,39 @@ function App() {
       <GlobalProgressBar />
 
       {showHistory && <HistoryModal onClose={() => setShowHistory(false)} />}
-      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} onResetOnboarding={() => { setShowSettings(false); setShowOnboarding(true); }} />}
-      {showOnboarding && <OnboardingModal onComplete={() => { setShowOnboarding(false); try { localStorage.setItem("rustine_onboarded", "1"); } catch {} }} />}
+      {showSettings && (
+        <SettingsPanel
+          onClose={() => setShowSettings(false)}
+          onResetOnboarding={() => {
+            setShowSettings(false);
+            setShowOnboarding(true);
+          }}
+        />
+      )}
+      {showOnboarding && (
+        <OnboardingModal
+          onComplete={() => {
+            setShowOnboarding(false);
+            try {
+              localStorage.setItem("rustine_onboarded", "1");
+            } catch {}
+          }}
+        />
+      )}
 
       <Toaster
         position="bottom-right"
         theme={theme === "dark" ? "dark" : "light"}
         toastOptions={{
           style: {
-            background: theme === "dark" ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.9)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            border: theme === "dark" ? '1px solid rgba(99,102,241,0.2)' : '1px solid rgba(99,102,241,0.15)',
-            borderRadius: '16px',
-            color: theme === "dark" ? '#ffffff' : '#1a1a1a',
-            fontSize: '12px',
-            boxShadow: theme === "dark" ? '0 8px 32px 0 rgba(0,0,0,0.3)' : '0 8px 32px 0 rgba(0,0,0,0.1)',
+            background: theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.9)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: theme === "dark" ? "1px solid rgba(99,102,241,0.2)" : "1px solid rgba(99,102,241,0.15)",
+            borderRadius: "16px",
+            color: theme === "dark" ? "#ffffff" : "#1a1a1a",
+            fontSize: "12px",
+            boxShadow: theme === "dark" ? "0 8px 32px 0 rgba(0,0,0,0.3)" : "0 8px 32px 0 rgba(0,0,0,0.1)",
           },
         }}
       />

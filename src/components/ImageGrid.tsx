@@ -11,11 +11,7 @@ import {
   MeasuringStrategy,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useT } from "../i18n/i18n";
 import { safeAssetUrl } from "../lib/utils";
 import { ImageGridCard } from "./ImageGridCard";
@@ -35,12 +31,7 @@ const MEASURING_CONFIG = {
 
 const CARD_MIN_W = 100;
 
-export const ImageGrid = memo(function ImageGrid({
-  files,
-  onReorder,
-  onRemove,
-  onClear,
-}: ImageGridProps) {
+export const ImageGrid = memo(function ImageGrid({ files, onReorder, onRemove, onClear }: ImageGridProps) {
   const { t } = useT();
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState("");
@@ -49,14 +40,11 @@ export const ImageGrid = memo(function ImageGrid({
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Stable IDs for DnD — use path + index to ensure uniqueness
-  const itemIds = useMemo(
-    () => files.map((f, i) => `${i}::${f}`),
-    [files]
-  );
+  const itemIds = useMemo(() => files.map((f, i) => `${i}::${f}`), [files]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -69,7 +57,7 @@ export const ImageGrid = memo(function ImageGrid({
         }
       }
     },
-    [itemIds, onReorder]
+    [itemIds, onReorder],
   );
 
   const [infoMetadata, setInfoMetadata] = useState<ImageMetadata | null>(null);
@@ -103,7 +91,13 @@ export const ImageGrid = memo(function ImageGrid({
     <>
       <div className="relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-3 space-y-3">
         <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
+        <div
+          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
+          }}
+        />
         <div className="relative flex items-center justify-between">
           <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
             {t("label.n_files_selected", { n: files.length })}
@@ -200,11 +194,7 @@ export const ImageGrid = memo(function ImageGrid({
               </button>
             </div>
             <div className="flex items-center justify-center p-4 bg-neutral-100 dark:bg-neutral-950">
-              <img
-                src={previewSrc}
-                alt={previewName}
-                className="max-w-full max-h-[75vh] object-contain rounded"
-              />
+              <img src={previewSrc} alt={previewName} className="max-w-full max-h-[75vh] object-contain rounded" />
             </div>
           </div>
         </div>

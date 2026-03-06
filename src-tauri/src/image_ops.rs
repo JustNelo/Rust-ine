@@ -123,8 +123,7 @@ pub fn compress_to_jpeg(
             let file = fs::File::create(&output_path)
                 .map_err(|e| format!("Cannot create JPEG file: {}", e))?;
             let mut writer = std::io::BufWriter::new(file);
-            let encoder =
-                image::codecs::jpeg::JpegEncoder::new_with_quality(&mut writer, quality);
+            let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut writer, quality);
             rgb.write_with_encoder(encoder)
                 .map_err(|e| format!("Cannot encode JPEG: {}", e))?;
 

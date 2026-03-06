@@ -26,10 +26,13 @@ export function CompressTab() {
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [lastOutputDir, setLastOutputDir] = useState("");
 
-  const handleFilesSelected = useCallback((paths: string[]) => {
-    addFiles(paths);
-    setResults([]);
-  }, [addFiles]);
+  const handleFilesSelected = useCallback(
+    (paths: string[]) => {
+      addFiles(paths);
+      setResults([]);
+    },
+    [addFiles],
+  );
 
   const handleClearFiles = useCallback(() => {
     clearFiles();
@@ -88,12 +91,7 @@ export function CompressTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <ImageGrid
-        files={files}
-        onReorder={reorderFiles}
-        onRemove={removeFile}
-        onClear={handleClearFiles}
-      />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-2">
         <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">

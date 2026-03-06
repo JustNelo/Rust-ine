@@ -36,27 +36,17 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
         <div className="flex items-center justify-between px-4 py-3 border-b border-black/12 dark:border-white/8">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-neutral-400" strokeWidth={1.5} />
-            <span className="text-sm font-medium text-neutral-900 dark:text-white">
-              {t("history.title")}
-            </span>
-            <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
-              ({entries.length})
-            </span>
+            <span className="text-sm font-medium text-neutral-900 dark:text-white">{t("history.title")}</span>
+            <span className="text-[10px] text-neutral-400 dark:text-neutral-500">({entries.length})</span>
           </div>
           <div className="flex items-center gap-2">
             {entries.length > 0 && (
-              <button
-                onClick={handleClear}
-                className="btn-ghost-danger"
-              >
+              <button onClick={handleClear} className="btn-ghost-danger">
                 <Trash2 className="h-3 w-3" strokeWidth={1.5} />
                 {t("history.clear")}
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="btn-icon"
-            >
+            <button onClick={onClose} className="btn-icon">
               <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
             </button>
           </div>
@@ -65,9 +55,7 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
           {entries.length === 0 ? (
-            <p className="text-xs text-neutral-500 text-center py-8">
-              {t("history.empty")}
-            </p>
+            <p className="text-xs text-neutral-500 text-center py-8">{t("history.empty")}</p>
           ) : (
             entries.map((entry) => (
               <div
@@ -92,9 +80,7 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
                       {entry.successCount}/{entry.filesCount} {t("history.succeeded")}
                     </span>
                   </div>
-                  <p className="text-[10px] text-neutral-400 dark:text-neutral-600 truncate">
-                    {entry.outputDir}
-                  </p>
+                  <p className="text-[10px] text-neutral-400 dark:text-neutral-600 truncate">{entry.outputDir}</p>
                 </div>
                 <span className="text-[10px] text-neutral-400 dark:text-neutral-600 shrink-0">
                   {formatTimestamp(entry.timestamp)}

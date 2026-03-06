@@ -100,7 +100,10 @@ export function CropTab() {
   const updateImgBounds = useCallback(() => {
     const img = imgRef.current;
     const container = containerRef.current;
-    if (!img || !container || !naturalSize) { setImgBounds(null); return; }
+    if (!img || !container || !naturalSize) {
+      setImgBounds(null);
+      return;
+    }
     const cR = container.getBoundingClientRect();
     const cW = cR.width;
     const cH = cR.height;
@@ -108,9 +111,15 @@ export function CropTab() {
     const cA = cW / cH;
     let rW: number, rH: number, oX: number, oY: number;
     if (iA > cA) {
-      rW = cW; rH = cW / iA; oX = 0; oY = (cH - rH) / 2;
+      rW = cW;
+      rH = cW / iA;
+      oX = 0;
+      oY = (cH - rH) / 2;
     } else {
-      rH = cH; rW = cH * iA; oX = (cW - rW) / 2; oY = 0;
+      rH = cH;
+      rW = cH * iA;
+      oX = (cW - rW) / 2;
+      oY = 0;
     }
     setImgBounds({ oX, oY, rW, rH });
   }, [naturalSize]);
@@ -237,14 +246,11 @@ export function CropTab() {
     [isDragging, hitTest, getRenderedBounds],
   );
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-      activeHandle.current = null;
-      setIsDragging(false);
-    },
-    [],
-  );
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    activeHandle.current = null;
+    setIsDragging(false);
+  }, []);
 
   // ── Pixel values ─────────────────────────────────────────────────────
   const pixelRect = naturalSize
@@ -297,9 +303,7 @@ export function CropTab() {
       if (result.completed === result.total) {
         toast.success(t("toast.crop_success", { n: result.completed }));
       } else if (result.completed > 0) {
-        toast.warning(
-          t("toast.partial", { completed: result.completed, total: result.total }),
-        );
+        toast.warning(t("toast.partial", { completed: result.completed, total: result.total }));
       } else {
         toast.error(t("toast.all_failed"));
       }
@@ -326,9 +330,7 @@ export function CropTab() {
       {files.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-neutral-500">
-              {t("label.crop_draw_hint")}
-            </span>
+            <span className="text-[10px] text-neutral-500">{t("label.crop_draw_hint")}</span>
             <button
               onClick={resetSelection}
               className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors duration-200 cursor-pointer"

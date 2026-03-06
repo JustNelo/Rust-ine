@@ -29,8 +29,15 @@ const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
 export function ConvertTab() {
   const { t } = useT();
   const {
-    files, removeFile, reorderFiles, handleFilesSelected, handleClearFiles,
-    loading, results, lastOutputDir, process,
+    files,
+    removeFile,
+    reorderFiles,
+    handleFilesSelected,
+    handleClearFiles,
+    loading,
+    results,
+    lastOutputDir,
+    process,
   } = useTabProcessor({ tabId: "convert", command: "convert_images" });
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png");
 
@@ -51,12 +58,7 @@ export function ConvertTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <ImageGrid
-        files={files}
-        onReorder={reorderFiles}
-        onRemove={removeFile}
-        onClear={handleClearFiles}
-      />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-3">
         <div className="space-y-2">
@@ -92,7 +94,6 @@ export function ConvertTab() {
             </span>
           )}
         </div>
-
       </div>
 
       <ActionButton
@@ -100,7 +101,11 @@ export function ConvertTab() {
         disabled={files.length === 0}
         loading={loading}
         loadingText={t("status.converting")}
-        text={files.length > 0 ? t("action.convert_n", { n: files.length, format: outputFormat.toUpperCase() }) : t("action.convert", { format: outputFormat.toUpperCase() })}
+        text={
+          files.length > 0
+            ? t("action.convert_n", { n: files.length, format: outputFormat.toUpperCase() })
+            : t("action.convert", { format: outputFormat.toUpperCase() })
+        }
         icon={<ArrowRightLeft className="h-4 w-4" strokeWidth={1.5} />}
       />
 

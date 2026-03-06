@@ -31,10 +31,13 @@ export function SvgRasterizeTab() {
   const [result, setResult] = useState<SvgRasterizeResult | null>(null);
   const [lastOutputDir, setLastOutputDir] = useState("");
 
-  const handleFilesSelected = useCallback((paths: string[]) => {
-    addFiles(paths.slice(0, 1));
-    setResult(null);
-  }, [addFiles]);
+  const handleFilesSelected = useCallback(
+    (paths: string[]) => {
+      addFiles(paths.slice(0, 1));
+      setResult(null);
+    },
+    [addFiles],
+  );
 
   const handleClearFiles = useCallback(() => {
     clearFiles();
@@ -84,12 +87,7 @@ export function SvgRasterizeTab() {
         onFilesSelected={handleFilesSelected}
       />
 
-      <ImageGrid
-        files={files}
-        onReorder={reorderFiles}
-        onRemove={removeFile}
-        onClear={handleClearFiles}
-      />
+      <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-2">
         <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
@@ -144,9 +142,7 @@ export function SvgRasterizeTab() {
               </button>
             )}
           </div>
-          <p className="text-[10px] text-neutral-500 truncate">
-            {result.output_path}
-          </p>
+          <p className="text-[10px] text-neutral-500 truncate">{result.output_path}</p>
         </div>
       )}
     </div>

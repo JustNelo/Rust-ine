@@ -1,7 +1,15 @@
 import { useState, useMemo, useCallback } from "react";
 import {
-  ChevronRight, ChevronLeft, FolderOpen,
-  ImageIcon, FileText, Code2, Check, Sun, Moon, Globe,
+  ChevronRight,
+  ChevronLeft,
+  FolderOpen,
+  ImageIcon,
+  FileText,
+  Code2,
+  Check,
+  Sun,
+  Moon,
+  Globe,
 } from "lucide-react";
 import { useT, type Lang } from "../i18n/i18n";
 import { useWorkspace } from "../hooks/useWorkspace";
@@ -15,7 +23,8 @@ interface OnboardingModalProps {
 
 const TOTAL_STEPS = 4;
 
-const NOISE_SVG = 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")';
+const NOISE_SVG =
+  "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")";
 
 interface CategoryCard {
   titleKey: string;
@@ -43,7 +52,7 @@ function ParticleLayer() {
         duration: 5 + Math.random() * 5,
         delay: Math.random() * 6,
       })),
-    []
+    [],
   );
 
   return (
@@ -52,16 +61,18 @@ function ParticleLayer() {
         <span
           key={p.id}
           className="ob-particle"
-          style={{
-            left: p.left,
-            bottom: p.bottom,
-            width: p.size,
-            height: p.size,
-            "--ob-p-opacity": p.opacity,
-            "--ob-p-travel": `${p.travel}px`,
-            "--ob-p-dur": `${p.duration}s`,
-            "--ob-p-delay": `${p.delay}s`,
-          } as React.CSSProperties}
+          style={
+            {
+              left: p.left,
+              bottom: p.bottom,
+              width: p.size,
+              height: p.size,
+              "--ob-p-opacity": p.opacity,
+              "--ob-p-travel": `${p.travel}px`,
+              "--ob-p-dur": `${p.duration}s`,
+              "--ob-p-delay": `${p.delay}s`,
+            } as React.CSSProperties
+          }
         />
       ))}
     </div>
@@ -71,10 +82,7 @@ function ParticleLayer() {
 /* ── Orbit ring around logo ── */
 function OrbitRing() {
   return (
-    <div
-      className="absolute -inset-3"
-      style={{ animation: "ob-orbit-spin 20s linear infinite" }}
-    >
+    <div className="absolute -inset-3" style={{ animation: "ob-orbit-spin 20s linear infinite" }}>
       {/* Ring */}
       <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
         <circle cx="50" cy="50" r="48" className="stroke-neutral-900/6 dark:stroke-white/6" strokeWidth="0.5" />
@@ -101,7 +109,8 @@ function WordReveal({ text, baseDelay = 200 }: { text: string; baseDelay?: numbe
             animation: `ob-word-reveal 400ms cubic-bezier(0.16, 1, 0.3, 1) ${baseDelay + i * 80}ms both`,
           }}
         >
-          {word}{i < words.length - 1 ? "\u00a0" : ""}
+          {word}
+          {i < words.length - 1 ? "\u00a0" : ""}
         </span>
       ))}
     </span>
@@ -185,7 +194,8 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             <h2 className="text-2xl font-light text-neutral-900 dark:text-white tracking-tight">
               <WordReveal text={t("onboarding.welcome")} baseDelay={100} />
             </h2>
-            <p className="mt-2.5 text-sm text-neutral-500 dark:text-neutral-400 max-w-xs"
+            <p
+              className="mt-2.5 text-sm text-neutral-500 dark:text-neutral-400 max-w-xs"
               style={{ animation: "ob-word-reveal 500ms cubic-bezier(0.16,1,0.3,1) 500ms both" }}
             >
               {t("onboarding.welcome_sub")}
@@ -221,10 +231,16 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                   {(["dark", "light"] as Theme[]).map((th) => (
                     <button
                       key={th}
-                      onClick={() => { if (theme !== th) toggleTheme(); }}
+                      onClick={() => {
+                        if (theme !== th) toggleTheme();
+                      }}
                       className={`btn-toggle ${theme === th ? "btn-toggle-active" : ""}`}
                     >
-                      {th === "dark" ? <Moon className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Sun className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                      {th === "dark" ? (
+                        <Moon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      ) : (
+                        <Sun className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      )}
                       {th === "dark" ? t("settings.theme_dark") : t("settings.theme_light")}
                     </button>
                   ))}
@@ -259,10 +275,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                     <p className="text-xs text-neutral-900 dark:text-white truncate flex-1 text-left font-medium">
                       {workspace}
                     </p>
-                    <button
-                      onClick={selectWorkspace}
-                      className="btn-pill shrink-0"
-                    >
+                    <button onClick={selectWorkspace} className="btn-pill shrink-0">
                       {t("settings.change")}
                     </button>
                   </div>
@@ -277,7 +290,10 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                     className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay rounded-xl"
                     style={{ backgroundImage: NOISE_SVG }}
                   />
-                  <FolderOpen className="relative h-6 w-6 text-neutral-400 dark:text-neutral-500 mx-auto mb-2 group-hover:text-indigo-400/70 transition-colors duration-300" strokeWidth={1.5} />
+                  <FolderOpen
+                    className="relative h-6 w-6 text-neutral-400 dark:text-neutral-500 mx-auto mb-2 group-hover:text-indigo-400/70 transition-colors duration-300"
+                    strokeWidth={1.5}
+                  />
                   <span className="relative text-sm text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300 transition-colors duration-300">
                     {t("onboarding.choose_folder")}
                   </span>
@@ -315,12 +331,8 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                       <Icon className="h-5 w-5 text-indigo-400/60" strokeWidth={1.5} />
                     </div>
                     <div className="relative text-left min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                        {t(cat.titleKey)}
-                      </p>
-                      <p className="text-[11px] text-neutral-400 dark:text-neutral-500 truncate">
-                        {t(cat.subKey)}
-                      </p>
+                      <p className="text-sm font-medium text-neutral-900 dark:text-white">{t(cat.titleKey)}</p>
+                      <p className="text-[11px] text-neutral-400 dark:text-neutral-500 truncate">{t(cat.subKey)}</p>
                     </div>
                   </div>
                 );
@@ -355,11 +367,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               {t("onboarding.ready_sub")}
             </p>
 
-            <button
-              onClick={onComplete}
-              className="btn-primary ob-scale-in mt-8"
-              style={{ animationDelay: "380ms" }}
-            >
+            <button onClick={onComplete} className="btn-primary ob-scale-in mt-8" style={{ animationDelay: "380ms" }}>
               {t("onboarding.lets_go")}
               <ChevronRight className="h-4 w-4" strokeWidth={2} />
             </button>
@@ -370,26 +378,17 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
         {step < TOTAL_STEPS - 1 && (
           <div className="relative flex items-center justify-between mt-8">
             {step > 0 ? (
-              <button
-                onClick={goBack}
-                className="btn-ghost"
-              >
+              <button onClick={goBack} className="btn-ghost">
                 <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.5} />
                 {t("onboarding.back")}
               </button>
             ) : (
-              <button
-                onClick={onComplete}
-                className="btn-ghost"
-              >
+              <button onClick={onComplete} className="btn-ghost">
                 {t("onboarding.skip")}
               </button>
             )}
 
-            <button
-              onClick={goNext}
-              className="btn-primary"
-            >
+            <button onClick={goNext} className="btn-primary">
               {t("onboarding.next")}
               <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
             </button>

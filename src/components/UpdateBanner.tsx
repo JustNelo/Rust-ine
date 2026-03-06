@@ -37,18 +37,12 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
 
       <div className="flex items-center gap-2">
         {status === "available" && (
-          <button
-            onClick={onInstall}
-            className="btn-primary-sm"
-          >
+          <button onClick={onInstall} className="btn-primary-sm">
             {t("updater.download")}
           </button>
         )}
         {status !== "downloading" && (
-          <button
-            onClick={onDismiss}
-            className="btn-icon"
-          >
+          <button onClick={onDismiss} className="btn-icon">
             <X className="h-3.5 w-3.5" strokeWidth={1.5} />
           </button>
         )}

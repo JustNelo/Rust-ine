@@ -28,10 +28,13 @@ export function SpriteSheetTab() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SpriteSheetResult | null>(null);
 
-  const handleFilesSelected = useCallback((paths: string[]) => {
-    addFiles(paths);
-    setResult(null);
-  }, [addFiles]);
+  const handleFilesSelected = useCallback(
+    (paths: string[]) => {
+      addFiles(paths);
+      setResult(null);
+    },
+    [addFiles],
+  );
 
   const handleClearFiles = useCallback(() => {
     clearFiles();
@@ -63,7 +66,13 @@ export function SpriteSheetTab() {
       setResult(res);
 
       const successCount = res.sprite_count > 0 ? 1 : 0;
-      addEntry({ tabId: "spritesheet", filesCount: files.length, successCount, failCount: res.errors.length, outputDir });
+      addEntry({
+        tabId: "spritesheet",
+        filesCount: files.length,
+        successCount,
+        failCount: res.errors.length,
+        outputDir,
+      });
 
       if (res.sprite_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.spritesheet_success", { n: res.sprite_count }));

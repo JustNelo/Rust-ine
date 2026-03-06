@@ -71,8 +71,8 @@ pub fn generate_spritesheet(
                 .and_then(|s| s.to_str())
                 .unwrap_or("sprite")
                 .to_string();
-            let img_result = image::open(path)
-                .map_err(|e| format!("Cannot open '{}': {}", path, e));
+            let img_result =
+                image::open(path).map_err(|e| format!("Cannot open '{}': {}", path, e));
             (name, img_result)
         })
         .collect();

@@ -13,8 +13,15 @@ import type { ImageMetadata } from "../types";
 export function ExifStripTab() {
   const { t } = useT();
   const {
-    files, removeFile, reorderFiles, handleFilesSelected, handleClearFiles: baseClear,
-    loading, results, lastOutputDir, process,
+    files,
+    removeFile,
+    reorderFiles,
+    handleFilesSelected,
+    handleClearFiles: baseClear,
+    loading,
+    results,
+    lastOutputDir,
+    process,
   } = useTabProcessor({ tabId: "strip", command: "strip_metadata" });
   const [metadataList, setMetadataList] = useState<ImageMetadata[]>([]);
   const [loadingMeta, setLoadingMeta] = useState(false);
@@ -57,13 +64,8 @@ export function ExifStripTab() {
     };
   }, [files]);
 
-  const totalExifFields = metadataList.reduce(
-    (acc, m) => acc + m.exif.length,
-    0
-  );
-  const hasGps = metadataList.some((m) =>
-    m.exif.some((e) => e.tag.startsWith("GPS"))
-  );
+  const totalExifFields = metadataList.reduce((acc, m) => acc + m.exif.length, 0);
+  const hasGps = metadataList.some((m) => m.exif.some((e) => e.tag.startsWith("GPS")));
 
   const handleStrip = useCallback(async () => {
     await process({
@@ -108,9 +110,7 @@ export function ExifStripTab() {
                   </span>
                 )}
                 {totalExifFields === 0 && (
-                  <span className="text-[10px] text-neutral-500 font-medium">
-                    {t("result.clean")}
-                  </span>
+                  <span className="text-[10px] text-neutral-500 font-medium">{t("result.clean")}</span>
                 )}
               </div>
             )}

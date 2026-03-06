@@ -18,15 +18,10 @@ export function GlobalProgressBar() {
 
   if (!progress || progress.completed >= progress.total) return null;
 
-  const percent =
-    progress.total > 0
-      ? Math.round((progress.completed / progress.total) * 100)
-      : 0;
+  const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   return (
-    <div
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border border-black/12 dark:border-white/8 bg-white/80 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] px-4 py-2.5 min-w-72"
-    >
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border border-black/12 dark:border-white/8 bg-white/80 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] px-4 py-2.5 min-w-72">
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between text-xs">
           <span className="text-neutral-600 dark:text-neutral-300 font-medium">

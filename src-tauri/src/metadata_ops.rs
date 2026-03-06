@@ -73,10 +73,8 @@ pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
     // Extract color type and bit depth from the decoder header — avoids full pixel decode
     let (bit_depth, color_type) = match image::ImageReader::open(path)
         .and_then(|r| r.with_guessed_format())
-        .and_then(|r| {
-            r.into_decoder()
-                .map_err(std::io::Error::other)
-        }) {
+        .and_then(|r| r.into_decoder().map_err(std::io::Error::other))
+    {
         Ok(decoder) => {
             let ct = match decoder.color_type() {
                 image::ColorType::L8 => ("8", "Grayscale"),

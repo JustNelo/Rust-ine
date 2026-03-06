@@ -66,12 +66,12 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
       onClick={onClose}
     >
       <div
-        className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
+        className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-black/8 dark:border-white/8">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-black/12 dark:border-white/8">
           <div className="flex items-center gap-3 text-xs text-neutral-700 dark:text-neutral-300">
             <span className="font-medium">{t("preview.before_after")}</span>
             <span className="text-neutral-500">{formatSize(result.input_size)}</span>
@@ -85,7 +85,7 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-1 hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
+            className="rounded-full p-1 hover:bg-black/8 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
           >
             <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
           </button>

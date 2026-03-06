@@ -82,7 +82,7 @@ export function PdfPageGrid({
   if (pages.length === 0 && !loadingThumbnails) return null;
 
   return (
-    <div className="rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl p-3 space-y-3">
+    <div className="rounded-2xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl p-3 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
           {pages.length} {t("pdf_tool.pages_count")}

@@ -27,13 +27,13 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg max-h-[80vh] rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 bg-white/90 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] flex flex-col"
+        className="relative w-full max-w-lg max-h-[80vh] rounded-2xl overflow-hidden border border-black/12 dark:border-white/8 bg-white/90 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-black/8 dark:border-white/8">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-black/12 dark:border-white/8">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-neutral-400" strokeWidth={1.5} />
             <span className="text-sm font-medium text-neutral-900 dark:text-white">
@@ -72,7 +72,7 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
             entries.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center gap-3 rounded-xl border border-black/6 dark:border-white/6 bg-black/2 dark:bg-white/2 px-3 py-2 hover:bg-black/4 dark:hover:bg-white/4 transition-colors duration-200"
+                className="flex items-center gap-3 rounded-xl border border-black/10 dark:border-white/6 bg-black/4 dark:bg-white/2 px-3 py-2 hover:bg-black/6 dark:hover:bg-white/4 transition-colors duration-200"
               >
                 <div className="flex items-center gap-1.5 shrink-0">
                   {entry.failCount === 0 ? (

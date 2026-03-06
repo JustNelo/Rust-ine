@@ -17,7 +17,7 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
   }
 
   return (
-    <div className="relative z-20 flex items-center justify-between gap-3 border-b border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl px-4 py-2">
+    <div className="relative z-20 flex items-center justify-between gap-3 border-b border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl px-4 py-2">
       <div className="flex items-center gap-2.5">
         {status === "downloading" ? (
           <Loader2 className="h-3.5 w-3.5 text-neutral-400 animate-spin shrink-0" strokeWidth={1.5} />
@@ -39,7 +39,7 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
         {status === "available" && (
           <button
             onClick={onInstall}
-            className="rounded-md bg-neutral-100 px-3 py-1 text-[11px] font-medium text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:bg-white transition-colors duration-300 cursor-pointer"
+            className="rounded-md bg-indigo-500 dark:bg-neutral-100 px-3 py-1 text-[11px] font-medium text-white dark:text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:bg-indigo-600 dark:hover:bg-white transition-colors duration-300 cursor-pointer"
           >
             {t("updater.download")}
           </button>
@@ -47,7 +47,7 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
         {status !== "downloading" && (
           <button
             onClick={onDismiss}
-            className="rounded-md p-1 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
+            className="rounded-md p-1 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
           >
             <X className="h-3.5 w-3.5" strokeWidth={1.5} />
           </button>

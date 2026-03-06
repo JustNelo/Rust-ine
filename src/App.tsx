@@ -198,9 +198,9 @@ function App() {
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-gray-50 dark:bg-neutral-950">
       {/* ── Ambient background blobs ── */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-125 w-125 rounded-full bg-indigo-200 dark:bg-indigo-900 mix-blend-screen filter blur-[120px] opacity-30" />
-        <div className="absolute top-1/2 right-[-10%] h-100 w-100 rounded-full bg-neutral-300 dark:bg-neutral-800 mix-blend-screen filter blur-[100px] opacity-20" />
-        <div className="absolute bottom-[-15%] left-1/3 h-87.5 w-87.5 rounded-full bg-indigo-200 dark:bg-indigo-900 mix-blend-screen filter blur-[100px] opacity-20" />
+        <div className="absolute -top-40 -left-40 h-125 w-125 rounded-full bg-indigo-200 dark:bg-indigo-900 mix-blend-multiply dark:mix-blend-screen filter blur-[120px] opacity-25 dark:opacity-30" />
+        <div className="absolute top-1/2 right-[-10%] h-100 w-100 rounded-full bg-neutral-300 dark:bg-neutral-800 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-15 dark:opacity-20" />
+        <div className="absolute bottom-[-15%] left-1/3 h-87.5 w-87.5 rounded-full bg-indigo-200 dark:bg-indigo-900 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-15 dark:opacity-20" />
       </div>
 
       <TitleBar />
@@ -265,7 +265,7 @@ function App() {
               <Settings className="h-4 w-4" strokeWidth={1.5} />
               {t("settings.title")}
             </button>
-            <div className="relative overflow-hidden rounded-xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 px-3 py-2">
+            <div className="relative overflow-hidden rounded-xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 px-3 py-2">
               <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/25 to-transparent" />
               <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-relaxed">
                 {t("sidebar.hint")}

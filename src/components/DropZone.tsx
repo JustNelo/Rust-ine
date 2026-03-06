@@ -79,10 +79,10 @@ export function DropZone({
     <div
       onClick={handleClick}
       className={cn(
-        "relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all duration-300 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]",
+        "relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all duration-300 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]",
         isDragging
           ? "border-indigo-400/30 bg-indigo-500/5 scale-[1.01]"
-          : "border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/2 hover:bg-black/4 dark:hover:bg-white/4 hover:border-black/15 dark:hover:border-white/15"
+          : "border-black/12 dark:border-white/10 bg-black/4 dark:bg-white/2 hover:bg-black/6 dark:hover:bg-white/4 hover:border-black/20 dark:hover:border-white/15"
       )}
     >
       <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
@@ -101,7 +101,7 @@ export function DropZone({
           <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{sublabel}</p>
         )}
         <p className="mt-1.5 text-[10px] text-neutral-400 dark:text-neutral-600">
-          <kbd className="rounded border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-1 py-0.5 font-mono text-[10px]">Ctrl+O</kbd>
+          <kbd className="rounded border border-black/12 dark:border-white/8 bg-black/6 dark:bg-white/4 px-1 py-0.5 font-mono text-[10px]">Ctrl+O</kbd>
         </p>
       </div>
     </div>

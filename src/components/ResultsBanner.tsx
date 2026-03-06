@@ -33,7 +33,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
 
   return (
     <>
-      <div className="relative mt-4 overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-3 space-y-3">
+      <div className="relative mt-4 overflow-hidden rounded-2xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-3 space-y-3">
         <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
         <div className="relative flex items-center justify-between">
@@ -52,7 +52,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
           {outputDir && (
             <button
               onClick={() => revealItemInDir(outputDir)}
-              className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-900 dark:hover:text-white transition-colors duration-200 cursor-pointer"
+              className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/6 dark:hover:bg-white/4 hover:text-neutral-900 dark:hover:text-white transition-colors duration-200 cursor-pointer"
             >
               <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
               {t("label.open_output_folder")}
@@ -93,7 +93,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
               return (
                 <div
                   key={i}
-                  className="group relative rounded-xl overflow-hidden border border-black/8 dark:border-white/8 bg-black/3 dark:bg-white/3 aspect-square cursor-pointer"
+                  className="group relative rounded-xl overflow-hidden border border-black/12 dark:border-white/8 bg-black/5 dark:bg-white/3 aspect-square cursor-pointer"
                   onClick={() => canPreview && setPreviewResult(r)}
                 >
                   {canPreview ? (

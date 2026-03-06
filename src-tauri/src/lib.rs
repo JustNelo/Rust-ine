@@ -92,7 +92,9 @@ fn allowed_base_dirs() -> Vec<std::path::PathBuf> {
         dirs.push(tmp);
     }
     dirs.push(std::env::temp_dir());
-    dirs
+    dirs.into_iter()
+        .filter_map(|d| std::fs::canonicalize(&d).ok().or(Some(d)))
+        .collect()
 }
 
 fn validate_path(path: &str) -> Result<(), String> {

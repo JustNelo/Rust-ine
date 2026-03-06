@@ -174,7 +174,7 @@ export function BulkRenameTab() {
           ))}
           {files.length > 5 && (
             <span className="text-[10px] text-neutral-500">
-              ... +{files.length - 5} more
+              {t("label.more_files", { n: files.length - 5 })}
             </span>
           )}
         </div>

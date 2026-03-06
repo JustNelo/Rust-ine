@@ -34,7 +34,7 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative h-40 rounded-xl overflow-hidden border border-white/8 bg-white/3 cursor-grab active:cursor-grabbing"
+      className="group relative h-40 rounded-xl overflow-hidden border border-black/8 dark:border-white/8 bg-black/3 dark:bg-white/3 cursor-grab active:cursor-grabbing"
     >
       {/* Remove button — stops drag activation */}
       <button
@@ -63,7 +63,7 @@ export const PdfPageCard = memo(function PdfPageCard({ page, onRemove }: PdfPage
       </div>
 
       {/* Thumbnail — fixed area, image contained */}
-      <div className="absolute inset-0 bottom-7 flex items-center justify-center bg-white/2">
+      <div className="absolute inset-0 bottom-7 flex items-center justify-center bg-black/2 dark:bg-white/2">
         {page.thumbnailLoaded && page.thumbnailSrc ? (
           <img
             src={page.thumbnailSrc}

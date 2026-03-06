@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 use std::path::PathBuf;
 
+use crate::progress::emit_progress_simple;
 use crate::utils::{ensure_output_dir, file_stem};
 
 /// Point margin from page edges for watermark placement.
@@ -43,6 +44,7 @@ pub fn watermark_pdf_text(
     font_size: f32,
     color: &str,
     output_dir: &str,
+    app_handle: &tauri::AppHandle,
 ) -> PdfWatermarkResult {
     let mut result = PdfWatermarkResult {
         output_path: String::new(),
@@ -85,7 +87,9 @@ pub fn watermark_pdf_text(
     // Collect page IDs first to avoid borrow issues
     let page_ids: Vec<lopdf::ObjectId> = doc.page_iter().collect();
 
-    for &page_id in &page_ids {
+    let total_pages = page_ids.len();
+
+    for (idx, &page_id) in page_ids.iter().enumerate() {
         // Read page dimensions from MediaBox
         let (page_w, page_h) = get_page_dimensions(&doc, page_id);
 
@@ -132,6 +136,7 @@ pub fn watermark_pdf_text(
             append_content_to_page(page_dict, content_id);
             result.page_count += 1;
         }
+        emit_progress_simple(app_handle, idx + 1, total_pages, pdf_path);
     }
 
     let pdf_stem = file_stem(pdf_path);
@@ -161,6 +166,7 @@ pub fn watermark_pdf_image(
     opacity: f32,
     scale: f32,
     output_dir: &str,
+    app_handle: &tauri::AppHandle,
 ) -> PdfWatermarkResult {
     let mut result = PdfWatermarkResult {
         output_path: String::new(),
@@ -278,7 +284,9 @@ pub fn watermark_pdf_image(
     // Collect page IDs
     let page_ids: Vec<lopdf::ObjectId> = doc.page_iter().collect();
 
-    for &page_id in &page_ids {
+    let total_pages = page_ids.len();
+
+    for (idx, &page_id) in page_ids.iter().enumerate() {
         let (page_w, page_h) = get_page_dimensions(&doc, page_id);
 
         // Compute watermark draw dimensions
@@ -315,6 +323,7 @@ pub fn watermark_pdf_image(
             append_content_to_page(page_dict, content_id);
             result.page_count += 1;
         }
+        emit_progress_simple(app_handle, idx + 1, total_pages, pdf_path);
     }
 
     let pdf_stem = file_stem(pdf_path);

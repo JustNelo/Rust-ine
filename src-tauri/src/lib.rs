@@ -604,6 +604,7 @@ async fn generate_spritesheet(
 
 #[tauri::command]
 async fn protect_pdf_cmd(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     password: String,
     output_dir: String,
@@ -611,7 +612,7 @@ async fn protect_pdf_cmd(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::protect_pdf(&pdf_path, &password, &output_dir)
+        pdf_ops::protect_pdf(&pdf_path, &password, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -639,6 +640,7 @@ async fn unlock_pdf_cmd(
 #[allow(clippy::too_many_arguments)]
 #[tauri::command]
 async fn watermark_pdf_text_cmd(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     text: String,
     position: String,
@@ -658,6 +660,7 @@ async fn watermark_pdf_text_cmd(
             font_size,
             &color,
             &output_dir,
+            &app_handle,
         )
     })
     .await
@@ -667,6 +670,7 @@ async fn watermark_pdf_text_cmd(
 
 #[tauri::command]
 async fn watermark_pdf_image_cmd(
+    app_handle: tauri::AppHandle,
     image_path: String,
     pdf_path: String,
     position: String,
@@ -685,6 +689,7 @@ async fn watermark_pdf_image_cmd(
             opacity,
             scale,
             &output_dir,
+            &app_handle,
         )
     })
     .await

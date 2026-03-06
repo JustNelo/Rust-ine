@@ -77,7 +77,7 @@ export function QrCodeTab() {
           className="w-full rounded-xl border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-2 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30 resize-none"
         />
         <div className="flex justify-end">
-          <span className="text-[10px] text-neutral-500">{text.length} chars</span>
+          <span className="text-[10px] text-neutral-500">{t("label.chars_count", { n: text.length })}</span>
         </div>
       </div>
 

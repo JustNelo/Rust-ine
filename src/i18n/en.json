@@ -394,5 +394,12 @@
   "format.alpha_no": "No alpha",
   "label.n_pdfs": "{n} PDF(s)",
   "label.n_images_count": "{n} image(s)",
-  "toast.copy_failed": "Failed to copy to clipboard."
+  "toast.copy_failed": "Failed to copy to clipboard.",
+  "label.chars_count": "{n} chars",
+  "label.more_files": "... +{n} more",
+  "label.password_weak": "Weak",
+  "label.password_medium": "Medium",
+  "label.password_strong": "Strong",
+  "label.dpi_value": "{n} DPI",
+  "result.no_reduction": "No reduction"
 }

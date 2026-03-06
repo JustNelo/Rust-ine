@@ -331,7 +331,7 @@ export function CropTab() {
             </span>
             <button
               onClick={resetSelection}
-              className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-300 transition-colors duration-200 cursor-pointer"
+              className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors duration-200 cursor-pointer"
             >
               <RotateCcw className="h-3 w-3" strokeWidth={1.5} />
               {t("label.reset")}
@@ -340,7 +340,7 @@ export function CropTab() {
 
           <div
             ref={containerRef}
-            className="relative rounded-xl overflow-hidden border border-white/8 bg-neutral-950 select-none touch-none"
+            className="relative rounded-xl overflow-hidden border border-black/8 dark:border-white/8 bg-neutral-100 dark:bg-neutral-950 select-none touch-none"
             style={{ cursor }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -420,7 +420,7 @@ export function CropTab() {
                             return { ...prev, h: Math.max(1 / naturalSize.h, v / naturalSize.h) };
                           });
                         }}
-                        className="w-16 rounded-md border border-white/8 bg-white/4 px-1.5 py-0.5 text-[10px] text-white text-center focus:border-indigo-400/30 focus:outline-none"
+                        className="w-16 rounded-md border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-1.5 py-0.5 text-[10px] text-neutral-900 dark:text-white text-center focus:border-indigo-400/30 focus:outline-none"
                       />
                     </div>
                   );

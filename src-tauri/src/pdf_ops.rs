@@ -616,7 +616,7 @@ fn encrypt_dictionary(dict: &mut lopdf::Dictionary, obj_key: &[u8]) {
 /// Implements Algorithms 1-4 from PDF 1.7 spec (R=2, V=1, 40-bit RC4).
 /// All indirect-object strings and streams are RC4-encrypted with per-object keys
 /// so that readers can actually decrypt and display the content.
-pub fn protect_pdf(pdf_path: &str, password: &str, output_dir: &str) -> PdfProtectResult {
+pub fn protect_pdf(pdf_path: &str, password: &str, output_dir: &str, app_handle: &tauri::AppHandle) -> PdfProtectResult {
     let mut result = PdfProtectResult {
         output_path: String::new(),
         success: false,
@@ -676,10 +676,14 @@ pub fn protect_pdf(pdf_path: &str, password: &str, output_dir: &str) -> PdfProte
 
     // ── Encrypt every indirect object in the document ──────────────────
     let object_ids: Vec<(u32, u16)> = doc.objects.keys().cloned().collect();
-    for (obj_num, gen_num) in &object_ids {
+    let total_objects = object_ids.len();
+    for (idx, (obj_num, gen_num)) in object_ids.iter().enumerate() {
         let obj_key = compute_object_key(&global_key, *obj_num, *gen_num);
         if let Some(obj) = doc.objects.get_mut(&(*obj_num, *gen_num)) {
             encrypt_object(obj, &obj_key);
+        }
+        if idx % 20 == 0 || idx + 1 == total_objects {
+            emit_progress_simple(app_handle, idx + 1, total_objects, pdf_path);
         }
     }
 

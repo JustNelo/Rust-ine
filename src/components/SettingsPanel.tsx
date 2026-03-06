@@ -177,7 +177,7 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
             <button
               onClick={handleCheckUpdate}
               disabled={updateStatus === "checking" || updateStatus === "downloading"}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-neutral-400 hover:text-white hover:bg-white/4 transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/4 dark:hover:bg-white/4 transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updateStatus === "checking" || updateStatus === "downloading" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
@@ -196,8 +196,8 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
             </button>
 
             {updateStatus === "available" && (
-              <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/4 px-3 py-2">
-                <span className="text-xs text-white">
+              <div className="flex items-center justify-between rounded-lg border border-black/10 dark:border-white/10 bg-black/4 dark:bg-white/4 px-3 py-2">
+                <span className="text-xs text-neutral-900 dark:text-white">
                   {t("updater.new_version").replace("{version}", foundVersion)}
                 </span>
                 <button

@@ -394,5 +394,12 @@
   "format.alpha_no": "Pas d'alpha",
   "label.n_pdfs": "{n} PDF(s)",
   "label.n_images_count": "{n} image(s)",
-  "toast.copy_failed": "Échec de la copie dans le presse-papier."
+  "toast.copy_failed": "Échec de la copie dans le presse-papier.",
+  "label.chars_count": "{n} caractères",
+  "label.more_files": "... +{n} de plus",
+  "label.password_weak": "Faible",
+  "label.password_medium": "Moyen",
+  "label.password_strong": "Fort",
+  "label.dpi_value": "{n} DPI",
+  "result.no_reduction": "Aucune réduction"
 }

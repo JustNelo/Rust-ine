@@ -78,6 +78,23 @@ fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> 
     ))
 }
 
+/// Returns the set of base directories the app is allowed to access.
+/// Mirrors the `assetProtocol.scope` from `tauri.conf.json`.
+fn allowed_base_dirs() -> Vec<std::path::PathBuf> {
+    let mut dirs = Vec::new();
+    if let Some(home) = dirs::home_dir() {
+        dirs.push(home);
+    }
+    if let Some(tmp) = std::env::var_os("TEMP")
+        .or_else(|| std::env::var_os("TMPDIR"))
+        .map(std::path::PathBuf::from)
+    {
+        dirs.push(tmp);
+    }
+    dirs.push(std::env::temp_dir());
+    dirs
+}
+
 fn validate_path(path: &str) -> Result<(), String> {
     let p = Path::new(path);
     if p.components().any(|c| matches!(c, Component::ParentDir)) {
@@ -86,14 +103,16 @@ fn validate_path(path: &str) -> Result<(), String> {
     if !p.is_absolute() {
         return Err(format!("Only absolute paths are allowed: {}", path));
     }
-    // If the path already exists, resolve symlinks and re-validate
+    // If the path already exists, resolve symlinks and verify it's within allowed directories
     if p.exists() {
         if let Ok(canonical) = std::fs::canonicalize(p) {
-            if canonical
-                .components()
-                .any(|c| matches!(c, Component::ParentDir))
-            {
-                return Err(format!("Symlink traversal detected: {}", path));
+            let allowed = allowed_base_dirs();
+            let is_allowed = allowed.iter().any(|base| canonical.starts_with(base));
+            if !is_allowed {
+                return Err(format!(
+                    "Path resolves outside allowed directories: {}",
+                    path
+                ));
             }
         }
     }

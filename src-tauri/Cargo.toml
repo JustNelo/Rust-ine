@@ -38,3 +38,4 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 time = { version = "0.3", features = ["formatting", "macros"] }
 dirs = "6"
+resvg = "0.44"

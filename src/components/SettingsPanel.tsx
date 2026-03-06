@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { X, FolderOpen, RotateCcw, Globe, RefreshCw, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { X, FolderOpen, RotateCcw, Globe, RefreshCw, Loader2, CheckCircle, AlertCircle, Sun, Moon } from "lucide-react";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { useT, type Lang } from "../i18n/i18n";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useTheme } from "../hooks/useTheme";
 import { GlassModal } from "./ui/GlassModal";
 
 interface SettingsPanelProps {
@@ -14,6 +15,7 @@ interface SettingsPanelProps {
 export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps) {
   const { lang, setLang, t } = useT();
   const { workspace, selectWorkspace, openInExplorer } = useWorkspace();
+  const { theme, toggleTheme } = useTheme();
   const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "available" | "downloading" | "up-to-date" | "error">("idle");
   const [foundUpdate, setFoundUpdate] = useState<Awaited<ReturnType<typeof check>> | null>(null);
   const [foundVersion, setFoundVersion] = useState("");
@@ -86,6 +88,42 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
                   {l === "en" ? "English" : "Français"}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Theme */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-neutral-500">
+              {theme === "dark" ? (
+                <Moon className="h-3.5 w-3.5" strokeWidth={1.5} />
+              ) : (
+                <Sun className="h-3.5 w-3.5" strokeWidth={1.5} />
+              )}
+              {t("settings.theme")}
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { if (theme !== "dark") toggleTheme(); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer ${
+                  theme === "dark"
+                    ? "bg-neutral-100 text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)]"
+                    : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
+                }`}
+              >
+                <Moon className="h-3 w-3" strokeWidth={1.5} />
+                {t("settings.theme_dark")}
+              </button>
+              <button
+                onClick={() => { if (theme !== "light") toggleTheme(); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer ${
+                  theme === "light"
+                    ? "bg-neutral-100 text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)]"
+                    : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
+                }`}
+              >
+                <Sun className="h-3 w-3" strokeWidth={1.5} />
+                {t("settings.theme_light")}
+              </button>
             </div>
           </div>
 

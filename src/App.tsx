@@ -19,6 +19,8 @@ import {
   Code,
   QrCode,
   PenLine,
+  FileImage,
+  Clock,
 } from "lucide-react";
 import { cn } from "./lib/utils";
 import { TitleBar } from "./components/TitleBar";
@@ -37,6 +39,8 @@ import { SpriteSheetTab } from "./components/SpriteSheetTab";
 import { Base64Tab } from "./components/Base64Tab";
 import { QrCodeTab } from "./components/QrCodeTab";
 import { BulkRenameTab } from "./components/BulkRenameTab";
+import { SvgRasterizeTab } from "./components/SvgRasterizeTab";
+import { HistoryModal } from "./components/HistoryModal";
 import { GlobalProgressBar } from "./components/GlobalProgressBar";
 import { SplashScreen } from "./components/SplashScreen";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -64,6 +68,7 @@ const TAB_EXTENSIONS: Record<TabId, string[]> = {
   base64: ["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "svg", "tiff", "tif"],
   qrcode: [],
   "bulk-rename": ["png", "jpg", "jpeg", "bmp", "tiff", "tif", "webp", "gif", "ico", "svg"],
+  "svg-rasterize": ["svg"],
 };
 
 interface TabDef {
@@ -89,6 +94,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: "watermark", labelKey: "tab.watermark", icon: Stamp },
       { id: "strip", labelKey: "tab.strip", icon: ShieldOff },
       { id: "palette", labelKey: "tab.palette", icon: Pipette },
+      { id: "svg-rasterize", labelKey: "tab.svg_rasterize", icon: FileImage },
     ],
   },
   {
@@ -126,6 +132,7 @@ const TAB_DESC_KEYS: Record<TabId, string> = {
   base64: "tab.base64.desc",
   qrcode: "tab.qrcode.desc",
   "bulk-rename": "tab.bulk_rename.desc",
+  "svg-rasterize": "tab.svg_rasterize.desc",
 };
 
 const TAB_LABEL_KEYS: Record<TabId, string> = {
@@ -144,6 +151,7 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
   base64: "tab.base64",
   qrcode: "tab.qrcode",
   "bulk-rename": "tab.bulk_rename",
+  "svg-rasterize": "tab.svg_rasterize",
 };
 
 function App() {
@@ -153,6 +161,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>("compress");
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return localStorage.getItem("rustine_onboarded") !== "1"; } catch { return true; }
   });
@@ -241,6 +250,13 @@ function App() {
 
           <div className="px-3 py-3 space-y-2">
             <button
+              onClick={() => setShowHistory(true)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-neutral-400 hover:bg-white/4 hover:text-neutral-200 transition-all duration-200 cursor-pointer"
+            >
+              <Clock className="h-4 w-4" strokeWidth={1.5} />
+              {t("history.title")}
+            </button>
+            <button
               onClick={() => setShowSettings(true)}
               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-neutral-400 hover:bg-white/4 hover:text-neutral-200 transition-all duration-200 cursor-pointer"
             >
@@ -284,6 +300,7 @@ function App() {
             {activeTab === "base64" && <Base64Tab />}
             {activeTab === "qrcode" && <QrCodeTab />}
             {activeTab === "bulk-rename" && <BulkRenameTab />}
+            {activeTab === "svg-rasterize" && <SvgRasterizeTab />}
           </div>
         </main>
       </div>
@@ -291,6 +308,7 @@ function App() {
       <SplashScreen visible={isLoading} />
       <GlobalProgressBar />
 
+      {showHistory && <HistoryModal onClose={() => setShowHistory(false)} />}
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} onResetOnboarding={() => { setShowSettings(false); setShowOnboarding(true); }} />}
       {showOnboarding && <OnboardingModal onComplete={() => { setShowOnboarding(false); try { localStorage.setItem("rustine_onboarded", "1"); } catch {} }} />}
 

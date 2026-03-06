@@ -10,6 +10,7 @@ mod pdf_watermark_ops;
 mod qr_ops;
 mod rename_ops;
 mod sprite_ops;
+mod svg_ops;
 mod utils;
 
 use color_ops::PaletteResult;
@@ -26,6 +27,7 @@ use pdf_watermark_ops::PdfWatermarkResult;
 use qr_ops::QrResult;
 use rename_ops::RenameResult;
 use sprite_ops::SpriteSheetResult;
+use svg_ops::SvgRasterizeResult;
 use std::path::{Component, Path};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -142,6 +144,26 @@ async fn compress_webp(
     cancel.store(false, Ordering::Relaxed);
     let result = tokio::task::spawn_blocking(move || {
         image_ops::compress_to_webp(input_paths, quality, output_dir, app_handle, cancel)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    Ok(result)
+}
+
+#[tauri::command]
+async fn compress_jpeg(
+    app_handle: tauri::AppHandle,
+    token: tauri::State<'_, CancellationToken>,
+    input_paths: Vec<String>,
+    quality: u8,
+    output_dir: String,
+) -> Result<BatchProgress, String> {
+    validate_path(&output_dir)?;
+    validate_paths(&input_paths)?;
+    let cancel = (*token).0.clone();
+    cancel.store(false, Ordering::Relaxed);
+    let result = tokio::task::spawn_blocking(move || {
+        image_ops::compress_to_jpeg(input_paths, quality, output_dir, app_handle, cancel)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -686,6 +708,24 @@ async fn generate_qr_cmd(text: String, size: u32, output_dir: String) -> Result<
 }
 
 #[tauri::command]
+async fn rasterize_svg_cmd(
+    input_path: String,
+    target_width: u32,
+    output_format: String,
+    output_dir: String,
+) -> Result<SvgRasterizeResult, String> {
+    validate_path(&input_path)?;
+    validate_path(&output_dir)?;
+    let target_width = target_width.clamp(16, 8192);
+    let result = tokio::task::spawn_blocking(move || {
+        svg_ops::rasterize_svg(&input_path, target_width, &output_format, &output_dir)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))?;
+    result
+}
+
+#[tauri::command]
 fn cancel_processing(token: tauri::State<'_, CancellationToken>) {
     (*token).0.store(true, Ordering::Relaxed);
 }
@@ -733,6 +773,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             compress_webp,
+            compress_jpeg,
             convert_images,
             extract_pdf_images,
             resize_images,
@@ -760,6 +801,7 @@ pub fn run() {
             image_to_base64,
             generate_qr_cmd,
             bulk_rename_cmd,
+            rasterize_svg_cmd,
             cancel_processing,
             reset_cancel
         ])

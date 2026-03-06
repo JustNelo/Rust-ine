@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, memo } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { X } from "lucide-react";
 import {
   DndContext,
@@ -18,6 +19,8 @@ import {
 import { useT } from "../i18n/i18n";
 import { safeAssetUrl } from "../lib/utils";
 import { ImageGridCard } from "./ImageGridCard";
+import { MetadataPanel } from "./MetadataPanel";
+import type { ImageMetadata } from "../types";
 
 interface ImageGridProps {
   files: string[];
@@ -69,6 +72,8 @@ export const ImageGrid = memo(function ImageGrid({
     [itemIds, onReorder]
   );
 
+  const [infoMetadata, setInfoMetadata] = useState<ImageMetadata | null>(null);
+
   const openPreview = useCallback((filePath: string) => {
     setPreviewSrc(safeAssetUrl(filePath));
     setPreviewName(filePath.split(/[\\/]/).pop() || filePath);
@@ -77,6 +82,19 @@ export const ImageGrid = memo(function ImageGrid({
   const closePreview = useCallback(() => {
     setPreviewSrc(null);
     setPreviewName("");
+  }, []);
+
+  const openInfo = useCallback(async (filePath: string) => {
+    try {
+      const meta = await invoke<ImageMetadata>("read_metadata", { filePath });
+      setInfoMetadata(meta);
+    } catch {
+      // silently ignore files that cannot be read
+    }
+  }, []);
+
+  const closeInfo = useCallback(() => {
+    setInfoMetadata(null);
   }, []);
 
   if (files.length === 0) return null;
@@ -124,12 +142,40 @@ export const ImageGrid = memo(function ImageGrid({
                   index={index}
                   onRemove={onRemove}
                   onPreview={openPreview}
+                  onInfo={openInfo}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
       </div>
+
+      {/* Info modal */}
+      {infoMetadata && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={closeInfo}
+        >
+          <div
+            className="relative w-full max-w-md rounded-2xl overflow-hidden border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium uppercase tracking-widest text-neutral-400">
+                {t("info.image_details")}
+              </span>
+              <button
+                onClick={closeInfo}
+                className="rounded-full p-1 hover:bg-white/6 transition-colors duration-200 cursor-pointer"
+              >
+                <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
+              </button>
+            </div>
+            <MetadataPanel metadata={infoMetadata} />
+          </div>
+        </div>
+      )}
 
       {/* Fullscreen preview modal */}
       {previewSrc && (

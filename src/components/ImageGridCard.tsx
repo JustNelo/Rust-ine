@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { X, ZoomIn } from "lucide-react";
+import { X, ZoomIn, Info } from "lucide-react";
 import { safeAssetUrl } from "../lib/utils";
 
 interface ImageGridCardProps {
@@ -10,6 +10,7 @@ interface ImageGridCardProps {
   onRemove: (index: number) => void;
   index: number;
   onPreview: (filePath: string) => void;
+  onInfo?: (filePath: string) => void;
 }
 
 export const ImageGridCard = memo(function ImageGridCard({
@@ -18,6 +19,7 @@ export const ImageGridCard = memo(function ImageGridCard({
   onRemove,
   index,
   onPreview,
+  onInfo,
 }: ImageGridCardProps) {
   const {
     attributes,
@@ -64,6 +66,17 @@ export const ImageGridCard = memo(function ImageGridCard({
         <ZoomIn className="h-3 w-3 text-white" strokeWidth={1.5} />
       </button>
 
+      {/* Info button */}
+      {onInfo && (
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => onInfo(filePath)}
+          className="absolute bottom-6 right-1 z-10 rounded-full bg-black/50 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 backdrop-blur-sm"
+        >
+          <Info className="h-3 w-3 text-white" strokeWidth={1.5} />
+        </button>
+      )}
+
       {/* Thumbnail */}
       <img
         src={safeAssetUrl(filePath)}
@@ -93,6 +106,7 @@ export const ImageGridCard = memo(function ImageGridCard({
     prev.filePath === next.filePath &&
     prev.index === next.index &&
     prev.onRemove === next.onRemove &&
-    prev.onPreview === next.onPreview
+    prev.onPreview === next.onPreview &&
+    prev.onInfo === next.onInfo
   );
 });

@@ -106,6 +106,40 @@ pub fn compress_to_webp(
     )
 }
 
+pub fn compress_to_jpeg(
+    input_paths: Vec<String>,
+    quality: u8,
+    output_dir: String,
+    app_handle: tauri::AppHandle,
+    cancel: Arc<AtomicBool>,
+) -> BatchProgress {
+    let quality = quality.clamp(1, 100);
+
+    batch_process(
+        &input_paths,
+        &output_dir,
+        &app_handle,
+        &cancel,
+        |input_path, out_dir| {
+            let img = load_image(input_path)?;
+            let rgb = img.to_rgb8();
+
+            let stem = file_stem(input_path);
+            let output_path = out_dir.join(format!("{}-compressed.jpg", stem));
+
+            let file = fs::File::create(&output_path)
+                .map_err(|e| format!("Cannot create JPEG file: {}", e))?;
+            let mut writer = std::io::BufWriter::new(file);
+            let encoder =
+                image::codecs::jpeg::JpegEncoder::new_with_quality(&mut writer, quality);
+            rgb.write_with_encoder(encoder)
+                .map_err(|e| format!("Cannot encode JPEG: {}", e))?;
+
+            Ok((output_path.to_string_lossy().to_string(), None))
+        },
+    )
+}
+
 pub fn convert_images(
     input_paths: Vec<String>,
     output_format: String,

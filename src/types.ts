@@ -49,10 +49,13 @@ export interface ImageMetadata {
   height: number;
   format: string;
   file_size: number;
+  bit_depth: string | null;
+  color_type: string | null;
+  dpi: [number, number] | null;
   exif: MetadataEntry[];
 }
 
-export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "optimize" | "crop" | "palette" | "pdf-toolkit" | "favicon" | "animation" | "spritesheet" | "base64" | "qrcode" | "bulk-rename";
+export type TabId = "compress" | "convert" | "resize" | "watermark" | "strip" | "optimize" | "crop" | "palette" | "pdf-toolkit" | "favicon" | "animation" | "spritesheet" | "base64" | "qrcode" | "bulk-rename" | "svg-rasterize";
 
 export interface PageThumbnail {
   id: string;

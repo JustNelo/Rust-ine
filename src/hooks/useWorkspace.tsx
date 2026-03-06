@@ -22,6 +22,7 @@ const SUB_FOLDERS: Partial<Record<TabId, string>> = {
   base64: "base64",
   qrcode: "qrcodes",
   "bulk-rename": "renamed",
+  "svg-rasterize": "svg-rasterized",
 };
 
 interface WorkspaceContextValue {

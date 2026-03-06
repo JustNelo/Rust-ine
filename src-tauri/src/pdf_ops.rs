@@ -3,6 +3,7 @@ use pdfium_render::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+use crate::progress::emit_progress_simple;
 use crate::utils::{embed_image_as_pdf_page, ensure_output_dir, file_stem, filename_or_default};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -18,6 +19,7 @@ pub fn extract_images_from_pdf(
     output_dir: &str,
     pdfium_lib_path: &str,
     output_stem: Option<&str>,
+    app_handle: &tauri::AppHandle,
 ) -> PdfExtractionResult {
     let mut result = PdfExtractionResult {
         pdf_path: pdf_path.to_string(),
@@ -58,6 +60,7 @@ pub fn extract_images_from_pdf(
         .unwrap_or_else(|| file_stem(pdf_path));
 
     let mut image_index: usize = 0;
+    let total_pages = document.pages().len() as usize;
 
     for (page_index, page) in document.pages().iter().enumerate() {
         for object in page.objects().iter() {
@@ -89,6 +92,7 @@ pub fn extract_images_from_pdf(
                 }
             }
         }
+        emit_progress_simple(app_handle, page_index + 1, total_pages, pdf_path);
     }
 
     result
@@ -103,7 +107,7 @@ pub struct ImagesToPdfResult {
     pub errors: Vec<String>,
 }
 
-pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str) -> ImagesToPdfResult {
+pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str, app_handle: &tauri::AppHandle) -> ImagesToPdfResult {
     let mut result = ImagesToPdfResult {
         output_path: output_path.to_string(),
         page_count: 0,
@@ -114,7 +118,9 @@ pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str) -> ImagesToPdf
     let pages_id = doc.new_object_id();
     let mut page_ids: Vec<Object> = Vec::new();
 
-    for input_path in &input_paths {
+    let total = input_paths.len();
+
+    for (idx, input_path) in input_paths.iter().enumerate() {
         // Use fit-to-image dimensions: read image to get size first
         let img = match image::open(input_path) {
             Ok(i) => i,
@@ -139,6 +145,7 @@ pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str) -> ImagesToPdf
                     .push(format!("{}: {}", filename_or_default(input_path), e));
             }
         }
+        emit_progress_simple(app_handle, idx + 1, total, input_path);
     }
 
     if result.page_count == 0 {
@@ -186,6 +193,7 @@ pub fn pdf_to_images(
     format: &str,
     dpi: u32,
     output_stem: Option<&str>,
+    app_handle: &tauri::AppHandle,
 ) -> PdfToImagesResult {
     let mut result = PdfToImagesResult {
         pdf_path: pdf_path.to_string(),
@@ -227,6 +235,7 @@ pub fn pdf_to_images(
 
     // Scale factor: pdfium renders at 72 DPI by default
     let scale = dpi as f32 / 72.0;
+    let total_pages = document.pages().len() as usize;
 
     for (page_index, page) in document.pages().iter().enumerate() {
         let page_w = page.width().value * scale;
@@ -264,6 +273,7 @@ pub fn pdf_to_images(
                     .push(format!("Page {}: render failed — {}", page_index + 1, e));
             }
         }
+        emit_progress_simple(app_handle, page_index + 1, total_pages, pdf_path);
     }
 
     result
@@ -287,7 +297,7 @@ pub struct PdfCompressResult {
 ///   from raw pixel data using Width/Height/ColorSpace → encode as JPEG
 ///
 /// Size guard: if the output is larger than the original, copies the original.
-pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompressResult {
+pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str, app_handle: &tauri::AppHandle) -> PdfCompressResult {
     let mut result = PdfCompressResult {
         output_path: String::new(),
         original_size: 0,
@@ -312,12 +322,13 @@ pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompres
     };
 
     let object_ids: Vec<lopdf::ObjectId> = doc.objects.keys().copied().collect();
+    let total_objects = object_ids.len();
     let mut images_replaced: usize = 0;
 
-    for obj_id in object_ids {
+    for (idx, obj_id) in object_ids.iter().enumerate() {
         // --- Phase 1: extract image metadata + decompressed content (clone) ---
         let image_info = {
-            let stream = match doc.get_object(obj_id).and_then(|o| o.as_stream()) {
+            let stream = match doc.get_object(*obj_id).and_then(|o| o.as_stream()) {
                 Ok(s) => s,
                 Err(_) => continue,
             };
@@ -425,10 +436,13 @@ pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str) -> PdfCompres
                         ]),
                         jpeg_data,
                     );
-                    doc.objects.insert(obj_id, Object::Stream(new_stream));
+                    doc.objects.insert(*obj_id, Object::Stream(new_stream));
                     images_replaced += 1;
                 }
             }
+        }
+        if idx % 20 == 0 || idx + 1 == total_objects {
+            emit_progress_simple(app_handle, idx + 1, total_objects, pdf_path);
         }
     }
 

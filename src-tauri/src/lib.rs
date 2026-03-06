@@ -193,6 +193,7 @@ async fn convert_images(
 
 #[tauri::command]
 async fn extract_pdf_images(
+    app_handle: tauri::AppHandle,
     pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     output_dir: String,
@@ -209,6 +210,7 @@ async fn extract_pdf_images(
             &output_dir,
             &pdfium_lib_path,
             output_stem.as_deref(),
+            &app_handle,
         )
     })
     .await
@@ -343,13 +345,14 @@ async fn add_image_watermark(
 
 #[tauri::command]
 async fn images_to_pdf(
+    app_handle: tauri::AppHandle,
     input_paths: Vec<String>,
     output_path: String,
 ) -> Result<ImagesToPdfResult, String> {
     validate_path(&output_path)?;
     validate_paths(&input_paths)?;
     let result =
-        tokio::task::spawn_blocking(move || pdf_ops::images_to_pdf(input_paths, &output_path))
+        tokio::task::spawn_blocking(move || pdf_ops::images_to_pdf(input_paths, &output_path, &app_handle))
             .await
             .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
@@ -401,13 +404,14 @@ async fn generate_pdf_thumbnails(
 
 #[tauri::command]
 async fn merge_to_pdf(
+    app_handle: tauri::AppHandle,
     items: Vec<PdfBuilderItem>,
     options: MergePdfOptions,
 ) -> Result<MergePdfResult, String> {
     validate_path(&options.output_path)?;
     let item_paths: Vec<String> = items.iter().map(|i| i.source_path.clone()).collect();
     validate_paths(&item_paths)?;
-    let result = tokio::task::spawn_blocking(move || pdf_builder_ops::merge_to_pdf(items, options))
+    let result = tokio::task::spawn_blocking(move || pdf_builder_ops::merge_to_pdf(items, options, &app_handle))
         .await
         .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)
@@ -473,6 +477,7 @@ async fn crop_images(
 
 #[tauri::command]
 async fn pdf_to_images(
+    app_handle: tauri::AppHandle,
     pdfium: tauri::State<'_, PdfiumPath>,
     pdf_path: String,
     output_dir: String,
@@ -492,6 +497,7 @@ async fn pdf_to_images(
             &format,
             dpi,
             output_stem.as_deref(),
+            &app_handle,
         )
     })
     .await
@@ -501,6 +507,7 @@ async fn pdf_to_images(
 
 #[tauri::command]
 async fn split_pdf(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     ranges: String,
     output_dir: String,
@@ -509,7 +516,7 @@ async fn split_pdf(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir, output_stem.as_deref())
+        pdf_split_ops::split_pdf(&pdf_path, &ranges, &output_dir, output_stem.as_deref(), &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -526,6 +533,7 @@ async fn extract_palette(image_path: String, num_colors: usize) -> Result<Palett
 
 #[tauri::command]
 async fn compress_pdf_cmd(
+    app_handle: tauri::AppHandle,
     pdf_path: String,
     quality: u8,
     output_dir: String,
@@ -533,7 +541,7 @@ async fn compress_pdf_cmd(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let result =
-        tokio::task::spawn_blocking(move || pdf_ops::compress_pdf(&pdf_path, quality, &output_dir))
+        tokio::task::spawn_blocking(move || pdf_ops::compress_pdf(&pdf_path, quality, &output_dir, &app_handle))
             .await
             .map_err(|e| format!("Task failed: {}", e))?;
     Ok(result)

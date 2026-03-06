@@ -60,11 +60,11 @@ export function WatermarkTab() {
         multiple: false,
         filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "svg"] }],
       });
-      if (selected) {
-        setLogoPath(selected as string);
+      if (typeof selected === "string") {
+        setLogoPath(selected);
       }
-    } catch (err) {
-      console.error("Dialog error:", err);
+    } catch {
+      // Dialog cancelled — no notification needed
     }
   }, []);
 

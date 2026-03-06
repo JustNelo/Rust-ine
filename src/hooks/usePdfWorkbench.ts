@@ -143,6 +143,8 @@ export function usePdfWorkbench() {
   const pagesRef = useRef(pages);
   useEffect(() => { pagesRef.current = pages; }, [pages]);
 
+  const abortRef = useRef<AbortController | null>(null);
+
   // --- Snapshot: capture initial state when pages are first loaded ---
   const captureSnapshot = useCallback((pageList: BuilderPage[]) => {
     const sig = pageList.map((p) => `${p.sourcePath}:${p.pageNumber}`).join("|");
@@ -188,6 +190,14 @@ export function usePdfWorkbench() {
 
   const addFiles = useCallback(async (paths: string[]) => {
     setResult(null);
+
+    // Cancel any in-progress thumbnail loading
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     const imagePaths = paths.filter(isImageFile);
     const pdfPaths = paths.filter(isPdfFile);
 
@@ -213,6 +223,7 @@ export function usePdfWorkbench() {
 
     // For PDFs: use paginated thumbnail loading
     for (const pdfPath of pdfPaths) {
+      if (controller.signal.aborted) break;
       setLoadingThumbnails(true);
       try {
         // Get page count first (instant)
@@ -239,6 +250,7 @@ export function usePdfWorkbench() {
 
         // Load thumbnails in batches
         for (let batch = 0; batch < pageCount; batch += THUMBNAIL_BATCH_SIZE) {
+          if (controller.signal.aborted) break;
           const startPage = batch + 1;
           const maxPages = Math.min(THUMBNAIL_BATCH_SIZE, pageCount - batch);
           try {
@@ -309,6 +321,10 @@ export function usePdfWorkbench() {
   }, [checkIfModified]);
 
   const clearAll = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
     setPages([]);
     setGridModified(false);
     initialSnapshotRef.current = "";

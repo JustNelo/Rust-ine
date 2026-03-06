@@ -39,7 +39,7 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
         {status === "available" && (
           <button
             onClick={onInstall}
-            className="rounded-md bg-indigo-500 dark:bg-neutral-100 px-3 py-1 text-[11px] font-medium text-white dark:text-neutral-900 shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:bg-indigo-600 dark:hover:bg-white transition-colors duration-300 cursor-pointer"
+            className="btn-primary-sm"
           >
             {t("updater.download")}
           </button>
@@ -47,7 +47,7 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
         {status !== "downloading" && (
           <button
             onClick={onDismiss}
-            className="rounded-md p-1 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
+            className="btn-icon"
           >
             <X className="h-3.5 w-3.5" strokeWidth={1.5} />
           </button>

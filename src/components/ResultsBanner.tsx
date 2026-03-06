@@ -52,7 +52,7 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
           {outputDir && (
             <button
               onClick={() => revealItemInDir(outputDir)}
-              className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/6 dark:hover:bg-white/4 hover:text-neutral-900 dark:hover:text-white transition-colors duration-200 cursor-pointer"
+              className="btn-ghost"
             >
               <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
               {t("label.open_output_folder")}

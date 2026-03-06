@@ -117,11 +117,7 @@ export function ResizeTab() {
             <button
               key={opt.value}
               onClick={() => setMode(opt.value)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer ${
-                mode === opt.value
-                  ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-400/25"
-                  : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
-              }`}
+              className={`btn-toggle ${mode === opt.value ? "btn-toggle-active" : ""}`}
             >
               {t(opt.labelKey)}
             </button>

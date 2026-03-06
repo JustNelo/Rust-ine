@@ -47,7 +47,7 @@ export function GlobalProgressBar() {
       <button
         onClick={handleCancel}
         data-cancel-button
-        className="rounded-lg p-1.5 text-neutral-500 hover:text-red-400 hover:bg-red-400/10 transition-colors duration-200 cursor-pointer"
+        className="btn-icon hover:text-red-400! hover:bg-red-400/10!"
         title={t("action.cancel")}
       >
         <X className="h-4 w-4" strokeWidth={1.5} />

@@ -91,11 +91,7 @@ export function QrCodeTab() {
             <button
               key={s}
               onClick={() => setSize(s)}
-              className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer ${
-                size === s
-                  ? "border-indigo-400/25 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
-                  : "border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
-              }`}
+              className={`btn-toggle ${size === s ? "btn-toggle-active" : ""}`}
             >
               {s}px
             </button>

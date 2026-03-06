@@ -47,7 +47,7 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
             {entries.length > 0 && (
               <button
                 onClick={handleClear}
-                className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-red-400 hover:bg-red-500/10 transition-colors duration-200 cursor-pointer"
+                className="btn-ghost-danger"
               >
                 <Trash2 className="h-3 w-3" strokeWidth={1.5} />
                 {t("history.clear")}
@@ -55,7 +55,7 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
             )}
             <button
               onClick={onClose}
-              className="rounded-full p-1 hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
+              className="btn-icon"
             >
               <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
             </button>

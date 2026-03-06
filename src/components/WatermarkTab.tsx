@@ -156,12 +156,7 @@ export function WatermarkTab() {
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={cn(
-              "flex items-center gap-2 flex-1 justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer",
-              mode === m
-                ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-400/25"
-                : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
-            )}
+            className={cn("btn-toggle", mode === m && "btn-toggle-active")}
           >
             {m === "text" ? (
               <Type className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -276,11 +271,7 @@ export function WatermarkTab() {
               <button
                 key={opt.value}
                 onClick={() => setPosition(opt.value)}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer ${
-                  position === opt.value
-                    ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-400/25"
-                    : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
-                }`}
+                className={`btn-toggle ${position === opt.value ? "btn-toggle-active" : ""}`}
               >
                 {t(opt.labelKey)}
               </button>

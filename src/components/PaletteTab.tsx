@@ -266,22 +266,14 @@ export function PaletteTab() {
         <div className="flex gap-2">
           <button
             onClick={() => setMode("palette")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer ${
-              mode === "palette"
-                ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-400/25"
-                : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
-            }`}
+            className={`btn-toggle ${mode === "palette" ? "btn-toggle-active" : ""}`}
           >
             <Pipette className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t("label.palette_extract")}
           </button>
           <button
             onClick={() => setMode("eyedropper")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer ${
-              mode === "eyedropper"
-                ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-400/25"
-                : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
-            }`}
+            className={`btn-toggle ${mode === "eyedropper" ? "btn-toggle-active" : ""}`}
           >
             <Crosshair className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t("label.eyedropper")}

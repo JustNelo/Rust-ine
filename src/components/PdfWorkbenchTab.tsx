@@ -354,23 +354,13 @@ export function PdfWorkbenchTab() {
       <div className="flex gap-2">
         <button
           onClick={() => setMode("workbench")}
-          className={cn(
-            "flex-1 rounded-xl px-4 py-2.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
-            mode === "workbench"
-              ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-              : "bg-black/5 dark:bg-white/3 text-neutral-700 dark:text-neutral-300 border-black/12 dark:border-white/8 hover:bg-black/8 dark:hover:bg-white/6"
-          )}
+          className={cn("btn-toggle", mode === "workbench" && "btn-toggle-active")}
         >
           {t("pdf_tool.workbench_mode")}
         </button>
         <button
           onClick={() => setMode("unlock")}
-          className={cn(
-            "flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
-            mode === "unlock"
-              ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-              : "bg-black/5 dark:bg-white/3 text-neutral-700 dark:text-neutral-300 border-black/12 dark:border-white/8 hover:bg-black/8 dark:hover:bg-white/6"
-          )}
+          className={cn("btn-toggle", mode === "unlock" && "btn-toggle-active")}
         >
           <Unlock className="h-3.5 w-3.5" strokeWidth={1.5} />
           {t("pdf_tool.unlock_mode")}
@@ -499,12 +489,7 @@ export function PdfWorkbenchTab() {
                       <button
                         key={action.id}
                         onClick={() => setActiveTool(action.id)}
-                        className={cn(
-                          "flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-medium transition-all duration-300 cursor-pointer border",
-                          isActive
-                            ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-                            : "bg-black/5 dark:bg-white/3 text-neutral-500 dark:text-neutral-400 border-black/12 dark:border-white/8 hover:bg-black/8 dark:hover:bg-white/6 hover:text-neutral-900 dark:hover:text-white"
-                        )}
+                        className={cn("btn-toggle flex-col gap-1.5! py-3! text-[11px]!", isActive && "btn-toggle-active")}
                       >
                         <Icon className={cn("h-4 w-4")} strokeWidth={1.5} />
                         {t(action.labelKey)}
@@ -560,12 +545,7 @@ export function PdfWorkbenchTab() {
                           <button
                             key={f}
                             onClick={() => setExportFormat(f)}
-                            className={cn(
-                              "rounded-md px-4 py-1.5 text-xs font-medium uppercase transition-all duration-300 cursor-pointer border",
-                              exportFormat === f
-                                ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-                                : "bg-black/7 dark:bg-white/5 border-black/15 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/12 dark:hover:bg-white/10 hover:border-black/25 dark:hover:border-white/20"
-                            )}
+                            className={cn("btn-toggle uppercase", exportFormat === f && "btn-toggle-active")}
                           >
                             {f}
                           </button>
@@ -581,12 +561,7 @@ export function PdfWorkbenchTab() {
                           <button
                             key={d}
                             onClick={() => setExportDpi(d)}
-                            className={cn(
-                              "rounded-md px-4 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
-                              exportDpi === d
-                                ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-                                : "bg-black/7 dark:bg-white/5 border-black/15 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/12 dark:hover:bg-white/10 hover:border-black/25 dark:hover:border-white/20"
-                            )}
+                            className={cn("btn-toggle", exportDpi === d && "btn-toggle-active")}
                           >
                             {t("label.dpi_value", { n: d })}
                           </button>
@@ -610,12 +585,7 @@ export function PdfWorkbenchTab() {
                         <button
                           key={m}
                           onClick={() => updateWm("mode", m)}
-                          className={cn(
-                            "flex items-center gap-2 flex-1 justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer border",
-                            wm.mode === m
-                              ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-                              : "bg-black/7 dark:bg-white/5 border-black/15 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/12 dark:hover:bg-white/10 hover:border-black/25 dark:hover:border-white/20"
-                          )}
+                          className={cn("btn-toggle", wm.mode === m && "btn-toggle-active")}
                         >
                           {m === "text" ? (
                             <Type className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -729,12 +699,7 @@ export function PdfWorkbenchTab() {
                           <button
                             key={opt.value}
                             onClick={() => updateWm("position", opt.value)}
-                            className={cn(
-                              "rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer border",
-                              wm.position === opt.value
-                                ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-                                : "bg-black/7 dark:bg-white/5 border-black/15 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/12 dark:hover:bg-white/10 hover:border-black/25 dark:hover:border-white/20"
-                            )}
+                            className={cn("btn-toggle", wm.position === opt.value && "btn-toggle-active")}
                           >
                             {t(opt.labelKey)}
                           </button>
@@ -764,12 +729,7 @@ export function PdfWorkbenchTab() {
                     <div>
                       <button
                         onClick={() => setPpCompress(!ppCompress)}
-                        className={cn(
-                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer w-full border",
-                          ppCompress
-                            ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-                            : "bg-black/5 dark:bg-white/3 text-neutral-700 dark:text-neutral-300 border-black/12 dark:border-white/8 hover:bg-black/8 dark:hover:bg-white/6"
-                        )}
+                        className={cn("btn-toggle w-full", ppCompress && "btn-toggle-active")}
                       >
                         <Zap className="h-3.5 w-3.5" strokeWidth={1.5} />
                         {t("pdf_tool.compress")}
@@ -802,12 +762,7 @@ export function PdfWorkbenchTab() {
                     <div>
                       <button
                         onClick={() => setPpProtect(!ppProtect)}
-                        className={cn(
-                          "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer w-full border",
-                          ppProtect
-                            ? "bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 dark:border-indigo-400/25"
-                            : "bg-black/5 dark:bg-white/3 text-neutral-700 dark:text-neutral-300 border-black/12 dark:border-white/8 hover:bg-black/8 dark:hover:bg-white/6"
-                        )}
+                        className={cn("btn-toggle w-full", ppProtect && "btn-toggle-active")}
                       >
                         <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
                         {t("pdf_tool.protect")}

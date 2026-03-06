@@ -36,6 +36,165 @@
   --color-glow: rgba(255, 255, 255, 0.06);
 }
 
+/* ─── Button Design System ─── */
+
+/* Primary — main CTA (indigo solid, inverts in dark) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 300ms;
+  background: #6366f1;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(99,102,241,0.35);
+}
+.btn-primary:hover { background: #4f46e5; box-shadow: 0 0 28px rgba(99,102,241,0.5); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+[data-theme="dark"] .btn-primary { background: #f5f5f5; color: #171717; box-shadow: 0 0 20px rgba(99,102,241,0.35); }
+[data-theme="dark"] .btn-primary:hover { background: #fff; }
+
+/* Primary small — compact CTA for banners/inline */
+.btn-primary-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 300ms;
+  background: #6366f1;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(99,102,241,0.35);
+}
+.btn-primary-sm:hover { background: #4f46e5; }
+[data-theme="dark"] .btn-primary-sm { background: #f5f5f5; color: #171717; }
+[data-theme="dark"] .btn-primary-sm:hover { background: #fff; }
+
+/* Toggle — segmented control buttons (lang, theme, format) */
+.btn-toggle {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 300ms;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: rgba(0,0,0,0.04);
+  color: #525252;
+}
+.btn-toggle:hover {
+  background: rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.18);
+}
+[data-theme="dark"] .btn-toggle {
+  border-color: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #d4d4d4;
+}
+[data-theme="dark"] .btn-toggle:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.15);
+}
+
+/* Toggle active state */
+.btn-toggle-active {
+  border-color: rgba(99,102,241,0.30) !important;
+  background: rgba(99,102,241,0.10) !important;
+  color: #4f46e5 !important;
+  box-shadow: 0 0 16px rgba(99,102,241,0.15);
+}
+[data-theme="dark"] .btn-toggle-active {
+  border-color: rgba(255,255,255,0.12) !important;
+  background: rgba(255,255,255,0.06) !important;
+  color: #fff !important;
+  box-shadow: 0 0 16px rgba(99,102,241,0.2);
+}
+
+/* Ghost — text-like buttons (back, skip, links) */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 200ms;
+  background: transparent;
+  color: #737373;
+}
+.btn-ghost:hover { background: rgba(0,0,0,0.05); color: #171717; }
+[data-theme="dark"] .btn-ghost { color: #737373; }
+[data-theme="dark"] .btn-ghost:hover { background: rgba(255,255,255,0.04); color: #fff; }
+
+/* Ghost danger — destructive ghost (clear, delete) */
+.btn-ghost-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms;
+  background: transparent;
+  color: #f87171;
+}
+.btn-ghost-danger:hover { background: rgba(248,113,113,0.1); }
+
+/* Icon button — square icon-only (close, minimize) */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: all 200ms;
+  background: transparent;
+  color: #a3a3a3;
+}
+.btn-icon:hover { background: rgba(0,0,0,0.06); color: #525252; }
+[data-theme="dark"] .btn-icon { color: #737373; }
+[data-theme="dark"] .btn-icon:hover { background: rgba(255,255,255,0.06); color: #fff; }
+
+/* Pill — small inline actions (change, open in explorer) */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.625rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 200ms;
+  background: rgba(0,0,0,0.06);
+  color: #737373;
+}
+.btn-pill:hover { background: rgba(0,0,0,0.10); color: #171717; }
+[data-theme="dark"] .btn-pill { background: rgba(255,255,255,0.06); color: #a3a3a3; }
+[data-theme="dark"] .btn-pill:hover { background: rgba(255,255,255,0.10); color: #fff; }
+
 body {
   background-color: #f9fafb;
   color: #171717;
@@ -74,3 +233,103 @@ body {
   50% { transform: translateX(0%); }
   100% { transform: translateX(100%); }
 }
+
+/* ─── Onboarding Animations ─── */
+
+/* Aurora mesh — 3 radial-gradient layers drifting slowly */
+@keyframes ob-aurora {
+  0%   { background-position: 0% 50%, 100% 50%, 50% 100%; }
+  50%  { background-position: 100% 50%, 0% 50%, 50% 0%; }
+  100% { background-position: 0% 50%, 100% 50%, 50% 100%; }
+}
+
+.ob-aurora {
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 40%, rgba(99,102,241,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 80% 60%, rgba(129,140,248,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 40% at 50% 80%, rgba(99,102,241,0.05) 0%, transparent 70%);
+  background-size: 200% 200%, 200% 200%, 200% 200%;
+  animation: ob-aurora 12s ease-in-out infinite;
+}
+
+/* Morph transitions — scale + fade */
+@keyframes ob-morph-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.ob-morph-in {
+  animation: ob-morph-in 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Word-by-word reveal */
+@keyframes ob-word-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger cards */
+@keyframes ob-card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ob-stagger-1 { animation: ob-card-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both; }
+.ob-stagger-2 { animation: ob-card-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 250ms both; }
+.ob-stagger-3 { animation: ob-card-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 400ms both; }
+
+/* Orbit ring rotation */
+@keyframes ob-orbit-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Orbit dot glow */
+@keyframes ob-orbit-dot-pulse {
+  0%, 100% { opacity: 0.6; box-shadow: 0 0 6px 2px rgba(129,140,248,0.3); }
+  50%      { opacity: 1;   box-shadow: 0 0 12px 4px rgba(129,140,248,0.5); }
+}
+
+/* Progress dot glow */
+@keyframes ob-dot-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(129,140,248,0); }
+  50%      { box-shadow: 0 0 8px 3px rgba(129,140,248,0.35); }
+}
+
+.ob-dot-active {
+  animation: ob-dot-glow 2s ease-in-out infinite;
+}
+
+/* Floating particles — dust in light */
+@keyframes ob-particle-float {
+  0%   { transform: translateY(0) scale(1); opacity: var(--ob-p-opacity, 0.12); }
+  50%  { opacity: calc(var(--ob-p-opacity, 0.12) * 1.8); }
+  100% { transform: translateY(calc(var(--ob-p-travel, -50px))) scale(0.6); opacity: 0; }
+}
+
+.ob-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, var(--ob-p-opacity, 0.12));
+  animation: ob-particle-float var(--ob-p-dur, 6s) ease-in-out infinite;
+  animation-delay: var(--ob-p-delay, 0s);
+  pointer-events: none;
+}
+
+/* Scale in for final step elements */
+@keyframes ob-scale-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.ob-scale-in {
+  animation: ob-scale-in 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Indigo glow pulse — reusable */
+@keyframes ob-glow-pulse {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.1); }
+}
+
+.ob-glow-pulse { animation: ob-glow-pulse 3s ease-in-out infinite; }

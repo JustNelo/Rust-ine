@@ -8,6 +8,7 @@ import { ResultsBanner } from "./ResultsBanner";
 import { ActionButton } from "./ui/ActionButton";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 import { safeAssetUrl } from "../lib/utils";
 import type { BatchProgress, ProcessingResult } from "../types";
@@ -47,6 +48,7 @@ export function CropTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [lastOutputDir, setLastOutputDir] = useState("");
@@ -288,6 +290,10 @@ export function CropTab() {
 
       setResults(result.results);
 
+      const successCount = result.results.filter((r) => r.success).length;
+      const failCount = result.results.filter((r) => !r.success).length;
+      addEntry({ tabId: "crop", filesCount: result.total, successCount, failCount, outputDir });
+
       if (result.completed === result.total) {
         toast.success(t("toast.crop_success", { n: result.completed }));
       } else if (result.completed > 0) {
@@ -302,7 +308,7 @@ export function CropTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, pixelRect, getOutputDir, t]);
+  }, [files, pixelRect, getOutputDir, addEntry, t]);
 
   // ── Render ───────────────────────────────────────────────────────────
   return (

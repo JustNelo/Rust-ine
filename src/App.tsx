@@ -48,6 +48,7 @@ import { OnboardingModal } from "./components/OnboardingModal";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
 import { useAutoUpdate } from "./hooks/useAutoUpdate";
+import { useTheme } from "./hooks/useTheme";
 import { useT } from "./i18n/i18n";
 import type { TabId } from "./types";
 import "./App.css";
@@ -157,6 +158,7 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
 function App() {
   const { t } = useT();
   const { status: updateStatus, version: updateVersion, install: installUpdate, dismiss: dismissUpdate } = useAutoUpdate();
+  const { theme } = useTheme();
   const [appVersion, setAppVersion] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("compress");
   const [isLoading, setIsLoading] = useState(true);
@@ -193,12 +195,12 @@ function App() {
   });
 
   return (
-    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-neutral-950">
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-gray-50 dark:bg-neutral-950">
       {/* ── Ambient background blobs ── */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-125 w-125 rounded-full bg-indigo-900 mix-blend-screen filter blur-[120px] opacity-30" />
-        <div className="absolute top-1/2 right-[-10%] h-100 w-100 rounded-full bg-neutral-800 mix-blend-screen filter blur-[100px] opacity-20" />
-        <div className="absolute bottom-[-15%] left-1/3 h-87.5 w-87.5 rounded-full bg-indigo-900 mix-blend-screen filter blur-[100px] opacity-20" />
+        <div className="absolute -top-40 -left-40 h-125 w-125 rounded-full bg-indigo-200 dark:bg-indigo-900 mix-blend-screen filter blur-[120px] opacity-30" />
+        <div className="absolute top-1/2 right-[-10%] h-100 w-100 rounded-full bg-neutral-300 dark:bg-neutral-800 mix-blend-screen filter blur-[100px] opacity-20" />
+        <div className="absolute bottom-[-15%] left-1/3 h-87.5 w-87.5 rounded-full bg-indigo-200 dark:bg-indigo-900 mix-blend-screen filter blur-[100px] opacity-20" />
       </div>
 
       <TitleBar />
@@ -206,7 +208,7 @@ function App() {
 
       <div className="relative z-10 flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="flex w-56 shrink-0 flex-col border-r border-indigo-400/10 bg-white/2 backdrop-blur-xl">
+        <aside className="flex w-56 shrink-0 flex-col border-r border-indigo-400/10 bg-white/80 dark:bg-white/2 backdrop-blur-xl">
           <nav className="flex flex-col gap-0.5 px-3 mt-1 flex-1 overflow-y-auto">
             {SIDEBAR_SECTIONS.map((section) => {
               const isCollapsed = collapsedSections[section.titleKey] ?? false;
@@ -216,11 +218,11 @@ function App() {
                     onClick={() => toggleSection(section.titleKey)}
                     className="flex w-full items-center justify-between px-3 pt-3 pb-1.5 cursor-pointer group"
                   >
-                    <span className="text-[9px] font-medium uppercase tracking-widest text-neutral-500 transition-colors group-hover:text-neutral-400">
+                    <span className="text-[9px] font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500 transition-colors group-hover:text-neutral-600 dark:group-hover:text-neutral-400">
                       {t(section.titleKey)}
                     </span>
                     <ChevronDown className={cn(
-                      "h-3 w-3 text-neutral-600 transition-transform duration-200",
+                      "h-3 w-3 text-neutral-400 dark:text-neutral-600 transition-transform duration-200",
                       isCollapsed && "-rotate-90"
                     )} />
                   </button>
@@ -234,11 +236,11 @@ function App() {
                         className={cn(
                           "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer w-full",
                           isActive
-                            ? "bg-indigo-500/15 text-white border-l-2 border-indigo-400"
-                            : "text-neutral-400 hover:bg-white/4 hover:text-neutral-200 border-l-2 border-transparent"
+                            ? "bg-indigo-500/15 text-indigo-900 dark:text-white border-l-2 border-indigo-400"
+                            : "text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-800 dark:hover:text-neutral-200 border-l-2 border-transparent"
                         )}
                       >
-                        <Icon className={cn("h-3.5 w-3.5", isActive ? "text-indigo-400" : "text-neutral-500")} strokeWidth={1.5} />
+                        <Icon className={cn("h-3.5 w-3.5", isActive ? "text-indigo-500 dark:text-indigo-400" : "text-neutral-400 dark:text-neutral-500")} strokeWidth={1.5} />
                         {t(tab.labelKey)}
                       </button>
                     );
@@ -251,24 +253,24 @@ function App() {
           <div className="px-3 py-3 space-y-2">
             <button
               onClick={() => setShowHistory(true)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-neutral-400 hover:bg-white/4 hover:text-neutral-200 transition-all duration-200 cursor-pointer"
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200 cursor-pointer"
             >
               <Clock className="h-4 w-4" strokeWidth={1.5} />
               {t("history.title")}
             </button>
             <button
               onClick={() => setShowSettings(true)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-neutral-400 hover:bg-white/4 hover:text-neutral-200 transition-all duration-200 cursor-pointer"
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200 cursor-pointer"
             >
               <Settings className="h-4 w-4" strokeWidth={1.5} />
               {t("settings.title")}
             </button>
-            <div className="relative overflow-hidden rounded-xl border border-white/8 bg-white/2 px-3 py-2">
+            <div className="relative overflow-hidden rounded-xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 px-3 py-2">
               <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/25 to-transparent" />
-              <p className="text-[10px] text-neutral-500 leading-relaxed">
+              <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-relaxed">
                 {t("sidebar.hint")}
               </p>
-              {appVersion && <p className="text-[9px] text-neutral-600 mt-1">v{appVersion}</p>}
+              {appVersion && <p className="text-[9px] text-neutral-400 dark:text-neutral-600 mt-1">v{appVersion}</p>}
             </div>
           </div>
         </aside>
@@ -277,10 +279,10 @@ function App() {
         <main className="flex-1 overflow-y-auto p-6 bg-transparent">
           <div className="mx-auto max-w-xl">
             <div className="mb-6">
-              <h2 className="text-lg font-light text-white">
+              <h2 className="text-lg font-light text-neutral-900 dark:text-white">
                 {t(TAB_LABEL_KEYS[activeTab])}
               </h2>
-              <p className="text-xs text-neutral-500 mt-1">
+              <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
                 {t(TAB_DESC_KEYS[activeTab])}
               </p>
             </div>
@@ -314,17 +316,17 @@ function App() {
 
       <Toaster
         position="bottom-right"
-        theme="dark"
+        theme={theme === "dark" ? "dark" : "light"}
         toastOptions={{
           style: {
-            background: 'rgba(255,255,255,0.03)',
+            background: theme === "dark" ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.9)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(99,102,241,0.2)',
+            border: theme === "dark" ? '1px solid rgba(99,102,241,0.2)' : '1px solid rgba(99,102,241,0.15)',
             borderRadius: '16px',
-            color: '#ffffff',
+            color: theme === "dark" ? '#ffffff' : '#1a1a1a',
             fontSize: '12px',
-            boxShadow: '0 8px 32px 0 rgba(0,0,0,0.3)',
+            boxShadow: theme === "dark" ? '0 8px 32px 0 rgba(0,0,0,0.3)' : '0 8px 32px 0 rgba(0,0,0,0.1)',
           },
         }}
       />

@@ -9,6 +9,7 @@ import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 import type { BatchProgress, ProcessingResult } from "../types";
 
@@ -18,6 +19,7 @@ export function CompressTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [format, setFormat] = useState<CompressFormat>("webp");
   const [quality, setQuality] = useState(80);
   const [loading, setLoading] = useState(false);
@@ -59,6 +61,10 @@ export function CompressTab() {
 
       setResults(result.results);
 
+      const successCount = result.results.filter((r) => r.success).length;
+      const failCount = result.results.filter((r) => !r.success).length;
+      addEntry({ tabId: "compress", filesCount: result.total, successCount, failCount, outputDir });
+
       if (result.completed === result.total) {
         toast.success(t("toast.compress_success", { n: result.completed, format: format.toUpperCase() }));
       } else if (result.completed > 0) {
@@ -71,7 +77,7 @@ export function CompressTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, format, quality, getOutputDir, t]);
+  }, [files, format, quality, getOutputDir, addEntry, t]);
 
   return (
     <div className="space-y-5">
@@ -90,7 +96,7 @@ export function CompressTab() {
       />
 
       <div className="space-y-2">
-        <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
           {t("label.output_format")}
         </label>
         <div className="flex gap-2">
@@ -100,8 +106,8 @@ export function CompressTab() {
               onClick={() => setFormat(f)}
               className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer ${
                 format === f
-                  ? "bg-indigo-500/10 text-indigo-300 border border-indigo-400/25"
-                  : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
+                  ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-400/25"
+                  : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
               }`}
             >
               {f.toUpperCase()}

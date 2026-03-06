@@ -6,6 +6,7 @@ import { DropZone } from "./DropZone";
 import { ImageGrid } from "./ImageGrid";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 
 interface FaviconResult {
@@ -18,6 +19,7 @@ export function FaviconTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FaviconResult | null>(null);
 
@@ -53,6 +55,8 @@ export function FaviconTab() {
 
       setResult(res);
 
+      addEntry({ tabId: "favicon", filesCount: 1, successCount: res.generated_files.length > 0 ? 1 : 0, failCount: res.errors.length, outputDir });
+
       if (res.generated_files.length > 0 && res.errors.length === 0) {
         toast.success(t("toast.favicon_success"));
       } else if (res.generated_files.length > 0) {
@@ -65,7 +69,7 @@ export function FaviconTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, getOutputDir, t]);
+  }, [files, getOutputDir, addEntry, t]);
 
   return (
     <div className="space-y-5">

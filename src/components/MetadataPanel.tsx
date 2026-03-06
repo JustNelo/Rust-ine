@@ -48,14 +48,14 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
   const hasDetails = metadata.bit_depth || metadata.color_type || metadata.dpi;
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl overflow-hidden">
+    <div className="rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between px-3 py-2 hover:bg-white/4 transition-colors duration-200 cursor-pointer"
+        className="flex w-full items-center justify-between px-3 py-2 hover:bg-black/4 dark:hover:bg-white/4 transition-colors duration-200 cursor-pointer"
       >
         <div className="flex items-center gap-2 min-w-0">
           <Eye className="h-3.5 w-3.5 text-neutral-400 shrink-0" strokeWidth={1.5} />
-          <span className="text-xs font-medium text-white truncate">
+          <span className="text-xs font-medium text-neutral-900 dark:text-white truncate">
             {fileName}
           </span>
           <span className="text-[10px] text-neutral-500 shrink-0">
@@ -81,7 +81,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
       </button>
 
       {expanded && (
-        <div className="border-t border-white/8 px-3 py-2 space-y-3">
+        <div className="border-t border-black/8 dark:border-white/8 px-3 py-2 space-y-3">
           {/* Image details: bit depth, color type, DPI */}
           {hasDetails && (
             <div>
@@ -95,7 +95,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {metadata.color_type && (
                   <div className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{t("info.color_type")}</span>
-                    <span className="text-[10px] text-white font-mono text-right truncate">
+                    <span className="text-[10px] text-neutral-900 dark:text-white font-mono text-right truncate">
                       {metadata.color_type}
                     </span>
                   </div>
@@ -103,7 +103,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {metadata.bit_depth && (
                   <div className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{t("info.bit_depth")}</span>
-                    <span className="text-[10px] text-white font-mono text-right truncate">
+                    <span className="text-[10px] text-neutral-900 dark:text-white font-mono text-right truncate">
                       {metadata.bit_depth} bit
                     </span>
                   </div>
@@ -111,7 +111,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {metadata.dpi && (
                   <div className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{t("info.dpi")}</span>
-                    <span className="text-[10px] text-white font-mono text-right truncate">
+                    <span className="text-[10px] text-neutral-900 dark:text-white font-mono text-right truncate">
                       {metadata.dpi[0]}×{metadata.dpi[1]}
                     </span>
                   </div>
@@ -132,7 +132,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {cameraEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{e.tag}</span>
-                    <span className="text-[10px] text-white font-mono text-right truncate">
+                    <span className="text-[10px] text-neutral-900 dark:text-white font-mono text-right truncate">
                       {e.value}
                     </span>
                   </div>
@@ -153,7 +153,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {shootingEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{e.tag}</span>
-                    <span className="text-[10px] text-white font-mono text-right truncate">
+                    <span className="text-[10px] text-neutral-900 dark:text-white font-mono text-right truncate">
                       {e.value}
                     </span>
                   </div>
@@ -174,7 +174,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {gpsEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{e.tag}</span>
-                    <span className="text-[10px] text-neutral-300 font-mono text-right truncate">
+                    <span className="text-[10px] text-neutral-600 dark:text-neutral-300 font-mono text-right truncate">
                       {e.value}
                     </span>
                   </div>
@@ -195,7 +195,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {otherEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{e.tag}</span>
-                    <span className="text-[10px] text-white font-mono text-right truncate">
+                    <span className="text-[10px] text-neutral-900 dark:text-white font-mono text-right truncate">
                       {e.value}
                     </span>
                   </div>

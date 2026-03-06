@@ -9,6 +9,7 @@ import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 import type { BatchProgress, ProcessingResult, ResizeMode } from "../types";
 
@@ -32,6 +33,7 @@ export function ResizeTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [mode, setMode] = useState<ResizeMode>("percentage");
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(600);
@@ -80,6 +82,10 @@ export function ResizeTab() {
 
       setResults(result.results);
 
+      const successCount = result.results.filter((r) => r.success).length;
+      const failCount = result.results.filter((r) => !r.success).length;
+      addEntry({ tabId: "resize", filesCount: result.total, successCount, failCount, outputDir });
+
       if (result.completed === result.total) {
         toast.success(t("toast.resize_success", { n: result.completed }));
       } else if (result.completed > 0) {
@@ -92,7 +98,7 @@ export function ResizeTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, mode, width, height, percentage, getOutputDir, t]);
+  }, [files, mode, width, height, percentage, getOutputDir, addEntry, t]);
 
   return (
     <div className="space-y-5">
@@ -113,8 +119,8 @@ export function ResizeTab() {
               onClick={() => setMode(opt.value)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer ${
                 mode === opt.value
-                  ? "bg-indigo-500/10 text-indigo-300 border border-indigo-400/25"
-                  : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
+                  ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-400/25"
+                  : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
               }`}
             >
               {t(opt.labelKey)}
@@ -123,7 +129,7 @@ export function ResizeTab() {
         </div>
 
         <div>
-          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-2 block">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2 block">
             {t("label.presets")}
           </label>
           <div className="flex gap-1.5 flex-wrap">
@@ -135,7 +141,7 @@ export function ResizeTab() {
                   setWidth(preset.w);
                   setHeight(preset.h);
                 }}
-                className="rounded-md bg-white/5 border border-white/10 px-2.5 py-1 text-[10px] font-medium text-neutral-400 hover:bg-white/10 hover:text-white transition-all duration-200 cursor-pointer"
+                className="rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-2.5 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white transition-all duration-200 cursor-pointer"
               >
                 {t(preset.labelKey)} ({preset.w}x{preset.h})
               </button>
@@ -163,9 +169,9 @@ export function ResizeTab() {
               min={1}
               value={width}
               onChange={(e) => setWidth(Number(e.target.value))}
-              className="flex-1 rounded-md border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:border-indigo-400/30 focus:outline-none"
+              className="flex-1 rounded-md border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white focus:border-indigo-400/30 focus:outline-none"
             />
-            <span className="text-xs text-neutral-500">{t("label.px")}</span>
+            <span className="text-xs text-neutral-400 dark:text-neutral-500">{t("label.px")}</span>
           </div>
         )}
 
@@ -177,9 +183,9 @@ export function ResizeTab() {
               min={1}
               value={height}
               onChange={(e) => setHeight(Number(e.target.value))}
-              className="flex-1 rounded-md border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:border-indigo-400/30 focus:outline-none"
+              className="flex-1 rounded-md border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white focus:border-indigo-400/30 focus:outline-none"
             />
-            <span className="text-xs text-neutral-500">{t("label.px")}</span>
+            <span className="text-xs text-neutral-400 dark:text-neutral-500">{t("label.px")}</span>
           </div>
         )}
       </div>

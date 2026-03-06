@@ -15,10 +15,10 @@ export const GlassModal = memo(function GlassModal({
   maxWidth = "max-w-md",
 }: GlassModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm">
       <div
         className={cn(
-          "relative w-full overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-6",
+          "relative w-full overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-white/90 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-6",
           maxWidth,
           className
         )}

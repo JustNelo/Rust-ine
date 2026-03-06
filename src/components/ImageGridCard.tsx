@@ -46,7 +46,7 @@ export const ImageGridCard = memo(function ImageGridCard({
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative aspect-square rounded-xl overflow-hidden border border-white/8 bg-white/3 cursor-grab active:cursor-grabbing"
+      className="group relative aspect-square rounded-xl overflow-hidden border border-black/8 dark:border-white/8 bg-black/3 dark:bg-white/3 cursor-grab active:cursor-grabbing"
     >
       {/* Remove button */}
       <button
@@ -71,7 +71,7 @@ export const ImageGridCard = memo(function ImageGridCard({
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onInfo(filePath)}
-          className="absolute bottom-6 right-1 z-10 rounded-full bg-black/50 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 backdrop-blur-sm"
+          className="absolute top-1 left-7 z-10 rounded-full bg-black/50 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 backdrop-blur-sm"
         >
           <Info className="h-3 w-3 text-white" strokeWidth={1.5} />
         </button>

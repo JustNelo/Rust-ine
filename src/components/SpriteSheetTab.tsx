@@ -6,6 +6,7 @@ import { DropZone } from "./DropZone";
 import { ImageGrid } from "./ImageGrid";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 
 interface SpriteSheetResult {
@@ -21,6 +22,7 @@ export function SpriteSheetTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [columns, setColumns] = useState(4);
   const [padding, setPadding] = useState(2);
   const [loading, setLoading] = useState(false);
@@ -60,6 +62,9 @@ export function SpriteSheetTab() {
 
       setResult(res);
 
+      const successCount = res.sprite_count > 0 ? 1 : 0;
+      addEntry({ tabId: "spritesheet", filesCount: files.length, successCount, failCount: res.errors.length, outputDir });
+
       if (res.sprite_count > 0 && res.errors.length === 0) {
         toast.success(t("toast.spritesheet_success", { n: res.sprite_count }));
       } else if (res.sprite_count > 0) {
@@ -72,7 +77,7 @@ export function SpriteSheetTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, columns, padding, getOutputDir, t]);
+  }, [files, columns, padding, getOutputDir, addEntry, t]);
 
   return (
     <div className="space-y-5">

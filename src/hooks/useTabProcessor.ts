@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { useFileSelection } from "./useFileSelection";
 import { useWorkspace } from "./useWorkspace";
+import { useHistory } from "./useHistory";
 import { useT } from "../i18n/i18n";
 import type { TabId, BatchProgress, ProcessingResult } from "../types";
 
@@ -22,6 +23,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
   const { t } = useT();
   const fileSelection = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [lastOutputDir, setLastOutputDir] = useState<string>("");
@@ -64,6 +66,10 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
 
         setResults(result.results);
 
+        const successCount = result.results.filter((r: ProcessingResult) => r.success).length;
+        const failCount = result.results.filter((r: ProcessingResult) => !r.success).length;
+        addEntry({ tabId, filesCount: result.total, successCount, failCount, outputDir });
+
         if (result.completed === result.total) {
           toast.success(successMessage);
         } else if (result.completed > 0) {
@@ -82,7 +88,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
         setLoading(false);
       }
     },
-    [fileSelection.files, command, tabId, getOutputDir, acceptToast, t]
+    [fileSelection.files, command, tabId, getOutputDir, acceptToast, addEntry, t]
   );
 
   return {

@@ -10,6 +10,7 @@ import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 import { cn, safeAssetUrl } from "../lib/utils";
 import type { BatchProgress, ProcessingResult, WatermarkPosition } from "../types";
@@ -29,6 +30,7 @@ export function WatermarkTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [mode, setMode] = useState<WatermarkMode>("text");
   const [text, setText] = useState("");
   const [position, setPosition] = useState<WatermarkPosition>("center");
@@ -119,6 +121,10 @@ export function WatermarkTab() {
 
       setResults(result.results);
 
+      const successCount = result.results.filter((r) => r.success).length;
+      const failCount = result.results.filter((r) => !r.success).length;
+      addEntry({ tabId: "watermark", filesCount: result.total, successCount, failCount, outputDir });
+
       if (result.completed === result.total) {
         toast.success(t("toast.watermark_success", { n: result.completed }));
       } else if (result.completed > 0) {
@@ -131,7 +137,7 @@ export function WatermarkTab() {
     } finally {
       setLoading(false);
     }
-  }, [files, mode, text, logoPath, position, opacity, fontSize, textColor, logoScale, getOutputDir, t]);
+  }, [files, mode, text, logoPath, position, opacity, fontSize, textColor, logoScale, getOutputDir, addEntry, t]);
 
   return (
     <div className="space-y-5">

@@ -101,11 +101,11 @@ export const ImageGrid = memo(function ImageGrid({
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-3 space-y-3">
+      <div className="relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-3 space-y-3">
         <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
         <div className="relative flex items-center justify-between">
-          <span className="text-xs font-medium text-neutral-300">
+          <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
             {t("label.n_files_selected", { n: files.length })}
             <span className="text-neutral-500"> — {t("pdf_tool.drag_hint")}</span>
           </span>
@@ -113,7 +113,7 @@ export const ImageGrid = memo(function ImageGrid({
             onClick={onClear}
             data-clear-button
             title={`${t("label.clear_all")} (Ctrl+L)`}
-            className="text-xs text-neutral-500 hover:text-white transition-colors duration-200 cursor-pointer"
+            className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors duration-200 cursor-pointer"
           >
             {t("label.clear_all")}
           </button>
@@ -153,11 +153,11 @@ export const ImageGrid = memo(function ImageGrid({
       {/* Info modal */}
       {infoMetadata && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm"
           onClick={closeInfo}
         >
           <div
-            className="relative w-full max-w-md rounded-2xl overflow-hidden border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4"
+            className="relative w-full max-w-md rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 bg-white/90 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
@@ -167,7 +167,7 @@ export const ImageGrid = memo(function ImageGrid({
               </span>
               <button
                 onClick={closeInfo}
-                className="rounded-full p-1 hover:bg-white/6 transition-colors duration-200 cursor-pointer"
+                className="rounded-full p-1 hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
               >
                 <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
               </button>
@@ -180,26 +180,26 @@ export const ImageGrid = memo(function ImageGrid({
       {/* Fullscreen preview modal */}
       {previewSrc && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm"
           onClick={closePreview}
         >
           <div
-            className="relative max-w-[85vw] max-h-[85vh] rounded-2xl overflow-hidden border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
+            className="relative max-w-[85vw] max-h-[85vh] rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 bg-white/90 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
-              <span className="text-xs font-medium text-neutral-300 truncate max-w-md">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-black/8 dark:border-white/8">
+              <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-md">
                 {previewName}
               </span>
               <button
                 onClick={closePreview}
-                className="rounded-full p-1 hover:bg-white/6 transition-colors duration-200 cursor-pointer"
+                className="rounded-full p-1 hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
               >
                 <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
               </button>
             </div>
-            <div className="flex items-center justify-center p-4 bg-neutral-950">
+            <div className="flex items-center justify-center p-4 bg-neutral-100 dark:bg-neutral-950">
               <img
                 src={previewSrc}
                 alt={previewName}

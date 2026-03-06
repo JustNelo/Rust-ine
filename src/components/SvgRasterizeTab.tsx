@@ -1,13 +1,15 @@
 import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { FileImage } from "lucide-react";
+import { FileImage, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { DropZone } from "./DropZone";
 import { ImageGrid } from "./ImageGrid";
 import { ActionButton } from "./ui/ActionButton";
 import { Slider } from "./ui/Slider";
 import { useFileSelection } from "../hooks/useFileSelection";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 
 interface SvgRasterizeResult {
@@ -22,10 +24,12 @@ export function SvgRasterizeTab() {
   const { t } = useT();
   const { files, addFiles, removeFile, clearFiles, reorderFiles } = useFileSelection();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [targetWidth, setTargetWidth] = useState(1024);
   const [outputFormat, setOutputFormat] = useState<SvgOutputFormat>("png");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SvgRasterizeResult | null>(null);
+  const [lastOutputDir, setLastOutputDir] = useState("");
 
   const handleFilesSelected = useCallback((paths: string[]) => {
     addFiles(paths.slice(0, 1));
@@ -50,6 +54,7 @@ export function SvgRasterizeTab() {
 
     setLoading(true);
     setResult(null);
+    setLastOutputDir(outputDir);
 
     try {
       const res = await invoke<SvgRasterizeResult>("rasterize_svg_cmd", {
@@ -60,13 +65,14 @@ export function SvgRasterizeTab() {
       });
 
       setResult(res);
+      addEntry({ tabId: "svg-rasterize", filesCount: 1, successCount: 1, failCount: 0, outputDir });
       toast.success(t("toast.svg_rasterize_success", { w: res.width, h: res.height }));
     } catch (err) {
       toast.error(`${t("status.rasterizing")} ${err}`);
     } finally {
       setLoading(false);
     }
-  }, [files, targetWidth, outputFormat, getOutputDir, t]);
+  }, [files, targetWidth, outputFormat, getOutputDir, addEntry, t]);
 
   return (
     <div className="space-y-5">
@@ -86,7 +92,7 @@ export function SvgRasterizeTab() {
       />
 
       <div className="space-y-2">
-        <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
           {t("label.output_format")}
         </label>
         <div className="flex gap-2">
@@ -96,8 +102,8 @@ export function SvgRasterizeTab() {
               onClick={() => setOutputFormat(f)}
               className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-300 cursor-pointer ${
                 outputFormat === f
-                  ? "bg-indigo-500/10 text-indigo-300 border border-indigo-400/25"
-                  : "bg-white/5 border border-white/10 text-neutral-200 hover:bg-white/10 hover:border-white/20"
+                  ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-400/25"
+                  : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
               }`}
             >
               {f.toUpperCase()}
@@ -126,11 +132,22 @@ export function SvgRasterizeTab() {
       />
 
       {result && (
-        <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-2">
+        <div className="relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-2">
           <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-          <p className="relative text-xs font-medium text-white">
-            {t("result.svg_rasterized", { w: result.width, h: result.height })}
-          </p>
+          <div className="relative flex items-center justify-between">
+            <p className="text-xs font-medium text-neutral-900 dark:text-white">
+              {t("result.svg_rasterized", { w: result.width, h: result.height })}
+            </p>
+            {lastOutputDir && (
+              <button
+                onClick={() => revealItemInDir(lastOutputDir)}
+                className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-900 dark:hover:text-white transition-colors duration-200 cursor-pointer"
+              >
+                <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
+                {t("label.open_output_folder")}
+              </button>
+            )}
+          </div>
           <p className="text-[10px] text-neutral-500 truncate">
             {result.output_path}
           </p>

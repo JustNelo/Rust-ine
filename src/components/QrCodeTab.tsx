@@ -4,6 +4,7 @@ import { QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { ActionButton } from "./ui/ActionButton";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useHistory } from "../hooks/useHistory";
 import { useT } from "../i18n/i18n";
 import { safeAssetUrl } from "../lib/utils";
 
@@ -18,6 +19,7 @@ const SIZE_OPTIONS = [256, 512, 1024, 2048];
 export function QrCodeTab() {
   const { t } = useT();
   const { getOutputDir } = useWorkspace();
+  const { addEntry } = useHistory();
   const [text, setText] = useState("");
   const [size, setSize] = useState(512);
   const [loading, setLoading] = useState(false);
@@ -46,6 +48,8 @@ export function QrCodeTab() {
 
       setResult(res);
 
+      addEntry({ tabId: "qrcode", filesCount: 1, successCount: res.output_path ? 1 : 0, failCount: res.errors.length, outputDir });
+
       if (res.output_path && res.errors.length === 0) {
         toast.success(t("toast.qr_success"));
       } else {
@@ -56,7 +60,7 @@ export function QrCodeTab() {
     } finally {
       setLoading(false);
     }
-  }, [text, size, getOutputDir, t]);
+  }, [text, size, getOutputDir, addEntry, t]);
 
   return (
     <div className="space-y-5">

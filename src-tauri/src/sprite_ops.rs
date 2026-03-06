@@ -1,4 +1,5 @@
 use image::{DynamicImage, GenericImageView, RgbaImage};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -61,21 +62,26 @@ pub fn generate_spritesheet(
 
     let cols = columns.max(1);
 
-    // Load all images
+    // Load all images in parallel
+    let loaded: Vec<(String, Result<DynamicImage, String>)> = image_paths
+        .par_iter()
+        .map(|path| {
+            let name = std::path::Path::new(path)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("sprite")
+                .to_string();
+            let img_result = image::open(path)
+                .map_err(|e| format!("Cannot open '{}': {}", path, e));
+            (name, img_result)
+        })
+        .collect();
+
     let mut images: Vec<(String, DynamicImage)> = Vec::new();
-    for path in image_paths {
-        match image::open(path) {
-            Ok(img) => {
-                let name = std::path::Path::new(path)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("sprite")
-                    .to_string();
-                images.push((name, img));
-            }
-            Err(e) => {
-                result.errors.push(format!("Cannot open '{}': {}", path, e));
-            }
+    for (name, img_result) in loaded {
+        match img_result {
+            Ok(img) => images.push((name, img)),
+            Err(e) => result.errors.push(e),
         }
     }
 

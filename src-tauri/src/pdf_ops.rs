@@ -121,9 +121,13 @@ pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str, app_handle: &t
     let total = input_paths.len();
 
     for (idx, input_path) in input_paths.iter().enumerate() {
-        // Use fit-to-image dimensions: read image to get size first
-        let img = match image::open(input_path) {
-            Ok(i) => i,
+        // Read dimensions from image header only — avoids full pixel decode
+        let (width, height) = match image::ImageReader::open(input_path)
+            .and_then(|r| Ok(r.with_guessed_format()?))
+            .map_err(|e| e.to_string())
+            .and_then(|r| r.into_dimensions().map_err(|e| e.to_string()))
+        {
+            Ok((w, h)) => (w as f32, h as f32),
             Err(e) => {
                 result
                     .errors
@@ -131,8 +135,6 @@ pub fn images_to_pdf(input_paths: Vec<String>, output_path: &str, app_handle: &t
                 continue;
             }
         };
-        let (width, height) = (img.width() as f32, img.height() as f32);
-        drop(img);
 
         match embed_image_as_pdf_page(&mut doc, pages_id, input_path, width, height, 0.0, 85) {
             Ok(page_id) => {
@@ -407,9 +409,9 @@ pub fn compress_pdf(pdf_path: &str, quality: u8, output_dir: &str, app_handle: &
             image::load_from_memory(&content).ok()
         } else {
             match colorspace.as_str() {
-                "DeviceRGB" => image::RgbImage::from_raw(width, height, content.clone())
+                "DeviceRGB" => image::RgbImage::from_raw(width, height, content)
                     .map(image::DynamicImage::ImageRgb8),
-                "DeviceGray" => image::GrayImage::from_raw(width, height, content.clone())
+                "DeviceGray" => image::GrayImage::from_raw(width, height, content)
                     .map(image::DynamicImage::ImageLuma8),
                 _ => image::load_from_memory(&content).ok(),
             }

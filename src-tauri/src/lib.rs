@@ -31,7 +31,7 @@ use sprite_ops::SpriteSheetResult;
 use svg_ops::SvgRasterizeResult;
 use std::path::{Component, Path};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use tauri::Manager;
 
 /// Resolved pdfium library path, computed once at startup and shared via tauri::State.
@@ -83,7 +83,8 @@ fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> 
 
 /// Returns the set of base directories the app is allowed to access.
 /// Mirrors the `assetProtocol.scope` from `tauri.conf.json`.
-fn allowed_base_dirs() -> Vec<std::path::PathBuf> {
+/// Computed once and cached for the lifetime of the process.
+static ALLOWED_BASE_DIRS: LazyLock<Vec<std::path::PathBuf>> = LazyLock::new(|| {
     let mut dirs = Vec::new();
     if let Some(home) = dirs::home_dir() {
         dirs.push(home);
@@ -98,7 +99,7 @@ fn allowed_base_dirs() -> Vec<std::path::PathBuf> {
     dirs.into_iter()
         .filter_map(|d| std::fs::canonicalize(&d).ok().or(Some(d)))
         .collect()
-}
+});
 
 fn validate_path(path: &str) -> Result<(), String> {
     let p = Path::new(path);
@@ -111,8 +112,7 @@ fn validate_path(path: &str) -> Result<(), String> {
     // If the path already exists, resolve symlinks and verify it's within allowed directories
     if p.exists() {
         if let Ok(canonical) = std::fs::canonicalize(p) {
-            let allowed = allowed_base_dirs();
-            let is_allowed = allowed.iter().any(|base| canonical.starts_with(base));
+            let is_allowed = ALLOWED_BASE_DIRS.iter().any(|base| canonical.starts_with(base));
             if !is_allowed {
                 return Err(format!(
                     "Path resolves outside allowed directories: {}",

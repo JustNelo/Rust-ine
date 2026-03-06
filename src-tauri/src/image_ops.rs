@@ -623,8 +623,8 @@ pub fn add_image_watermark(
                 image::imageops::FilterType::Lanczos3,
             );
 
-            // Apply opacity to the watermark alpha channel
-            let mut wm_with_opacity = resized_wm.clone();
+            // Apply opacity to the watermark alpha channel (mutate in-place, no clone needed)
+            let mut wm_with_opacity = resized_wm;
             for pixel in wm_with_opacity.pixels_mut() {
                 pixel[3] = (pixel[3] as f32 * opacity_clamped) as u8;
             }

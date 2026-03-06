@@ -1,4 +1,5 @@
 use exif::{In, Tag};
+use image::ImageDecoder;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -69,10 +70,13 @@ pub fn read_image_metadata(path: &str) -> Result<ImageMetadata, String> {
 
     let size = fs::metadata(path).map(|m| m.len()).unwrap_or(0);
 
-    // Decode image to extract color type and bit depth
-    let (bit_depth, color_type) = match image::open(path) {
-        Ok(img) => {
-            let ct = match img.color() {
+    // Extract color type and bit depth from the decoder header — avoids full pixel decode
+    let (bit_depth, color_type) = match image::ImageReader::open(path)
+        .and_then(|r| Ok(r.with_guessed_format()?))
+        .and_then(|r| r.into_decoder().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)))
+    {
+        Ok(decoder) => {
+            let ct = match decoder.color_type() {
                 image::ColorType::L8 => ("8", "Grayscale"),
                 image::ColorType::La8 => ("8", "Grayscale+Alpha"),
                 image::ColorType::Rgb8 => ("8", "RGB"),

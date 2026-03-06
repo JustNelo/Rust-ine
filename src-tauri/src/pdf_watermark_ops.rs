@@ -89,6 +89,10 @@ pub fn watermark_pdf_text(
 
     let total_pages = page_ids.len();
 
+    // Pre-create q/Q wrapper streams to isolate existing page CTM from watermark
+    let q_id = doc.add_object(Object::Stream(Stream::new(dictionary! {}, b"q\n".to_vec())));
+    let big_q_id = doc.add_object(Object::Stream(Stream::new(dictionary! {}, b"Q\n".to_vec())));
+
     for (idx, &page_id) in page_ids.iter().enumerate() {
         // Read page dimensions from MediaBox
         let (page_w, page_h) = get_page_dimensions(&doc, page_id);
@@ -131,9 +135,9 @@ pub fn watermark_pdf_text(
         let entries = vec![("ExtGState", "WmGs", gs_id), ("Font", "WmF1", font_id)];
         inject_page_resources(&mut doc, page_id, &entries);
 
-        // Append watermark content stream
+        // Append watermark content stream (wrap existing content in q/Q)
         if let Ok(&mut Object::Dictionary(ref mut page_dict)) = doc.get_object_mut(page_id) {
-            append_content_to_page(page_dict, content_id);
+            append_content_to_page(page_dict, q_id, big_q_id, content_id);
             result.page_count += 1;
         }
         emit_progress_simple(app_handle, idx + 1, total_pages, pdf_path);
@@ -286,6 +290,10 @@ pub fn watermark_pdf_image(
 
     let total_pages = page_ids.len();
 
+    // Pre-create q/Q wrapper streams to isolate existing page CTM from watermark
+    let q_id = doc.add_object(Object::Stream(Stream::new(dictionary! {}, b"q\n".to_vec())));
+    let big_q_id = doc.add_object(Object::Stream(Stream::new(dictionary! {}, b"Q\n".to_vec())));
+
     for (idx, &page_id) in page_ids.iter().enumerate() {
         let (page_w, page_h) = get_page_dimensions(&doc, page_id);
 
@@ -318,9 +326,9 @@ pub fn watermark_pdf_image(
         ];
         inject_page_resources(&mut doc, page_id, &entries);
 
-        // Append watermark content stream
+        // Append watermark content stream (wrap existing content in q/Q)
         if let Ok(&mut Object::Dictionary(ref mut page_dict)) = doc.get_object_mut(page_id) {
-            append_content_to_page(page_dict, content_id);
+            append_content_to_page(page_dict, q_id, big_q_id, content_id);
             result.page_count += 1;
         }
         emit_progress_simple(app_handle, idx + 1, total_pages, pdf_path);
@@ -482,22 +490,36 @@ fn add_entries_to_resources(
     }
 }
 
-/// Append a content stream reference to a page's Contents entry.
-/// Handles both single-reference and array Contents.
-fn append_content_to_page(page_dict: &mut lopdf::Dictionary, new_content_id: lopdf::ObjectId) {
+/// Append a watermark content stream to a page's Contents entry.
+/// Wraps the existing page content in q/Q (using pre-created stream objects)
+/// to isolate its graphics state, preventing the page's CTM from affecting
+/// the watermark rendering.
+fn append_content_to_page(
+    page_dict: &mut lopdf::Dictionary,
+    q_id: lopdf::ObjectId,
+    big_q_id: lopdf::ObjectId,
+    new_content_id: lopdf::ObjectId,
+) {
     match page_dict.get(b"Contents") {
         Ok(Object::Reference(existing_id)) => {
             let existing_id = *existing_id;
+            // q  [existing]  Q  [watermark]
             page_dict.set(
                 "Contents",
                 Object::Array(vec![
+                    Object::Reference(q_id),
                     Object::Reference(existing_id),
+                    Object::Reference(big_q_id),
                     Object::Reference(new_content_id),
                 ]),
             );
         }
         Ok(Object::Array(existing_arr)) => {
-            let mut new_arr = existing_arr.clone();
+            // q  [existing...]  Q  [watermark]
+            let mut new_arr = Vec::with_capacity(existing_arr.len() + 3);
+            new_arr.push(Object::Reference(q_id));
+            new_arr.extend(existing_arr.clone());
+            new_arr.push(Object::Reference(big_q_id));
             new_arr.push(Object::Reference(new_content_id));
             page_dict.set("Contents", Object::Array(new_arr));
         }

@@ -263,23 +263,19 @@ export function usePdfWorkbench() {
               }
             );
 
-            // Update placeholders with real thumbnails
+            // Update placeholders with real thumbnails (O(1) lookup via Map)
+            const thumbMap = new Map<number, string>();
+            for (const t of thumbnails) {
+              if (t.source_path === pdfPath && t.thumbnail_b64) {
+                thumbMap.set(t.page_number, `data:image/jpeg;base64,${t.thumbnail_b64}`);
+              }
+            }
             setPages((prev) =>
               prev.map((page) => {
                 if (page.sourcePath !== pdfPath || page.thumbnailLoaded) return page;
-                const match = thumbnails.find(
-                  (t) =>
-                    t.source_path === pdfPath &&
-                    t.page_number === page.pageNumber
-                );
-                if (match) {
-                  return {
-                    ...page,
-                    thumbnailSrc: match.thumbnail_b64
-                      ? `data:image/jpeg;base64,${match.thumbnail_b64}`
-                      : "",
-                    thumbnailLoaded: true,
-                  };
+                const src = thumbMap.get(page.pageNumber);
+                if (src !== undefined) {
+                  return { ...page, thumbnailSrc: src, thumbnailLoaded: true };
                 }
                 return page;
               })

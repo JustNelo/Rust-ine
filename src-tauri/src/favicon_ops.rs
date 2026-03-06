@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
+use crate::progress::emit_progress_simple;
 use crate::utils::{ensure_output_dir, file_stem as get_file_stem};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -102,7 +103,7 @@ fn generate_webmanifest() -> String {
     .to_string()
 }
 
-pub fn generate_favicons(image_path: &str, output_dir: &str) -> FaviconResult {
+pub fn generate_favicons(image_path: &str, output_dir: &str, app_handle: &tauri::AppHandle) -> FaviconResult {
     let mut result = FaviconResult {
         zip_path: String::new(),
         generated_files: Vec::new(),
@@ -140,6 +141,10 @@ pub fn generate_favicons(image_path: &str, output_dir: &str) -> FaviconResult {
     let mut zip = ZipWriter::new(zip_file);
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
+    // Total steps: PNG sizes + favicon.ico + site.webmanifest
+    let total_steps = FAVICON_SIZES.len() + 2;
+    let mut step = 0;
+
     // Generate PNG sizes
     for (filename, w, h) in FAVICON_SIZES {
         match resize_to_png_bytes(&img, *w, *h) {
@@ -158,6 +163,8 @@ pub fn generate_favicons(image_path: &str, output_dir: &str) -> FaviconResult {
                 result.errors.push(e);
             }
         }
+        step += 1;
+        emit_progress_simple(app_handle, step, total_steps, filename);
     }
 
     // Generate favicon.ico
@@ -175,6 +182,8 @@ pub fn generate_favicons(image_path: &str, output_dir: &str) -> FaviconResult {
             result.errors.push(format!("favicon.ico: {}", e));
         }
     }
+    step += 1;
+    emit_progress_simple(app_handle, step, total_steps, "favicon.ico");
 
     // Generate site.webmanifest
     let manifest = generate_webmanifest();
@@ -185,6 +194,8 @@ pub fn generate_favicons(image_path: &str, output_dir: &str) -> FaviconResult {
     } else {
         result.generated_files.push("site.webmanifest".to_string());
     }
+    step += 1;
+    emit_progress_simple(app_handle, step, total_steps, "site.webmanifest");
 
     if let Err(e) = zip.finish() {
         result.errors.push(format!("Cannot finalize ZIP: {}", e));

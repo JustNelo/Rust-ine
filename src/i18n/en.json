@@ -384,5 +384,15 @@
   "updater.restarting": "Restarting...",
   "updater.up_to_date": "You're up to date!",
   "updater.check": "Check for updates",
-  "updater.error": "Update failed. Try again later."
+  "updater.error": "Update failed. Try again later.",
+
+  "format.lossy": "Lossy",
+  "format.lossless": "Lossless",
+  "format.lossy_lossless": "Lossy/Lossless",
+  "format.uncompressed": "Uncompressed",
+  "format.alpha_yes": "Alpha ✓",
+  "format.alpha_no": "No alpha",
+  "label.n_pdfs": "{n} PDF(s)",
+  "label.n_images_count": "{n} image(s)",
+  "toast.copy_failed": "Failed to copy to clipboard."
 }

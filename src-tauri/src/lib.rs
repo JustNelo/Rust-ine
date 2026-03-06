@@ -11,6 +11,7 @@ mod qr_ops;
 mod rename_ops;
 mod sprite_ops;
 mod svg_ops;
+mod progress;
 mod utils;
 
 use color_ops::PaletteResult;
@@ -540,13 +541,14 @@ async fn compress_pdf_cmd(
 
 #[tauri::command]
 async fn generate_favicons(
+    app_handle: tauri::AppHandle,
     image_path: String,
     output_dir: String,
 ) -> Result<FaviconResult, String> {
     validate_path(&image_path)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        favicon_ops::generate_favicons(&image_path, &output_dir)
+        favicon_ops::generate_favicons(&image_path, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -555,6 +557,7 @@ async fn generate_favicons(
 
 #[tauri::command]
 async fn create_gif(
+    app_handle: tauri::AppHandle,
     image_paths: Vec<String>,
     delay_ms: u16,
     loop_count: u16,
@@ -564,7 +567,7 @@ async fn create_gif(
     validate_path(&output_dir)?;
     let delay_ms = delay_ms.max(10);
     let result = tokio::task::spawn_blocking(move || {
-        gif_ops::create_gif(&image_paths, delay_ms, loop_count, &output_dir)
+        gif_ops::create_gif(&image_paths, delay_ms, loop_count, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -573,6 +576,7 @@ async fn create_gif(
 
 #[tauri::command]
 async fn generate_spritesheet(
+    app_handle: tauri::AppHandle,
     image_paths: Vec<String>,
     columns: u32,
     padding: u32,
@@ -583,7 +587,7 @@ async fn generate_spritesheet(
     let columns = columns.clamp(1, 100);
     let padding = padding.min(200);
     let result = tokio::task::spawn_blocking(move || {
-        sprite_ops::generate_spritesheet(&image_paths, columns, padding, &output_dir)
+        sprite_ops::generate_spritesheet(&image_paths, columns, padding, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -682,6 +686,7 @@ async fn watermark_pdf_image_cmd(
 
 #[tauri::command]
 async fn bulk_rename_cmd(
+    app_handle: tauri::AppHandle,
     input_paths: Vec<String>,
     pattern: String,
     start_index: u32,
@@ -690,7 +695,7 @@ async fn bulk_rename_cmd(
     validate_paths(&input_paths)?;
     validate_path(&output_dir)?;
     let result = tokio::task::spawn_blocking(move || {
-        rename_ops::bulk_rename(&input_paths, &pattern, start_index, &output_dir)
+        rename_ops::bulk_rename(&input_paths, &pattern, start_index, &output_dir, &app_handle)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;

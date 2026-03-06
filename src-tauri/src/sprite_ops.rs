@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::progress::emit_progress_simple;
 use crate::utils::ensure_output_dir;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -36,6 +37,7 @@ pub fn generate_spritesheet(
     columns: u32,
     padding: u32,
     output_dir: &str,
+    app_handle: &tauri::AppHandle,
 ) -> SpriteSheetResult {
     let mut result = SpriteSheetResult {
         image_path: String::new(),
@@ -109,6 +111,7 @@ pub fn generate_spritesheet(
 
     let mut atlas_frames: Vec<(String, AtlasFrame)> = Vec::new();
 
+    let total_sprites = images.len();
     for (i, (name, img)) in images.iter().enumerate() {
         let col = (i as u32) % cols;
         let row = (i as u32) / cols;
@@ -140,6 +143,7 @@ pub fn generate_spritesheet(
         ));
 
         result.sprite_count += 1;
+        emit_progress_simple(app_handle, i + 1, total_sprites, name);
     }
 
     // Save spritesheet PNG

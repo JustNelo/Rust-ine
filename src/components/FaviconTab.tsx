@@ -96,7 +96,7 @@ export function FaviconTab() {
       </button>
 
       {result && (
-        <div className="mt-4 relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-3">
+        <div className="mt-4 relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-3">
           <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
           <div className="relative flex items-center gap-2">
             {result.errors.length === 0 ? (
@@ -104,7 +104,7 @@ export function FaviconTab() {
             ) : (
               <XCircle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
             )}
-            <span className="text-xs font-medium text-white">
+            <span className="text-xs font-medium text-neutral-900 dark:text-white">
               {t("result.favicons_generated")}
             </span>
           </div>
@@ -113,7 +113,7 @@ export function FaviconTab() {
             {result.generated_files.map((file) => (
               <span
                 key={file}
-                className="rounded-md bg-white/4 border border-white/8 px-2 py-1 text-[10px] font-mono text-neutral-300"
+                className="rounded-md bg-black/4 dark:bg-white/4 border border-black/8 dark:border-white/8 px-2 py-1 text-[10px] font-mono text-neutral-600 dark:text-neutral-300"
               >
                 {file}
               </span>

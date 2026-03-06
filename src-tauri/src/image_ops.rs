@@ -7,22 +7,15 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
-use tauri::Emitter;
 use webp::Encoder;
 
+use crate::progress::emit_progress;
 use crate::utils::{ensure_output_dir, file_size, file_stem, get_extension};
 
 /// Pixel margin from image edges for watermark placement.
 const WATERMARK_MARGIN_PX: i32 = 20;
 /// Pixel spacing between tiles in tiled watermark mode.
 const WATERMARK_TILE_SPACING_PX: i32 = 80;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct ProgressPayload {
-    completed: usize,
-    total: usize,
-    current_file: String,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProcessingResult {
@@ -281,27 +274,7 @@ fn build_result(
     }
 }
 
-fn emit_progress(
-    app_handle: &tauri::AppHandle,
-    processed: &AtomicUsize,
-    total: usize,
-    current_file: &str,
-) {
-    let done = processed.fetch_add(1, Ordering::Relaxed) + 1;
-    let filename = std::path::Path::new(current_file)
-        .file_name()
-        .and_then(|f| f.to_str())
-        .unwrap_or(current_file)
-        .to_string();
-    let _ = app_handle.emit(
-        "processing-progress",
-        ProgressPayload {
-            completed: done,
-            total,
-            current_file: filename,
-        },
-    );
-}
+// emit_progress is imported from crate::progress
 
 /// Generic batch processor — handles output dir creation, parallel iteration,
 /// progress events, and result aggregation. Each caller only provides its

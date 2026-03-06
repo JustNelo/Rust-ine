@@ -66,7 +66,7 @@ export function QrCodeTab() {
     <div className="space-y-5">
       {/* Text input */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
           {t("label.qr_content")}
         </label>
         <textarea
@@ -74,7 +74,7 @@ export function QrCodeTab() {
           onChange={(e) => { setText(e.target.value); setResult(null); }}
           placeholder={t("label.qr_placeholder")}
           rows={3}
-          className="w-full rounded-xl border border-white/8 bg-white/4 px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30 resize-none"
+          className="w-full rounded-xl border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-2 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30 resize-none"
         />
         <div className="flex justify-end">
           <span className="text-[10px] text-neutral-500">{text.length} chars</span>
@@ -83,7 +83,7 @@ export function QrCodeTab() {
 
       {/* Size selector */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
           {t("label.qr_size")}
         </label>
         <div className="flex gap-2">
@@ -93,8 +93,8 @@ export function QrCodeTab() {
               onClick={() => setSize(s)}
               className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer ${
                 size === s
-                  ? "border-indigo-400/25 bg-indigo-500/10 text-indigo-300"
-                  : "border-white/10 bg-white/5 text-neutral-200 hover:bg-white/10 hover:border-white/20"
+                  ? "border-indigo-400/25 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
+                  : "border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-neutral-700 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20"
               }`}
             >
               {s}px
@@ -114,9 +114,9 @@ export function QrCodeTab() {
 
       {/* QR preview */}
       {result && result.output_path && (
-        <div className="mt-4 relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 flex flex-col items-center gap-3">
+        <div className="mt-4 relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 flex flex-col items-center gap-3">
           <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-          <div className="relative rounded-xl overflow-hidden border border-white/8 bg-white p-2">
+          <div className="relative rounded-xl overflow-hidden border border-black/8 dark:border-white/8 bg-white p-2">
             <img
               src={safeAssetUrl(result.output_path, true)}
               alt="QR Code"

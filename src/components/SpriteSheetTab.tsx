@@ -92,7 +92,7 @@ export function SpriteSheetTab() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
             {t("label.columns")}
           </label>
           <input
@@ -101,11 +101,11 @@ export function SpriteSheetTab() {
             max={32}
             value={columns}
             onChange={(e) => setColumns(Number(e.target.value))}
-            className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
+            className="w-full rounded-lg border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+          <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
             {t("label.padding")}
           </label>
           <input
@@ -114,7 +114,7 @@ export function SpriteSheetTab() {
             max={64}
             value={padding}
             onChange={(e) => setPadding(Number(e.target.value))}
-            className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
+            className="w-full rounded-lg border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
           />
         </div>
       </div>
@@ -133,7 +133,7 @@ export function SpriteSheetTab() {
       </button>
 
       {result && result.sprite_count > 0 && (
-        <div className="mt-4 relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-3">
+        <div className="mt-4 relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-3">
           <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
           <div className="relative flex items-center gap-2">
             {result.errors.length === 0 ? (
@@ -141,7 +141,7 @@ export function SpriteSheetTab() {
             ) : (
               <XCircle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
             )}
-            <span className="text-xs font-medium text-white">
+            <span className="text-xs font-medium text-neutral-900 dark:text-white">
               {t("result.spritesheet_created", {
                 n: result.sprite_count,
                 w: result.sheet_width,
@@ -151,10 +151,10 @@ export function SpriteSheetTab() {
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            <span className="rounded-md bg-white/4 border border-white/8 px-2 py-1 text-[10px] font-mono text-neutral-300">
+            <span className="rounded-md bg-black/4 dark:bg-white/4 border border-black/8 dark:border-white/8 px-2 py-1 text-[10px] font-mono text-neutral-600 dark:text-neutral-300">
               spritesheet.png
             </span>
-            <span className="rounded-md bg-white/4 border border-white/8 px-2 py-1 text-[10px] font-mono text-neutral-300">
+            <span className="rounded-md bg-black/4 dark:bg-white/4 border border-black/8 dark:border-white/8 px-2 py-1 text-[10px] font-mono text-neutral-600 dark:text-neutral-300">
               spritesheet.json
             </span>
           </div>

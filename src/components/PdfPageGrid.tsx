@@ -60,8 +60,8 @@ export function PdfPageGrid({
     }
     const pdfs = pdfSources.size;
     if (pdfs > 0 && imageCount > 0) return t("pdf_tool.sources_summary", { pdfs, images: imageCount });
-    if (pdfs > 0) return `${pdfs} PDF(s)`;
-    if (imageCount > 0) return `${imageCount} image(s)`;
+    if (pdfs > 0) return t("label.n_pdfs", { n: pdfs });
+    if (imageCount > 0) return t("label.n_images_count", { n: imageCount });
     return "";
   }, [pages, t]);
 

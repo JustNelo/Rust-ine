@@ -8,13 +8,13 @@ import { useTabProcessor } from "../hooks/useTabProcessor";
 import { useT } from "../i18n/i18n";
 import type { OutputFormat } from "../types";
 
-const FORMAT_INFO: Record<string, { type: string; alpha: boolean }> = {
-  png: { type: "Lossless", alpha: true },
-  jpg: { type: "Lossy", alpha: false },
-  webp: { type: "Lossy/Lossless", alpha: true },
-  bmp: { type: "Uncompressed", alpha: false },
-  ico: { type: "Lossless", alpha: true },
-  tiff: { type: "Lossless", alpha: true },
+const FORMAT_INFO: Record<string, { typeKey: string; alpha: boolean }> = {
+  png: { typeKey: "format.lossless", alpha: true },
+  jpg: { typeKey: "format.lossy", alpha: false },
+  webp: { typeKey: "format.lossy_lossless", alpha: true },
+  bmp: { typeKey: "format.uncompressed", alpha: false },
+  ico: { typeKey: "format.lossless", alpha: true },
+  tiff: { typeKey: "format.lossless", alpha: true },
 };
 
 const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
@@ -83,16 +83,16 @@ export function ConvertTab() {
         {/* Format info badges */}
         <div className="flex items-center gap-2">
           <span className="rounded-md bg-black/4 dark:bg-white/4 border border-black/8 dark:border-white/8 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
-            {FORMAT_INFO[outputFormat]?.type}
+            {t(FORMAT_INFO[outputFormat]?.typeKey)}
           </span>
           {FORMAT_INFO[outputFormat]?.alpha && (
             <span className="rounded-md bg-green-500/10 border border-green-500/20 px-2 py-0.5 text-[10px] font-medium text-green-400">
-              Alpha ✓
+              {t("format.alpha_yes")}
             </span>
           )}
           {!FORMAT_INFO[outputFormat]?.alpha && (
             <span className="rounded-md bg-black/4 dark:bg-white/4 border border-black/8 dark:border-white/8 px-2 py-0.5 text-[10px] font-medium text-neutral-500 dark:text-neutral-600">
-              No alpha
+              {t("format.alpha_no")}
             </span>
           )}
         </div>

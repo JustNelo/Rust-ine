@@ -121,7 +121,7 @@ export function BulkRenameTab() {
 
       {/* Pattern input */}
       <div className="space-y-2">
-        <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
           {t("label.rename_pattern")}
         </label>
         <input
@@ -129,14 +129,14 @@ export function BulkRenameTab() {
           value={pattern}
           onChange={(e) => { setPattern(e.target.value); setResult(null); }}
           placeholder="{name}_{index}"
-          className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-xs text-white font-mono placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
+          className="w-full rounded-lg border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-2 text-xs text-neutral-900 dark:text-white font-mono placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
         />
         <div className="flex gap-1.5 flex-wrap">
           {TOKENS.map((token) => (
             <button
               key={token}
               onClick={() => setPattern((prev) => prev + token)}
-              className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[10px] font-mono text-neutral-500 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer"
+              className="rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-2 py-0.5 text-[10px] font-mono text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200 cursor-pointer"
             >
               {token}
             </button>
@@ -147,7 +147,7 @@ export function BulkRenameTab() {
 
       {/* Start index */}
       <div className="flex items-center gap-3">
-        <label className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
           {t("label.start_index")}
         </label>
         <input
@@ -155,13 +155,13 @@ export function BulkRenameTab() {
           min={0}
           value={startIndex}
           onChange={(e) => setStartIndex(Number(e.target.value))}
-          className="w-20 rounded-lg border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
+          className="w-20 rounded-lg border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-indigo-400/30"
         />
       </div>
 
       {/* Live preview */}
       {previewNames.length > 0 && (
-        <div className="rounded-xl border border-white/8 bg-white/2 backdrop-blur-xl p-3 space-y-1.5">
+        <div className="rounded-xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl p-3 space-y-1.5">
           <span className="text-[10px] font-medium text-neutral-500 uppercase tracking-widest">
             {t("label.rename_preview")}
           </span>
@@ -169,7 +169,7 @@ export function BulkRenameTab() {
             <div key={i} className="flex items-center gap-2 text-[11px]">
               <span className="text-neutral-500 truncate flex-1">{p.original}</span>
               <span className="text-neutral-500 shrink-0">&rarr;</span>
-              <span className="text-white font-mono truncate flex-1 text-right">{p.preview}</span>
+              <span className="text-neutral-900 dark:text-white font-mono truncate flex-1 text-right">{p.preview}</span>
             </div>
           ))}
           {files.length > 5 && (
@@ -191,7 +191,7 @@ export function BulkRenameTab() {
 
       {/* Results */}
       {result && (
-        <div className="mt-4 relative overflow-hidden rounded-2xl border border-white/8 bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-2">
+        <div className="mt-4 relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-2">
           <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
           <div className="relative flex items-center gap-2">
             {result.errors.length === 0 ? (
@@ -199,7 +199,7 @@ export function BulkRenameTab() {
             ) : (
               <XCircle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
             )}
-            <span className="text-xs font-medium text-white">
+            <span className="text-xs font-medium text-neutral-900 dark:text-white">
               {t("result.renamed", { n: result.renamed_count })}
             </span>
           </div>
@@ -209,7 +209,7 @@ export function BulkRenameTab() {
                 <div key={i} className="flex items-center gap-2 text-[10px]">
                   <span className="text-neutral-500 truncate flex-1">{entry.original_name}</span>
                   <span className="text-neutral-500 shrink-0">&rarr;</span>
-                  <span className="text-white font-mono truncate flex-1 text-right">{entry.new_name}</span>
+                  <span className="text-neutral-900 dark:text-white font-mono truncate flex-1 text-right">{entry.new_name}</span>
                 </div>
               ))}
             </div>

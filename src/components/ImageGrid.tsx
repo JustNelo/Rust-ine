@@ -125,7 +125,7 @@ export const ImageGrid = memo(function ImageGrid({ files, onReorder, onRemove, o
               style={{
                 display: "grid",
                 gridTemplateColumns: `repeat(auto-fill, minmax(${CARD_MIN_W}px, 1fr))`,
-                gap: "6px",
+                gap: "10px",
               }}
             >
               {files.map((file, index) => (

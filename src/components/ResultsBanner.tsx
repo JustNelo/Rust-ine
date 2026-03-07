@@ -79,11 +79,11 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
 
         {successResults.length > 0 && (
           <div
-            className="relative max-h-48 overflow-y-auto pr-1"
+            className="relative max-h-56 overflow-y-auto pr-1"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
-              gap: "6px",
+              gap: "10px",
             }}
           >
             {successResults.map((r, i) => {

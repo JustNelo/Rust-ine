@@ -236,10 +236,7 @@ mod tests {
 
     #[test]
     fn parse_hex_color_case_insensitive() {
-        assert_eq!(
-            parse_hex_color("#aaBBcc", (0, 0, 0)),
-            (0xAA, 0xBB, 0xCC)
-        );
+        assert_eq!(parse_hex_color("#aaBBcc", (0, 0, 0)), (0xAA, 0xBB, 0xCC));
     }
 
     // --- sanitize_stem ---

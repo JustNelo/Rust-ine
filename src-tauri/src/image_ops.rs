@@ -420,7 +420,6 @@ pub fn strip_metadata(
 
 // --- Watermark ---
 
-
 /// Cached system font data — read from disk only once across the app lifetime.
 static SYSTEM_FONT: LazyLock<Result<Vec<u8>, String>> = LazyLock::new(|| {
     let candidates: Vec<&str> = if cfg!(target_os = "windows") {

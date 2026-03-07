@@ -17,7 +17,7 @@ pub struct PdfExtractionResult {
 pub fn extract_images_from_pdf(
     pdf_path: &str,
     output_dir: &str,
-    pdfium_lib_path: &str,
+    pdfium: &Pdfium,
     output_stem: Option<&str>,
     app_handle: &tauri::AppHandle,
 ) -> PdfExtractionResult {
@@ -33,17 +33,6 @@ pub fn extract_images_from_pdf(
         result.errors.push(e);
         return result;
     }
-
-    let bindings = match Pdfium::bind_to_library(pdfium_lib_path) {
-        Ok(b) => b,
-        Err(e) => {
-            result
-                .errors
-                .push(format!("Cannot load Pdfium library: {}", e));
-            return result;
-        }
-    };
-    let pdfium = Pdfium::new(bindings);
 
     let document = match pdfium.load_pdf_from_file(pdf_path, None) {
         Ok(d) => d,
@@ -195,7 +184,7 @@ pub struct PdfToImagesResult {
 pub fn pdf_to_images(
     pdf_path: &str,
     output_dir: &str,
-    pdfium_lib_path: &str,
+    pdfium: &Pdfium,
     format: &str,
     dpi: u32,
     output_stem: Option<&str>,
@@ -213,17 +202,6 @@ pub fn pdf_to_images(
         result.errors.push(e);
         return result;
     }
-
-    let bindings = match Pdfium::bind_to_library(pdfium_lib_path) {
-        Ok(b) => b,
-        Err(e) => {
-            result
-                .errors
-                .push(format!("Cannot load Pdfium library: {}", e));
-            return result;
-        }
-    };
-    let pdfium = Pdfium::new(bindings);
 
     let document = match pdfium.load_pdf_from_file(pdf_path, None) {
         Ok(d) => d,
@@ -745,7 +723,7 @@ pub fn protect_pdf(
 /// Unlock a password-protected PDF using pdfium-render.
 /// Opens the PDF with the given password, then saves it without encryption.
 pub fn unlock_pdf(
-    pdfium_path: &str,
+    pdfium: &Pdfium,
     pdf_path: &str,
     password: &str,
     output_dir: &str,
@@ -761,15 +739,6 @@ pub fn unlock_pdf(
         result.errors.push(e);
         return result;
     }
-
-    let bindings = match Pdfium::bind_to_library(pdfium_path) {
-        Ok(b) => b,
-        Err(e) => {
-            result.errors.push(format!("Cannot load pdfium: {}", e));
-            return result;
-        }
-    };
-    let pdfium = Pdfium::new(bindings);
 
     let doc = match pdfium.load_pdf_from_file(pdf_path, Some(password)) {
         Ok(d) => d,

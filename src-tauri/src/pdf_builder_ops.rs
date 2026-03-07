@@ -177,10 +177,7 @@ fn generate_pdf_page_thumbnails(
 }
 
 /// Returns the page count of a PDF without rendering any thumbnails.
-pub fn get_pdf_page_count(pdf_path: &str, pdfium_lib_path: &str) -> Result<usize, String> {
-    let bindings = Pdfium::bind_to_library(pdfium_lib_path)
-        .map_err(|e| format!("Cannot load Pdfium library: {}", e))?;
-    let pdfium = Pdfium::new(bindings);
+pub fn get_pdf_page_count(pdf_path: &str, pdfium: &Pdfium) -> Result<usize, String> {
     let document = pdfium
         .load_pdf_from_file(pdf_path, None)
         .map_err(|e| format!("Cannot open PDF '{}': {}", pdf_path, e))?;
@@ -189,7 +186,7 @@ pub fn get_pdf_page_count(pdf_path: &str, pdfium_lib_path: &str) -> Result<usize
 
 pub fn generate_thumbnails_batch(
     file_paths: Vec<String>,
-    pdfium_lib_path: &str,
+    pdfium: &Pdfium,
     start_page: Option<usize>,
     max_pages: Option<usize>,
 ) -> Vec<PageThumbnail> {
@@ -216,22 +213,14 @@ pub fn generate_thumbnails_batch(
         .filter_map(|path| generate_image_thumbnail(path).ok())
         .collect();
 
-    // Create one Pdfium binding for all PDFs
-    if !pdf_paths.is_empty() {
-        match Pdfium::bind_to_library(pdfium_lib_path) {
-            Ok(bindings) => {
-                let pdfium = Pdfium::new(bindings);
-                for pdf_path in &pdf_paths {
-                    match generate_pdf_page_thumbnails(pdf_path, &pdfium, start_page, max_pages) {
-                        Ok(thumbs) => all_thumbnails.extend(thumbs),
-                        Err(e) => eprintln!(
-                            "Warning: PDF thumbnail generation failed for {}: {}",
-                            pdf_path, e
-                        ),
-                    }
-                }
-            }
-            Err(e) => eprintln!("Warning: Cannot load Pdfium library: {}", e),
+    // Use the shared Pdfium instance for all PDF thumbnails
+    for pdf_path in &pdf_paths {
+        match generate_pdf_page_thumbnails(pdf_path, pdfium, start_page, max_pages) {
+            Ok(thumbs) => all_thumbnails.extend(thumbs),
+            Err(e) => eprintln!(
+                "Warning: PDF thumbnail generation failed for {}: {}",
+                pdf_path, e
+            ),
         }
     }
 

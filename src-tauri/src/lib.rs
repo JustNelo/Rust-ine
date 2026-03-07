@@ -31,11 +31,34 @@ use sprite_ops::SpriteSheetResult;
 use std::path::{Component, Path};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock};
+use pdfium_render::prelude::Pdfium;
 use svg_ops::SvgRasterizeResult;
 use tauri::Manager;
 
-/// Resolved pdfium library path, computed once at startup and shared via tauri::State.
-pub struct PdfiumPath(pub Arc<String>);
+/// Thread-safe wrapper around `Pdfium`.
+/// SAFETY: The `thread_safe` feature of pdfium-render ensures all internal
+/// operations are synchronized via mutexes, making concurrent access safe.
+struct SendPdfium(Pdfium);
+unsafe impl Send for SendPdfium {}
+unsafe impl Sync for SendPdfium {}
+
+impl SendPdfium {
+    fn inner(&self) -> &Pdfium {
+        &self.0
+    }
+}
+
+/// Pdfium instance, bound once at startup and shared via tauri::State.
+pub struct PdfiumState(Option<Arc<SendPdfium>>);
+
+/// Returns a cloned Arc to the shared Pdfium instance, or an error if unavailable.
+fn require_pdfium(state: &PdfiumState) -> Result<Arc<SendPdfium>, String> {
+    state
+        .0
+        .as_ref()
+        .cloned()
+        .ok_or_else(|| "Pdfium library not found — PDF features are unavailable. Please reinstall the application.".to_string())
+}
 
 /// Shared cancellation flag for batch operations.
 /// Set to `true` to request early termination of the current batch.
@@ -56,10 +79,17 @@ fn resolve_pdfium_path(app_handle: &tauri::AppHandle) -> Result<String, String> 
             .resource_dir()
             .ok()
             .map(|d| d.join(lib_name)),
+        app_handle
+            .path()
+            .resource_dir()
+            .ok()
+            .map(|d| d.join("resources").join(lib_name)),
         std::env::current_exe()
             .ok()
             .and_then(|p| p.parent().map(|d| d.join(lib_name))),
-        Some(std::path::PathBuf::from(format!("resources/{}", lib_name))),
+        std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.join("resources").join(lib_name))),
     ]
     .into_iter()
     .flatten()
@@ -196,7 +226,7 @@ async fn convert_images(
 #[tauri::command]
 async fn extract_pdf_images(
     app_handle: tauri::AppHandle,
-    pdfium: tauri::State<'_, PdfiumPath>,
+    pdfium_state: tauri::State<'_, PdfiumState>,
     pdf_path: String,
     output_dir: String,
     output_stem: Option<String>,
@@ -204,13 +234,13 @@ async fn extract_pdf_images(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
 
-    let pdfium_lib_path = (*pdfium).0.clone();
+    let pdfium = require_pdfium(&pdfium_state)?;
 
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::extract_images_from_pdf(
             &pdf_path,
             &output_dir,
-            &pdfium_lib_path,
+            pdfium.inner(),
             output_stem.as_deref(),
             &app_handle,
         )
@@ -371,13 +401,13 @@ async fn read_metadata(file_path: String) -> Result<ImageMetadata, String> {
 
 #[tauri::command]
 async fn get_pdf_page_count(
-    pdfium: tauri::State<'_, PdfiumPath>,
+    pdfium_state: tauri::State<'_, PdfiumState>,
     pdf_path: String,
 ) -> Result<usize, String> {
     validate_path(&pdf_path)?;
-    let pdfium_lib_path = (*pdfium).0.clone();
+    let pdfium = require_pdfium(&pdfium_state)?;
     tokio::task::spawn_blocking(move || {
-        pdf_builder_ops::get_pdf_page_count(&pdf_path, &pdfium_lib_path)
+        pdf_builder_ops::get_pdf_page_count(&pdf_path, pdfium.inner())
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?
@@ -385,17 +415,17 @@ async fn get_pdf_page_count(
 
 #[tauri::command]
 async fn generate_pdf_thumbnails(
-    pdfium: tauri::State<'_, PdfiumPath>,
+    pdfium_state: tauri::State<'_, PdfiumState>,
     file_paths: Vec<String>,
     start_page: Option<usize>,
     max_pages: Option<usize>,
 ) -> Result<Vec<PageThumbnail>, String> {
     validate_paths(&file_paths)?;
-    let pdfium_lib_path = (*pdfium).0.clone();
+    let pdfium = require_pdfium(&pdfium_state)?;
     let result = tokio::task::spawn_blocking(move || {
         pdf_builder_ops::generate_thumbnails_batch(
             file_paths,
-            &pdfium_lib_path,
+            pdfium.inner(),
             start_page,
             max_pages,
         )
@@ -483,7 +513,7 @@ async fn crop_images(
 #[tauri::command]
 async fn pdf_to_images(
     app_handle: tauri::AppHandle,
-    pdfium: tauri::State<'_, PdfiumPath>,
+    pdfium_state: tauri::State<'_, PdfiumState>,
     pdf_path: String,
     output_dir: String,
     format: String,
@@ -493,12 +523,12 @@ async fn pdf_to_images(
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
     let dpi = dpi.clamp(72, 1200);
-    let pdfium_lib_path = (*pdfium).0.clone();
+    let pdfium = require_pdfium(&pdfium_state)?;
     let result = tokio::task::spawn_blocking(move || {
         pdf_ops::pdf_to_images(
             &pdf_path,
             &output_dir,
-            &pdfium_lib_path,
+            pdfium.inner(),
             &format,
             dpi,
             output_stem.as_deref(),
@@ -633,16 +663,16 @@ async fn protect_pdf_cmd(
 
 #[tauri::command]
 async fn unlock_pdf_cmd(
-    pdfium: tauri::State<'_, PdfiumPath>,
+    pdfium_state: tauri::State<'_, PdfiumState>,
     pdf_path: String,
     password: String,
     output_dir: String,
 ) -> Result<PdfProtectResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
-    let pdfium_path = (*pdfium).0.clone();
+    let pdfium = require_pdfium(&pdfium_state)?;
     let result = tokio::task::spawn_blocking(move || {
-        pdf_ops::unlock_pdf(&pdfium_path, &pdf_path, &password, &output_dir)
+        pdf_ops::unlock_pdf(pdfium.inner(), &pdf_path, &password, &output_dir)
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))?;
@@ -852,9 +882,27 @@ pub fn run() {
                 }
             }
 
-            // Resolve pdfium library path once at startup
-            let pdfium_path = resolve_pdfium_path(app.handle()).unwrap_or_default();
-            app.manage(PdfiumPath(Arc::new(pdfium_path)));
+            // Resolve and bind pdfium library once at startup
+            let pdfium_instance = match resolve_pdfium_path(app.handle()) {
+                Ok(path) => match Pdfium::bind_to_library(&path) {
+                    Ok(bindings) => {
+                        eprintln!("Pdfium library bound successfully from: {}", path);
+                        Some(Arc::new(SendPdfium(Pdfium::new(bindings))))
+                    }
+                    Err(e) => {
+                        eprintln!(
+                            "Warning: Pdfium found at {} but binding failed: {} — PDF features will be unavailable",
+                            path, e
+                        );
+                        None
+                    }
+                },
+                Err(e) => {
+                    eprintln!("Warning: {} — PDF features will be unavailable", e);
+                    None
+                }
+            };
+            app.manage(PdfiumState(pdfium_instance));
             app.manage(CancellationToken(Arc::new(AtomicBool::new(false))));
 
             Ok(())

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use webp::Encoder;
 
 use crate::progress::emit_progress;
@@ -420,20 +420,9 @@ pub fn strip_metadata(
 
 // --- Watermark ---
 
-/// Parse a hex color string (#RRGGBB or RRGGBB) into (r, g, b) u8 components.
-/// Falls back to white (255, 255, 255) on invalid input.
-fn hex_to_rgba_components(hex: &str) -> (u8, u8, u8) {
-    let hex = hex.trim_start_matches('#');
-    if hex.len() != 6 {
-        return (255, 255, 255);
-    }
-    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(255);
-    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(255);
-    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(255);
-    (r, g, b)
-}
 
-fn find_system_font() -> Result<Vec<u8>, String> {
+/// Cached system font data — read from disk only once across the app lifetime.
+static SYSTEM_FONT: LazyLock<Result<Vec<u8>, String>> = LazyLock::new(|| {
     let candidates: Vec<&str> = if cfg!(target_os = "windows") {
         vec![
             "C:\\Windows\\Fonts\\arial.ttf",
@@ -461,7 +450,7 @@ fn find_system_font() -> Result<Vec<u8>, String> {
     }
 
     Err("No system font found. Install Arial, DejaVu Sans, or Liberation Sans.".to_string())
-}
+});
 
 #[allow(clippy::too_many_arguments)]
 pub fn add_watermark(
@@ -475,9 +464,9 @@ pub fn add_watermark(
     app_handle: tauri::AppHandle,
     cancel: Arc<AtomicBool>,
 ) -> BatchProgress {
-    let font_data = match find_system_font() {
-        Ok(d) => d,
-        Err(e) => return BatchProgress::all_failed(&input_paths, e),
+    let font_data = match SYSTEM_FONT.as_ref() {
+        Ok(d) => d.clone(),
+        Err(e) => return BatchProgress::all_failed(&input_paths, e.clone()),
     };
     let font = match FontArc::try_from_vec(font_data) {
         Ok(f) => f,
@@ -487,7 +476,7 @@ pub fn add_watermark(
     };
 
     let opacity_byte = (opacity.clamp(0.0, 1.0) * 255.0) as u8;
-    let (cr, cg, cb) = hex_to_rgba_components(&color);
+    let (cr, cg, cb) = crate::utils::parse_hex_color(&color, (255, 255, 255));
     let color = Rgba([cr, cg, cb, opacity_byte]);
     let scale = PxScale::from(font_size);
 

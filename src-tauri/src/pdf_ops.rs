@@ -768,3 +768,84 @@ pub fn unlock_pdf(
 
     result
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- pad_password ---
+
+    #[test]
+    fn pad_password_empty_uses_full_padding() {
+        let padded = pad_password(b"");
+        assert_eq!(padded, PDF_PADDING);
+    }
+
+    #[test]
+    fn pad_password_short_pads_with_spec_bytes() {
+        let padded = pad_password(b"test");
+        assert_eq!(&padded[..4], b"test");
+        assert_eq!(&padded[4..], &PDF_PADDING[..28]);
+    }
+
+    #[test]
+    fn pad_password_exact_32_no_padding() {
+        let input = [0xABu8; 32];
+        let padded = pad_password(&input);
+        assert_eq!(padded, input);
+    }
+
+    #[test]
+    fn pad_password_over_32_truncates() {
+        let input = [0xCDu8; 50];
+        let padded = pad_password(&input);
+        assert_eq!(padded, [0xCDu8; 32]);
+    }
+
+    // --- rc4_encrypt ---
+
+    #[test]
+    fn rc4_encrypt_roundtrip() {
+        // RC4 is symmetric: encrypting twice with the same key yields the original
+        let key = b"mykey";
+        let plaintext = b"Hello, World!";
+        let ciphertext = rc4_encrypt(key, plaintext);
+        assert_ne!(&ciphertext, plaintext);
+        let decrypted = rc4_encrypt(key, &ciphertext);
+        assert_eq!(&decrypted, plaintext);
+    }
+
+    #[test]
+    fn rc4_encrypt_known_vector() {
+        // Known RC4 test vector: Key = "Key", Plaintext = "Plaintext"
+        let key = b"Key";
+        let plaintext = b"Plaintext";
+        let ciphertext = rc4_encrypt(key, plaintext);
+        let expected: [u8; 9] = [0xBB, 0xF3, 0x16, 0xE8, 0xD9, 0x40, 0xAF, 0x0A, 0xD3];
+        assert_eq!(ciphertext, expected);
+    }
+
+    #[test]
+    fn rc4_encrypt_empty_data() {
+        let result = rc4_encrypt(b"key", b"");
+        assert!(result.is_empty());
+    }
+
+    // --- compute_o_value ---
+
+    #[test]
+    fn compute_o_value_deterministic() {
+        // Same inputs should always produce the same output
+        let o1 = compute_o_value(b"owner", b"user");
+        let o2 = compute_o_value(b"owner", b"user");
+        assert_eq!(o1, o2);
+        assert_eq!(o1.len(), 32);
+    }
+
+    #[test]
+    fn compute_o_value_different_passwords_differ() {
+        let o1 = compute_o_value(b"owner1", b"user");
+        let o2 = compute_o_value(b"owner2", b"user");
+        assert_ne!(o1, o2);
+    }
+}

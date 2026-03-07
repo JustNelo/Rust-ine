@@ -139,6 +139,35 @@ pub fn embed_image_as_pdf_page(
     Ok(doc.add_object(page))
 }
 
+/// Parse a hex color string (#RRGGBB or RRGGBB) into (r, g, b) u8 components.
+/// Falls back to the provided default on invalid input.
+pub fn parse_hex_color(hex: &str, default: (u8, u8, u8)) -> (u8, u8, u8) {
+    let hex = hex.trim_start_matches('#');
+    if hex.len() != 6 {
+        return default;
+    }
+    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(default.0);
+    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(default.1);
+    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(default.2);
+    (r, g, b)
+}
+
+/// Sanitize a user-provided file stem to prevent path traversal via output filenames.
+pub fn sanitize_stem(stem: &str) -> Result<String, String> {
+    let trimmed = stem.trim();
+    if trimmed.is_empty() {
+        return Err("Output stem must not be empty".to_string());
+    }
+    if trimmed.contains('/')
+        || trimmed.contains('\\')
+        || trimmed.contains("..")
+        || trimmed.contains('\0')
+    {
+        return Err(format!("Invalid output stem: '{}'", stem));
+    }
+    Ok(trimmed.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -187,5 +216,56 @@ mod tests {
     #[test]
     fn filename_or_default_fallback() {
         assert_eq!(filename_or_default(""), "");
+    }
+
+    // --- parse_hex_color ---
+
+    #[test]
+    fn parse_hex_color_valid() {
+        assert_eq!(parse_hex_color("#FF0000", (0, 0, 0)), (255, 0, 0));
+        assert_eq!(parse_hex_color("00ff00", (0, 0, 0)), (0, 255, 0));
+        assert_eq!(parse_hex_color("#0000FF", (0, 0, 0)), (0, 0, 255));
+    }
+
+    #[test]
+    fn parse_hex_color_invalid_falls_back() {
+        assert_eq!(parse_hex_color("", (10, 20, 30)), (10, 20, 30));
+        assert_eq!(parse_hex_color("#FFF", (10, 20, 30)), (10, 20, 30));
+        assert_eq!(parse_hex_color("ZZZZZZ", (1, 2, 3)), (1, 2, 3));
+    }
+
+    #[test]
+    fn parse_hex_color_case_insensitive() {
+        assert_eq!(
+            parse_hex_color("#aaBBcc", (0, 0, 0)),
+            (0xAA, 0xBB, 0xCC)
+        );
+    }
+
+    // --- sanitize_stem ---
+
+    #[test]
+    fn sanitize_stem_valid() {
+        assert_eq!(sanitize_stem("my_document").unwrap(), "my_document");
+        assert_eq!(sanitize_stem("  trimmed  ").unwrap(), "trimmed");
+    }
+
+    #[test]
+    fn sanitize_stem_rejects_traversal() {
+        assert!(sanitize_stem("../../etc/passwd").is_err());
+        assert!(sanitize_stem("foo/bar").is_err());
+        assert!(sanitize_stem("foo\\bar").is_err());
+        assert!(sanitize_stem("foo..bar").is_err());
+    }
+
+    #[test]
+    fn sanitize_stem_rejects_empty() {
+        assert!(sanitize_stem("").is_err());
+        assert!(sanitize_stem("   ").is_err());
+    }
+
+    #[test]
+    fn sanitize_stem_rejects_null_bytes() {
+        assert!(sanitize_stem("file\0name").is_err());
     }
 }

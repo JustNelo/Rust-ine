@@ -139,18 +139,25 @@ fn validate_path(path: &str) -> Result<(), String> {
     if !p.is_absolute() {
         return Err(format!("Only absolute paths are allowed: {}", path));
     }
-    // If the path already exists, resolve symlinks and verify it's within allowed directories
-    if p.exists() {
-        if let Ok(canonical) = std::fs::canonicalize(p) {
-            let is_allowed = ALLOWED_BASE_DIRS
-                .iter()
-                .any(|base| canonical.starts_with(base));
-            if !is_allowed {
-                return Err(format!(
-                    "Path resolves outside allowed directories: {}",
-                    path
-                ));
-            }
+    // Resolve symlinks on the path itself or its nearest existing ancestor
+    // to ensure the final target is within allowed directories.
+    let canonical = if p.exists() {
+        std::fs::canonicalize(p).ok()
+    } else {
+        p.ancestors()
+            .skip(1) // skip the path itself
+            .find(|a| a.exists())
+            .and_then(|a| std::fs::canonicalize(a).ok())
+    };
+    if let Some(canonical) = canonical {
+        let is_allowed = ALLOWED_BASE_DIRS
+            .iter()
+            .any(|base| canonical.starts_with(base));
+        if !is_allowed {
+            return Err(format!(
+                "Path resolves outside allowed directories: {}",
+                path
+            ));
         }
     }
     Ok(())
@@ -233,6 +240,7 @@ async fn extract_pdf_images(
 ) -> Result<PdfExtractionResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
+    let output_stem = output_stem.map(|s| utils::sanitize_stem(&s)).transpose()?;
 
     let pdfium = require_pdfium(&pdfium_state)?;
 
@@ -522,6 +530,7 @@ async fn pdf_to_images(
 ) -> Result<PdfToImagesResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
+    let output_stem = output_stem.map(|s| utils::sanitize_stem(&s)).transpose()?;
     let dpi = dpi.clamp(72, 1200);
     let pdfium = require_pdfium(&pdfium_state)?;
     let result = tokio::task::spawn_blocking(move || {
@@ -550,6 +559,7 @@ async fn split_pdf(
 ) -> Result<PdfSplitResult, String> {
     validate_path(&pdf_path)?;
     validate_path(&output_dir)?;
+    let output_stem = output_stem.map(|s| utils::sanitize_stem(&s)).transpose()?;
     let result = tokio::task::spawn_blocking(move || {
         pdf_split_ops::split_pdf(
             &pdf_path,
@@ -931,12 +941,15 @@ mod tests {
 
     #[test]
     fn validate_path_accepts_absolute() {
-        // On Windows, this is an absolute path; on Unix C:\... is relative,
-        // so we use cfg to pick the right test path.
+        // Use a path within an allowed directory (home or temp)
         if cfg!(windows) {
-            assert!(validate_path("C:\\Users\\test\\photo.png").is_ok());
+            if let Some(home) = dirs::home_dir() {
+                let p = home.join("photo.png");
+                assert!(validate_path(&p.to_string_lossy()).is_ok());
+            }
         } else {
-            assert!(validate_path("/home/test/photo.png").is_ok());
+            let tmp = std::env::temp_dir().join("photo.png");
+            assert!(validate_path(&tmp.to_string_lossy()).is_ok());
         }
     }
 
@@ -954,5 +967,20 @@ mod tests {
             ]
         };
         assert!(validate_paths(&paths).is_err());
+    }
+
+    #[test]
+    fn validate_path_rejects_non_existing_outside_allowed() {
+        // A non-existing path whose nearest ancestor resolves outside allowed dirs
+        if cfg!(not(windows)) {
+            assert!(validate_path("/opt/evil/non_existing_output").is_err());
+            assert!(validate_path("/etc/evil_output_dir/file.png").is_err());
+            assert!(validate_path("/var/lib/sneaky/out").is_err());
+        }
+    }
+
+    #[test]
+    fn validate_path_rejects_null_bytes() {
+        assert!(validate_path("/home/test/\0evil.png").is_err());
     }
 }

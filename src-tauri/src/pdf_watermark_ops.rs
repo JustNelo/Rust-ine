@@ -13,16 +13,10 @@ const WATERMARK_MARGIN_PT: f32 = 20.0;
 /// Point spacing between tiles in tiled watermark mode.
 const WATERMARK_TILE_SPACING_PT: f32 = 80.0;
 
-/// Parse a hex color string (#RRGGBB or RRGGBB) into (r, g, b) floats in 0.0–1.0.
-/// Falls back to light grey (0.7, 0.7, 0.7) on invalid input.
+/// Parse a hex color string into (r, g, b) floats in 0.0–1.0 via the shared parser.
+/// Falls back to light grey (179, 179, 179) ≈ (0.7, 0.7, 0.7) on invalid input.
 fn hex_to_rgb_f32(hex: &str) -> (f32, f32, f32) {
-    let hex = hex.trim_start_matches('#');
-    if hex.len() != 6 {
-        return (0.7, 0.7, 0.7);
-    }
-    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(179);
-    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(179);
-    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(179);
+    let (r, g, b) = crate::utils::parse_hex_color(hex, (179, 179, 179));
     (r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0)
 }
 
@@ -224,8 +218,15 @@ pub fn watermark_pdf_image(
     }
 
     // JPEG-encode the RGB data
-    let rgb_image: image::RgbImage = image::RgbImage::from_raw(img_w, img_h, rgb_pixels)
-        .unwrap_or_else(|| image::RgbImage::new(img_w, img_h));
+    let rgb_image: image::RgbImage = match image::RgbImage::from_raw(img_w, img_h, rgb_pixels) {
+        Some(img) => img,
+        None => {
+            result
+                .errors
+                .push("Failed to construct RGB image from watermark pixels".to_string());
+            return result;
+        }
+    };
     let mut jpeg_buf: Vec<u8> = Vec::new();
     let mut cursor = Cursor::new(&mut jpeg_buf);
     let encoder = JpegEncoder::new_with_quality(&mut cursor, 90);

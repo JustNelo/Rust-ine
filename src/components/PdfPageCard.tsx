@@ -15,11 +15,14 @@ export const PdfPageCard = memo(
     const { t } = useT();
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: page.id });
 
-    const style = {
+    const style: React.CSSProperties = {
       transform: CSS.Transform.toString(transform),
       transition,
       opacity: isDragging ? 0.5 : 1,
       zIndex: isDragging ? 50 : ("auto" as const),
+      borderRadius: 12,
+      border: '1px solid var(--bg-border)',
+      background: 'var(--bg-overlay)',
     };
 
     return (
@@ -28,7 +31,7 @@ export const PdfPageCard = memo(
         style={style}
         {...attributes}
         {...listeners}
-        className="group relative h-40 rounded-xl overflow-hidden border border-black/12 dark:border-white/8 bg-black/5 dark:bg-white/3 cursor-grab active:cursor-grabbing"
+        className="group relative h-40 overflow-hidden cursor-grab active:cursor-grabbing"
       >
         {/* Remove button — stops drag activation */}
         <button
@@ -57,7 +60,7 @@ export const PdfPageCard = memo(
         </div>
 
         {/* Thumbnail — fixed area, image contained */}
-        <div className="absolute inset-0 bottom-7 flex items-center justify-center bg-black/4 dark:bg-white/2">
+        <div className="absolute inset-0 bottom-7 flex items-center justify-center" style={{ background: 'var(--bg-elevated)' }}>
           {page.thumbnailLoaded && page.thumbnailSrc ? (
             <img
               src={page.thumbnailSrc}

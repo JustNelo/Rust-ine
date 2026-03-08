@@ -23,21 +23,21 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+      style={{ background: 'rgba(0,0,0,0.6)' }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg max-h-[80vh] rounded-2xl overflow-hidden border border-black/12 dark:border-white/8 bg-white/90 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] flex flex-col"
+        className="relative w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col"
+        style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-black/12 dark:border-white/8">
+        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--bg-border)' }}>
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-neutral-400" strokeWidth={1.5} />
-            <span className="text-sm font-medium text-neutral-900 dark:text-white">{t("history.title")}</span>
-            <span className="text-[10px] text-neutral-400 dark:text-neutral-500">({entries.length})</span>
+            <Clock className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} strokeWidth={1.5} />
+            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>{t("history.title")}</span>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>({entries.length})</span>
           </div>
           <div className="flex items-center gap-2">
             {entries.length > 0 && (
@@ -47,7 +47,7 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
               </button>
             )}
             <button onClick={onClose} className="btn-icon">
-              <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
+              <X className="h-4 w-4" strokeWidth={1.5} />
             </button>
           </div>
         </div>
@@ -55,34 +55,37 @@ export const HistoryModal = memo(function HistoryModal({ onClose }: HistoryModal
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
           {entries.length === 0 ? (
-            <p className="text-xs text-neutral-500 text-center py-8">{t("history.empty")}</p>
+            <p className="text-center py-8" style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>{t("history.empty")}</p>
           ) : (
             entries.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center gap-3 rounded-xl border border-black/10 dark:border-white/6 bg-black/4 dark:bg-white/2 px-3 py-2 hover:bg-black/6 dark:hover:bg-white/4 transition-colors duration-200"
+                className="flex items-center gap-3 px-3 py-2 cursor-default"
+                style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: 'var(--bg-overlay)', transition: 'background 150ms ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-border)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg-overlay)'; }}
               >
                 <div className="flex items-center gap-1.5 shrink-0">
                   {entry.failCount === 0 ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" strokeWidth={1.5} />
+                    <CheckCircle2 className="h-3.5 w-3.5" style={{ color: 'var(--success)' }} strokeWidth={1.5} />
                   ) : entry.successCount === 0 ? (
-                    <XCircle className="h-3.5 w-3.5 text-red-400" strokeWidth={1.5} />
+                    <XCircle className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} strokeWidth={1.5} />
                   ) : (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-amber-400" strokeWidth={1.5} />
+                    <CheckCircle2 className="h-3.5 w-3.5" style={{ color: 'var(--warning)' }} strokeWidth={1.5} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-neutral-900 dark:text-white">
+                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
                       {t(`tab.${entry.tabId.replace("-", "_")}` as Parameters<typeof t>[0])}
                     </span>
-                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                    <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
                       {entry.successCount}/{entry.filesCount} {t("history.succeeded")}
                     </span>
                   </div>
-                  <p className="text-[10px] text-neutral-400 dark:text-neutral-600 truncate">{entry.outputDir}</p>
+                  <p className="truncate" style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{entry.outputDir}</p>
                 </div>
-                <span className="text-[10px] text-neutral-400 dark:text-neutral-600 shrink-0">
+                <span className="shrink-0" style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
                   {formatTimestamp(entry.timestamp)}
                 </span>
               </div>

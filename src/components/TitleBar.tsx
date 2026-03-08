@@ -1,9 +1,14 @@
 import { useCallback, useMemo } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Square, X } from "lucide-react";
+import { Minus, Square, X, Clock, Settings } from "lucide-react";
 import icon from "../assets/icon.png";
 
-export function TitleBar() {
+interface TitleBarProps {
+  onShowHistory?: () => void;
+  onShowSettings?: () => void;
+}
+
+export function TitleBar({ onShowHistory, onShowSettings }: TitleBarProps) {
   const appWindow = useMemo(() => getCurrentWindow(), []);
 
   const handleMinimize = useCallback(async () => {
@@ -35,41 +40,68 @@ export function TitleBar() {
     <div
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
-      className="relative z-20 flex h-9 shrink-0 items-center justify-between border-b border-indigo-400/10 bg-white/80 dark:bg-white/2 backdrop-blur-xl select-none"
+      className="relative z-20 flex shrink-0 items-center justify-between select-none"
+      style={{ height: 36, background: 'var(--bg-surface)', borderBottom: '1px solid var(--bg-border)' }}
     >
-      <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-      <div
-        className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
-        }}
-      />
-
       <div className="flex items-center gap-2 px-3 pointer-events-none">
         <img src={icon} alt="Icon" className="h-4 w-4" />
-        <span className="text-xs font-semibold text-neutral-900 dark:text-white tracking-tight">Rust-ine</span>
+        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em' }}>Rust-ine</span>
       </div>
 
-      <div className="flex h-full">
+      <div className="flex h-full items-center">
+        {/* History + Settings */}
+        <button
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={onShowHistory}
+          className="flex h-full items-center justify-center"
+          style={{ width: 36, color: 'var(--text-tertiary)', transition: 'all 150ms ease', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-overlay)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+        >
+          <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
+        </button>
+        <button
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={onShowSettings}
+          className="flex h-full items-center justify-center"
+          style={{ width: 36, color: 'var(--text-tertiary)', transition: 'all 150ms ease', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-overlay)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+        >
+          <Settings className="h-3.5 w-3.5" strokeWidth={1.5} />
+        </button>
+
+        {/* Pipe separator */}
+        <div style={{ width: 1, height: 14, background: 'var(--bg-border)', margin: '0 2px' }} />
+
+        {/* Window controls */}
         <button
           onMouseDown={(e) => e.stopPropagation()}
           onClick={handleMinimize}
-          className="flex h-full w-11 items-center justify-center text-neutral-400 dark:text-neutral-500 hover:bg-black/6 dark:hover:bg-white/6 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors duration-200"
+          className="flex h-full items-center justify-center"
+          style={{ width: 44, color: 'var(--text-tertiary)', transition: 'all 150ms ease', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-overlay)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
         >
           <Minus className="h-3.5 w-3.5" strokeWidth={1.5} />
         </button>
         <button
           onMouseDown={(e) => e.stopPropagation()}
           onClick={handleToggleMaximize}
-          className="flex h-full w-11 items-center justify-center text-neutral-400 dark:text-neutral-500 hover:bg-black/6 dark:hover:bg-white/6 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors duration-200"
+          className="flex h-full items-center justify-center"
+          style={{ width: 44, color: 'var(--text-tertiary)', transition: 'all 150ms ease', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-overlay)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
         >
           <Square className="h-3 w-3" strokeWidth={1.5} />
         </button>
         <button
           onMouseDown={(e) => e.stopPropagation()}
           onClick={handleClose}
-          className="flex h-full w-11 items-center justify-center text-neutral-400 dark:text-neutral-500 hover:bg-red-600 hover:text-white transition-colors duration-200"
+          className="flex h-full items-center justify-center"
+          style={{ width: 44, color: 'var(--text-tertiary)', transition: 'all 150ms ease', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = '#fff'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
         >
           <X className="h-4 w-4" strokeWidth={1.5} />
         </button>

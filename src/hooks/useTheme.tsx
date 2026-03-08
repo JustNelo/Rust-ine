@@ -1,9 +1,7 @@
-import { useState, useCallback, useEffect, createContext, useContext } from "react";
+import { useEffect, createContext, useContext, useCallback } from "react";
 import type { ReactNode } from "react";
 
-const STORAGE_KEY = "rustine_theme";
-
-export type Theme = "dark" | "light";
+export type Theme = "dark";
 
 interface ThemeContextValue {
   theme: Theme;
@@ -13,27 +11,14 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === "light" || stored === "dark") return stored;
-    } catch {
-      // ignore
-    }
-    return "dark";
-  });
+  const theme: Theme = "dark";
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // ignore
-    }
-  }, [theme]);
+    document.documentElement.setAttribute("data-theme", "dark");
+  }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    /* dark-only — noop kept for interface compat */
   }, []);
 
   return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;

@@ -72,9 +72,9 @@ export function PdfPageGrid({ pages, loadingThumbnails, onReorder, onRemove }: P
   if (pages.length === 0 && !loadingThumbnails) return null;
 
   return (
-    <div className="rounded-2xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl p-3 space-y-3">
+    <div className="forge-card p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
           {pages.length} {t("pdf_tool.pages_count")}
           {sourcesSummary && <span className="text-neutral-500"> — {sourcesSummary}</span>}
           {" — "}

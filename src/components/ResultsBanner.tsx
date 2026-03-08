@@ -33,25 +33,17 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
 
   return (
     <>
-      <div className="relative mt-4 overflow-hidden rounded-2xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-3 space-y-3">
-        <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-        <div
-          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
-          }}
-        />
-        <div className="relative flex items-center justify-between">
+      <div className="mt-4 overflow-hidden p-3 space-y-3" style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)' }}>
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {failed === 0 ? (
-              <CheckCircle className="h-4 w-4 text-green-400" strokeWidth={1.5} />
+              <CheckCircle className="h-4 w-4" style={{ color: 'var(--success)' }} strokeWidth={1.5} />
             ) : succeeded === 0 ? (
-              <XCircle className="h-4 w-4 text-red-400" strokeWidth={1.5} />
+              <XCircle className="h-4 w-4" style={{ color: 'var(--danger)' }} strokeWidth={1.5} />
             ) : (
-              <AlertCircle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
+              <AlertCircle className="h-4 w-4" style={{ color: 'var(--warning)' }} strokeWidth={1.5} />
             )}
-            <span className="text-xs font-medium text-neutral-900 dark:text-white">
+            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
               {t("result.processed", { succeeded, total })}
             </span>
           </div>
@@ -64,22 +56,22 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
         </div>
 
         {succeeded > 0 && sizeStats.totalInput > 0 && (
-          <div className="relative flex items-center gap-3 text-xs text-neutral-600 dark:text-neutral-300">
+          <div className="flex items-center gap-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
             <span>{formatSize(sizeStats.totalInput)}</span>
-            <span className="text-neutral-500">→</span>
+            <span style={{ color: 'var(--text-tertiary)' }}>→</span>
             <span>{formatSize(sizeStats.totalOutput)}</span>
             {sizeStats.saved > 0 && (
-              <span className="ml-auto font-medium text-green-400">-{sizeStats.saved.toFixed(1)}%</span>
+              <span className="ml-auto font-medium" style={{ color: 'var(--success)' }}>-{sizeStats.saved.toFixed(1)}%</span>
             )}
             {sizeStats.saved < 0 && (
-              <span className="ml-auto font-medium text-amber-400">+{Math.abs(sizeStats.saved).toFixed(1)}%</span>
+              <span className="ml-auto font-medium" style={{ color: 'var(--warning)' }}>+{Math.abs(sizeStats.saved).toFixed(1)}%</span>
             )}
           </div>
         )}
 
         {successResults.length > 0 && (
           <div
-            className="relative max-h-56 overflow-y-auto pr-1"
+            className="max-h-56 overflow-y-auto pr-1"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
@@ -92,7 +84,8 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
               return (
                 <div
                   key={i}
-                  className="group relative rounded-xl overflow-hidden border border-black/12 dark:border-white/8 bg-black/5 dark:bg-white/3 aspect-square cursor-pointer"
+                  className="group relative overflow-hidden aspect-square cursor-pointer"
+                  style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: 'var(--bg-overlay)' }}
                   onClick={() => canPreview && setPreviewResult(r)}
                 >
                   {canPreview ? (
@@ -117,9 +110,9 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
                     </div>
                   )}
 
-                  <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent px-1.5 py-1">
-                    <span className="text-[10px] text-neutral-200 truncate block">{outName}</span>
-                    <span className="text-[9px] text-neutral-500">{formatSize(r.output_size)}</span>
+                  <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }}>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.9)' }} className="truncate block">{outName}</span>
+                    <span style={{ fontSize: 9, color: 'var(--text-tertiary)' }}>{formatSize(r.output_size)}</span>
                   </div>
                 </div>
               );
@@ -128,11 +121,11 @@ export const ResultsBanner = memo(function ResultsBanner({ results, total, outpu
         )}
 
         {failed > 0 && (
-          <div className="relative max-h-24 overflow-y-auto space-y-1">
+          <div className="max-h-24 overflow-y-auto space-y-1">
             {results
               .filter((r) => !r.success)
               .map((r, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs text-red-400/80">
+                <div key={i} className="flex items-start gap-2" style={{ fontSize: 'var(--text-sm)', color: 'rgba(239,68,68,0.8)' }}>
                   <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <span className="truncate">
                     {r.input_path.split(/[\\/]/).pop()}: {r.error}

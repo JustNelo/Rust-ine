@@ -21,29 +21,34 @@ export function GlobalProgressBar() {
   const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border border-black/12 dark:border-white/8 bg-white/80 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] px-4 py-2.5 min-w-72">
+    <div
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 min-w-72"
+      style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-surface)', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+    >
       <div className="flex-1 space-y-1">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-neutral-600 dark:text-neutral-300 font-medium">
+        <div className="flex items-center justify-between">
+          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
             {t("status.processing", { completed: progress.completed, total: progress.total })}
           </span>
-          <span className="font-mono text-neutral-500">{percent}%</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>{percent}%</span>
         </div>
         {progress.current_file && (
-          <p className="text-[10px] text-neutral-500 truncate max-w-56">{progress.current_file}</p>
+          <p className="truncate max-w-56" style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{progress.current_file}</p>
         )}
-        <div className="h-1.5 w-full rounded-full bg-black/12 dark:bg-white/8 overflow-hidden">
+        <div className="w-full overflow-hidden" style={{ height: 6, borderRadius: 3, background: 'var(--bg-border)' }}>
           <div
-            className="h-full rounded-full bg-indigo-400 transition-all duration-300"
-            style={{ width: `${percent}%` }}
+            style={{ height: '100%', borderRadius: 3, background: 'var(--indigo-core)', width: `${percent}%`, transition: 'width 300ms ease' }}
           />
         </div>
       </div>
       <button
         onClick={handleCancel}
         data-cancel-button
-        className="btn-icon hover:text-red-400! hover:bg-red-400/10!"
+        className="btn-icon"
         title={t("action.cancel")}
+        style={{ color: 'var(--text-tertiary)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.background = 'transparent'; }}
       >
         <X className="h-4 w-4" strokeWidth={1.5} />
       </button>

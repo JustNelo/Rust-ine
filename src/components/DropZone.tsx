@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Upload } from "lucide-react";
-import { cn } from "../lib/utils";
 
 interface DropZoneProps {
   accept: string;
@@ -69,34 +68,61 @@ export function DropZone({ accept, multiple = true, label, sublabel, onFilesSele
   return (
     <div
       onClick={handleClick}
-      className={cn(
-        "relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all duration-300 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]",
-        isDragging
-          ? "border-indigo-400/30 bg-indigo-500/5 scale-[1.01]"
-          : "border-black/12 dark:border-white/10 bg-black/4 dark:bg-white/2 hover:bg-black/6 dark:hover:bg-white/4 hover:border-black/20 dark:hover:border-white/15",
-      )}
+      className="relative flex flex-col items-center justify-center gap-3 cursor-pointer"
+      style={{
+        height: 180,
+        borderRadius: 12,
+        border: isDragging
+          ? '1px solid var(--indigo-glow)'
+          : '1px dashed var(--glass-border)',
+        background: isDragging ? 'var(--glass-bg)' : 'var(--bg-elevated)',
+        boxShadow: isDragging ? '0 0 0 4px rgba(99,102,241,0.08)' : 'none',
+        transform: isDragging ? 'scale(1.01)' : 'scale(1)',
+        transition: 'all 150ms ease',
+      }}
+      onMouseEnter={(e) => {
+        if (!isDragging) {
+          e.currentTarget.style.border = '1px solid var(--indigo-core)';
+          e.currentTarget.style.background = 'var(--glass-bg)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isDragging) {
+          e.currentTarget.style.border = '1px dashed var(--glass-border)';
+          e.currentTarget.style.background = 'var(--bg-elevated)';
+        }
+      }}
     >
-      <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
       <div
-        className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay rounded-2xl"
+        className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
         style={{
+          borderRadius: 12,
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
         }}
       />
-      <div
-        className={cn(
-          "flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-300",
-          isDragging ? "bg-indigo-500/15 text-indigo-300" : "bg-black/6 dark:bg-white/6 text-neutral-400",
-        )}
-      >
-        <Upload className="h-6 w-6" strokeWidth={1.5} />
-      </div>
+      <Upload
+        style={{
+          width: 28,
+          height: 28,
+          color: isDragging ? 'var(--indigo-bright)' : 'var(--indigo-muted)',
+          transition: 'color 150ms ease',
+        }}
+        strokeWidth={1.5}
+      />
       <div className="text-center">
-        <p className="text-sm font-medium text-neutral-900 dark:text-white">{label}</p>
-        {sublabel && <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{sublabel}</p>}
-        <p className="mt-1.5 text-[10px] text-neutral-400 dark:text-neutral-600">
-          <kbd className="rounded border border-black/12 dark:border-white/8 bg-black/6 dark:bg-white/4 px-1 py-0.5 font-mono text-[10px]">
+        <p style={{ fontSize: 'var(--text-md)', fontWeight: 500, color: 'var(--text-primary)' }}>{label}</p>
+        {sublabel && <p style={{ marginTop: 4, fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>{sublabel}</p>}
+        <p style={{ marginTop: 6 }}>
+          <kbd style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            padding: '2px 6px',
+            borderRadius: 4,
+            background: 'var(--bg-border)',
+            color: 'var(--text-tertiary)',
+            border: 'none',
+          }}>
             Ctrl+O
           </kbd>
         </p>

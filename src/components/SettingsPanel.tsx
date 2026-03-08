@@ -1,10 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { X, FolderOpen, RotateCcw, Globe, RefreshCw, Loader2, CheckCircle, AlertCircle, Sun, Moon } from "lucide-react";
+import { X, FolderOpen, RotateCcw, Globe, RefreshCw, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { useT, type Lang } from "../i18n/i18n";
 import { useWorkspace } from "../hooks/useWorkspace";
-import { useTheme } from "../hooks/useTheme";
 import { GlassModal } from "./ui/GlassModal";
 
 interface SettingsPanelProps {
@@ -15,7 +14,6 @@ interface SettingsPanelProps {
 export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps) {
   const { lang, setLang, t } = useT();
   const { workspace, selectWorkspace, openInExplorer } = useWorkspace();
-  const { theme, toggleTheme } = useTheme();
   const [updateStatus, setUpdateStatus] = useState<
     "idle" | "checking" | "available" | "downloading" | "up-to-date" | "error"
   >("idle");
@@ -60,16 +58,16 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
 
   return (
     <GlassModal>
-      <button onClick={onClose} className="btn-icon absolute right-4 top-4 z-10">
+      <button onClick={onClose} className="btn-icon absolute right-5 top-5 z-10">
         <X className="h-4 w-4" strokeWidth={1.5} />
       </button>
 
-      <h2 className="relative text-lg font-light text-neutral-900 dark:text-white mb-6">{t("settings.title")}</h2>
+      <h2 className="relative font-semibold" style={{ fontSize: 'var(--text-xl)', color: 'var(--text-primary)', letterSpacing: '-0.01em', marginBottom: 28 }}>{t("settings.title")}</h2>
 
-      <div className="relative space-y-5">
+      <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Language */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <label className="flex items-center gap-2 font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
             <Globe className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t("settings.language")}
           </label>
@@ -86,48 +84,16 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
           </div>
         </div>
 
-        {/* Theme */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
-            {theme === "dark" ? (
-              <Moon className="h-3.5 w-3.5" strokeWidth={1.5} />
-            ) : (
-              <Sun className="h-3.5 w-3.5" strokeWidth={1.5} />
-            )}
-            {t("settings.theme")}
-          </label>
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                if (theme !== "dark") toggleTheme();
-              }}
-              className={`btn-toggle ${theme === "dark" ? "btn-toggle-active" : ""}`}
-            >
-              <Moon className="h-3.5 w-3.5" strokeWidth={1.5} />
-              {t("settings.theme_dark")}
-            </button>
-            <button
-              onClick={() => {
-                if (theme !== "light") toggleTheme();
-              }}
-              className={`btn-toggle ${theme === "light" ? "btn-toggle-active" : ""}`}
-            >
-              <Sun className="h-3.5 w-3.5" strokeWidth={1.5} />
-              {t("settings.theme_light")}
-            </button>
-          </div>
-        </div>
-
         {/* Workspace */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <label className="flex items-center gap-2 font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
             <FolderOpen className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t("settings.workspace")}
           </label>
           {workspace ? (
-            <div className="rounded-lg border border-black/12 dark:border-white/8 bg-black/5 dark:bg-white/3 px-3 py-2">
-              <p className="text-[11px] text-neutral-900 dark:text-white truncate">{workspace}</p>
-              <div className="flex gap-2 mt-2">
+            <div style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)', padding: '10px 14px' }}>
+              <p className="truncate" style={{ fontSize: 12, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{workspace}</p>
+              <div className="flex gap-2" style={{ marginTop: 10 }}>
                 <button onClick={selectWorkspace} className="btn-pill">
                   {t("settings.change")}
                 </button>
@@ -143,20 +109,21 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
           )}
         </div>
 
-        {/* Reset Onboarding */}
-        <div className="pt-2 border-t border-black/10 dark:border-white/6">
-          <button onClick={onResetOnboarding} className="btn-ghost">
+        {/* Divider */}
+        <div style={{ height: 1, background: 'var(--bg-border)' }} />
+
+        {/* Actions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <button onClick={onResetOnboarding} className="btn-ghost" style={{ justifyContent: 'flex-start' }}>
             <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t("settings.reset_onboarding")}
           </button>
-        </div>
 
-        {/* Updates */}
-        <div className="pt-2 border-t border-black/10 dark:border-white/6 space-y-2">
           <button
             onClick={handleCheckUpdate}
             disabled={updateStatus === "checking" || updateStatus === "downloading"}
             className="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ justifyContent: 'flex-start' }}
           >
             {updateStatus === "checking" || updateStatus === "downloading" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
@@ -177,18 +144,18 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
                     ? t("updater.error")
                     : t("updater.check")}
           </button>
-
-          {updateStatus === "available" && (
-            <div className="flex items-center justify-between rounded-lg border border-black/12 dark:border-white/10 bg-black/6 dark:bg-white/4 px-3 py-2">
-              <span className="text-xs text-neutral-900 dark:text-white">
-                {t("updater.new_version").replace("{version}", foundVersion)}
-              </span>
-              <button onClick={handleInstallUpdate} className="btn-primary-sm">
-                {t("updater.download")}
-              </button>
-            </div>
-          )}
         </div>
+
+        {updateStatus === "available" && (
+          <div className="flex items-center justify-between" style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)', padding: '10px 14px' }}>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
+              {t("updater.new_version").replace("{version}", foundVersion)}
+            </span>
+            <button onClick={handleInstallUpdate} className="btn-primary-sm">
+              {t("updater.download")}
+            </button>
+          </div>
+        )}
       </div>
     </GlassModal>
   );

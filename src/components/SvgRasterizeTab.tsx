@@ -90,7 +90,7 @@ export function SvgRasterizeTab() {
       <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-2">
-        <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
+        <label className="forge-label">
           {t("label.output_format")}
         </label>
         <div className="flex gap-2">
@@ -126,23 +126,22 @@ export function SvgRasterizeTab() {
       />
 
       {result && (
-        <div className="relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4 space-y-2">
-          <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-          <div className="relative flex items-center justify-between">
-            <p className="text-xs font-medium text-neutral-900 dark:text-white">
+        <div className="forge-card space-y-2">
+          <div className="flex items-center justify-between">
+            <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
               {t("result.svg_rasterized", { w: result.width, h: result.height })}
             </p>
             {lastOutputDir && (
               <button
                 onClick={() => revealItemInDir(lastOutputDir)}
-                className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-900 dark:hover:text-white transition-colors duration-200 cursor-pointer"
+                className="btn-ghost"
               >
                 <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
                 {t("label.open_output_folder")}
               </button>
             )}
           </div>
-          <p className="text-[10px] text-neutral-500 truncate">{result.output_path}</p>
+          <p className="truncate forge-hint">{result.output_path}</p>
         </div>
       )}
     </div>

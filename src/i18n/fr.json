@@ -232,6 +232,7 @@
   "onboarding.skip": "Passer",
 
   "sidebar.hint": "Glissez-déposez vos fichiers ou utilisez Ctrl+O.",
+  "sidebar.hint_short": "Ctrl+O · Glisser-déposer",
   "sidebar.workspace": "Espace de travail",
 
   "label.scale": "Échelle",

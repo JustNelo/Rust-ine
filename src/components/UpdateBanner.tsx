@@ -17,16 +17,19 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
   }
 
   return (
-    <div className="relative z-20 flex items-center justify-between gap-3 border-b border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 backdrop-blur-xl px-4 py-2">
+    <div
+      className="relative z-20 flex items-center justify-between gap-3 px-4 py-2"
+      style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--bg-border)' }}
+    >
       <div className="flex items-center gap-2.5">
         {status === "downloading" ? (
-          <Loader2 className="h-3.5 w-3.5 text-neutral-400 animate-spin shrink-0" strokeWidth={1.5} />
+          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" style={{ color: 'var(--text-tertiary)' }} strokeWidth={1.5} />
         ) : status === "error" ? (
-          <AlertCircle className="h-3.5 w-3.5 text-red-400 shrink-0" strokeWidth={1.5} />
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--danger)' }} strokeWidth={1.5} />
         ) : (
-          <Download className="h-3.5 w-3.5 text-neutral-400 shrink-0" strokeWidth={1.5} />
+          <Download className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--text-tertiary)' }} strokeWidth={1.5} />
         )}
-        <span className="text-xs text-neutral-900 dark:text-white">
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
           {status === "downloading"
             ? t("updater.downloading")
             : status === "error"

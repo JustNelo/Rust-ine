@@ -89,25 +89,20 @@ export const ImageGrid = memo(function ImageGrid({ files, onReorder, onRemove, o
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-2xl border border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-3 space-y-3">
-        <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-        <div
-          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
-          }}
-        />
-        <div className="relative flex items-center justify-between">
-          <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
+      <div className="overflow-hidden p-3 space-y-3" style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)' }}>
+        <div className="flex items-center justify-between">
+          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
             {t("label.n_files_selected", { n: files.length })}
-            <span className="text-neutral-500"> — {t("pdf_tool.drag_hint")}</span>
+            <span style={{ color: 'var(--text-tertiary)' }}> — {t("pdf_tool.drag_hint")}</span>
           </span>
           <button
             onClick={onClear}
             data-clear-button
             title={`${t("label.clear_all")} (Ctrl+L)`}
-            className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors duration-200 cursor-pointer"
+            className="cursor-pointer"
+            style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)', background: 'none', border: 'none', transition: 'color 150ms ease' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; }}
           >
             {t("label.clear_all")}
           </button>
@@ -147,23 +142,21 @@ export const ImageGrid = memo(function ImageGrid({ files, onReorder, onRemove, o
       {/* Info modal */}
       {infoMetadata && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
           onClick={closeInfo}
         >
           <div
-            className="relative w-full max-w-md rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 bg-white/90 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-4"
+            className="relative w-full max-w-md overflow-hidden p-4"
+            style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-widest text-neutral-400">
+              <span className="font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
                 {t("info.image_details")}
               </span>
-              <button
-                onClick={closeInfo}
-                className="rounded-full p-1 hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
-              >
-                <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
+              <button onClick={closeInfo} className="btn-icon">
+                <X className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
             <MetadataPanel metadata={infoMetadata} />
@@ -174,27 +167,25 @@ export const ImageGrid = memo(function ImageGrid({ files, onReorder, onRemove, o
       {/* Fullscreen preview modal */}
       {previewSrc && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
           onClick={closePreview}
         >
           <div
-            className="relative max-w-[85vw] max-h-[85vh] rounded-2xl overflow-hidden border border-black/8 dark:border-white/8 bg-white/90 dark:bg-white/2 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]"
+            className="relative max-w-[85vw] max-h-[85vh] overflow-hidden"
+            style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/20 to-transparent" />
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-black/8 dark:border-white/8">
-              <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-md">
+            <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid var(--bg-border)' }}>
+              <span className="truncate max-w-md" style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
                 {previewName}
               </span>
-              <button
-                onClick={closePreview}
-                className="rounded-full p-1 hover:bg-black/6 dark:hover:bg-white/6 transition-colors duration-200 cursor-pointer"
-              >
-                <X className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
+              <button onClick={closePreview} className="btn-icon">
+                <X className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
-            <div className="flex items-center justify-center p-4 bg-neutral-100 dark:bg-neutral-950">
-              <img src={previewSrc} alt={previewName} className="max-w-full max-h-[75vh] object-contain rounded" />
+            <div className="flex items-center justify-center p-4" style={{ background: 'var(--bg-base)' }}>
+              <img src={previewSrc} alt={previewName} className="max-w-full max-h-[75vh] object-contain" style={{ borderRadius: 4 }} />
             </div>
           </div>
         </div>

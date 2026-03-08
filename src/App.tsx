@@ -8,10 +8,8 @@ import {
   Scaling,
   ShieldOff,
   Stamp,
-  Settings,
   Sparkles,
   Crop,
-  ChevronDown,
   Pipette,
   Globe,
   Film,
@@ -20,9 +18,7 @@ import {
   QrCode,
   PenLine,
   FileImage,
-  Clock,
 } from "lucide-react";
-import { cn } from "./lib/utils";
 import { TitleBar } from "./components/TitleBar";
 import { CompressTab } from "./components/CompressTab";
 import { ConvertTab } from "./components/ConvertTab";
@@ -48,7 +44,6 @@ import { OnboardingModal } from "./components/OnboardingModal";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
 import { useAutoUpdate } from "./hooks/useAutoUpdate";
-import { useTheme } from "./hooks/useTheme";
 import { useT } from "./i18n/i18n";
 import type { TabId } from "./types";
 import "./App.css";
@@ -161,7 +156,6 @@ function App() {
     install: installUpdate,
     dismiss: dismissUpdate,
   } = useAutoUpdate();
-  const { theme } = useTheme();
   const [appVersion, setAppVersion] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("compress");
   const [isLoading, setIsLoading] = useState(true);
@@ -190,113 +184,111 @@ function App() {
     window.dispatchEvent(new CustomEvent("rustine-shortcut-files", { detail: paths }));
   }, []);
 
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
-
-  const toggleSection = useCallback((titleKey: string) => {
-    setCollapsedSections((prev) => ({ ...prev, [titleKey]: !prev[titleKey] }));
-  }, []);
-
   useGlobalShortcuts({
     acceptExtensions: activeExtensions,
     onFilesSelected: handleShortcutFiles,
   });
 
   return (
-    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-gray-50 dark:bg-neutral-950">
-      {/* ── Ambient background blobs ── */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-125 w-125 rounded-full bg-indigo-200 dark:bg-indigo-900 mix-blend-multiply dark:mix-blend-screen filter blur-[120px] opacity-25 dark:opacity-30" />
-        <div className="absolute top-1/2 right-[-10%] h-100 w-100 rounded-full bg-neutral-300 dark:bg-neutral-800 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-15 dark:opacity-20" />
-        <div className="absolute bottom-[-15%] left-1/3 h-87.5 w-87.5 rounded-full bg-indigo-200 dark:bg-indigo-900 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-15 dark:opacity-20" />
-      </div>
-
-      <TitleBar />
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden" style={{ background: 'var(--bg-base)' }}>
+      <TitleBar onShowHistory={() => setShowHistory(true)} onShowSettings={() => setShowSettings(true)} />
       <UpdateBanner status={updateStatus} version={updateVersion} onInstall={installUpdate} onDismiss={dismissUpdate} />
 
       <div className="relative z-10 flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="flex w-56 shrink-0 flex-col border-r border-indigo-400/10 bg-white/80 dark:bg-white/2 backdrop-blur-xl">
-          <nav className="flex flex-col gap-0.5 px-3 mt-1 flex-1 overflow-y-auto">
-            {SIDEBAR_SECTIONS.map((section) => {
-              const isCollapsed = collapsedSections[section.titleKey] ?? false;
-              return (
-                <div key={section.titleKey} className="mb-1">
-                  <button
-                    onClick={() => toggleSection(section.titleKey)}
-                    className="flex w-full items-center justify-between px-3 pt-3 pb-1.5 cursor-pointer group"
+        <aside
+          className="flex shrink-0 flex-col"
+          style={{ width: 200, background: 'var(--bg-surface)', borderRight: '1px solid var(--bg-border)' }}
+        >
+          <nav className="flex flex-col gap-0.5 px-2 mt-1 flex-1 overflow-y-auto">
+            {SIDEBAR_SECTIONS.map((section) => (
+              <div key={section.titleKey} className="mb-1">
+                <div className="px-3 pt-4 pb-1.5">
+                  <span
+                    className="font-semibold uppercase select-none"
+                    style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}
                   >
-                    <span className="text-[9px] font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500 transition-colors group-hover:text-neutral-600 dark:group-hover:text-neutral-400">
-                      {t(section.titleKey)}
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3 w-3 text-neutral-400 dark:text-neutral-600 transition-transform duration-200",
-                        isCollapsed && "-rotate-90",
-                      )}
-                    />
-                  </button>
-                  {!isCollapsed &&
-                    section.tabs.map((tab) => {
-                      const Icon = tab.icon;
-                      const isActive = activeTab === tab.id;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActiveTab(tab.id)}
-                          className={cn(
-                            "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer w-full",
-                            isActive
-                              ? "bg-indigo-500/15 text-indigo-900 dark:text-white border-l-2 border-indigo-400"
-                              : "text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-800 dark:hover:text-neutral-200 border-l-2 border-transparent",
-                          )}
-                        >
-                          <Icon
-                            className={cn(
-                              "h-3.5 w-3.5",
-                              isActive
-                                ? "text-indigo-500 dark:text-indigo-400"
-                                : "text-neutral-400 dark:text-neutral-500",
-                            )}
-                            strokeWidth={1.5}
-                          />
-                          {t(tab.labelKey)}
-                        </button>
-                      );
-                    })}
+                    {t(section.titleKey)}
+                  </span>
                 </div>
-              );
-            })}
+                {section.tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className="relative flex items-center w-full cursor-pointer"
+                      style={{
+                        height: 32,
+                        padding: '0 12px',
+                        borderRadius: 6,
+                        gap: 8,
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-sans)',
+                        transition: 'all 150ms ease',
+                        background: isActive ? 'var(--glass-bg)' : 'transparent',
+                        color: isActive ? 'var(--indigo-glow)' : 'var(--text-secondary)',
+                        border: 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = 'var(--bg-overlay)';
+                          e.currentTarget.style.color = 'var(--text-primary)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = 'var(--text-secondary)';
+                        }
+                      }}
+                    >
+                      {/* Active indicator bar */}
+                      <span
+                        className="absolute left-0 top-1/2 -translate-y-1/2"
+                        style={{
+                          width: 2,
+                          height: 16,
+                          borderRadius: 1,
+                          background: isActive ? 'var(--indigo-core)' : 'transparent',
+                          transition: 'transform 150ms ease, background 150ms ease',
+                          transform: isActive ? 'scaleX(1)' : 'scaleX(0)',
+                          transformOrigin: 'left',
+                        }}
+                      />
+                      <Icon
+                        style={{
+                          width: 14,
+                          height: 14,
+                          color: isActive ? 'var(--indigo-core)' : 'var(--text-tertiary)',
+                          transition: 'color 150ms ease',
+                          flexShrink: 0,
+                        }}
+                        strokeWidth={1.5}
+                      />
+                      {t(tab.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
 
-          <div className="px-3 py-3 space-y-2">
-            <button
-              onClick={() => setShowHistory(true)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200 cursor-pointer"
-            >
-              <Clock className="h-4 w-4" strokeWidth={1.5} />
-              {t("history.title")}
-            </button>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/4 dark:hover:bg-white/4 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all duration-200 cursor-pointer"
-            >
-              <Settings className="h-4 w-4" strokeWidth={1.5} />
-              {t("settings.title")}
-            </button>
-            <div className="relative overflow-hidden rounded-xl border border-black/12 dark:border-white/8 bg-black/4 dark:bg-white/2 px-3 py-2">
-              <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/25 to-transparent" />
-              <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-relaxed">{t("sidebar.hint")}</p>
-              {appVersion && <p className="text-[9px] text-neutral-400 dark:text-neutral-600 mt-1">v{appVersion}</p>}
+          {appVersion && (
+            <div className="px-3 py-3 flex items-center justify-center" style={{ borderTop: '1px solid var(--bg-border)' }}>
+              <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>v{appVersion}</span>
             </div>
-          </div>
+          )}
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-transparent">
-          <div className="mx-auto max-w-xl">
-            <div className="mb-6">
-              <h2 className="text-lg font-light text-neutral-900 dark:text-white">{t(TAB_LABEL_KEYS[activeTab])}</h2>
-              <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">{t(TAB_DESC_KEYS[activeTab])}</p>
+        <main className="flex-1 overflow-y-auto" style={{ padding: '32px 40px' }}>
+          <div className="mx-auto" style={{ maxWidth: 680 }}>
+            <div style={{ marginBottom: 24 }}>
+              <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em', lineHeight: 1.3 }}>{t(TAB_LABEL_KEYS[activeTab])}</h2>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{t(TAB_DESC_KEYS[activeTab])}</p>
             </div>
 
             {activeTab === "compress" && <CompressTab />}
@@ -345,17 +337,16 @@ function App() {
 
       <Toaster
         position="bottom-right"
-        theme={theme === "dark" ? "dark" : "light"}
+        theme="dark"
         toastOptions={{
           style: {
-            background: theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.9)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            border: theme === "dark" ? "1px solid rgba(99,102,241,0.2)" : "1px solid rgba(99,102,241,0.15)",
-            borderRadius: "16px",
-            color: theme === "dark" ? "#ffffff" : "#1a1a1a",
-            fontSize: "12px",
-            boxShadow: theme === "dark" ? "0 8px 32px 0 rgba(0,0,0,0.3)" : "0 8px 32px 0 rgba(0,0,0,0.1)",
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '8px',
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'var(--text-sm)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
           },
         }}
       />

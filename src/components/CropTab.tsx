@@ -333,7 +333,7 @@ export function CropTab() {
             <span className="text-[10px] text-neutral-500">{t("label.crop_draw_hint")}</span>
             <button
               onClick={resetSelection}
-              className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors duration-200 cursor-pointer"
+              className="flex items-center gap-1 cursor-pointer forge-hint" style={{ transition: 'color 150ms ease' }}
             >
               <RotateCcw className="h-3 w-3" strokeWidth={1.5} />
               {t("label.reset")}
@@ -342,8 +342,8 @@ export function CropTab() {
 
           <div
             ref={containerRef}
-            className="relative rounded-xl overflow-hidden border border-black/12 dark:border-white/8 bg-neutral-100 dark:bg-neutral-950 select-none touch-none"
-            style={{ cursor }}
+            className="relative overflow-hidden select-none touch-none"
+            style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-base)', cursor }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -422,7 +422,7 @@ export function CropTab() {
                             return { ...prev, h: Math.max(1 / naturalSize.h, v / naturalSize.h) };
                           });
                         }}
-                        className="w-16 rounded-md border border-black/12 dark:border-white/8 bg-black/6 dark:bg-white/4 px-1.5 py-0.5 text-[10px] text-neutral-900 dark:text-white text-center focus:border-indigo-400/30 focus:outline-none"
+                        className="forge-input text-center" style={{ width: 64, flex: 'none', padding: '2px 6px', fontSize: 10 }}
                       />
                     </div>
                   );

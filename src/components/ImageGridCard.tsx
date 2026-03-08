@@ -27,19 +27,27 @@ export const ImageGridCard = memo(
     const fileName = filePath.split(/[\\/]/).pop() || filePath;
     const ext = fileName.split(".").pop()?.toUpperCase() || "";
 
+    const mergedStyle = {
+      ...style,
+      borderRadius: 8,
+      border: '1px solid var(--bg-border)',
+      background: 'var(--bg-overlay)',
+    };
+
     return (
       <div
         ref={setNodeRef}
-        style={style}
+        style={mergedStyle}
         {...attributes}
         {...listeners}
-        className="group relative aspect-square rounded-xl overflow-hidden border border-black/8 dark:border-white/8 bg-black/3 dark:bg-white/3 cursor-grab active:cursor-grabbing"
+        className="group relative aspect-square overflow-hidden cursor-grab active:cursor-grabbing"
       >
         {/* Remove button */}
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onRemove(index)}
-          className="absolute top-1 right-1 z-10 rounded-full bg-red-600/80 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-red-500"
+          className="absolute top-1 right-1 z-10 rounded-full p-0.5 opacity-0 group-hover:opacity-100 cursor-pointer"
+          style={{ background: 'var(--danger)', transition: 'opacity 150ms ease' }}
         >
           <X className="h-3 w-3 text-white" strokeWidth={1.5} />
         </button>
@@ -48,7 +56,8 @@ export const ImageGridCard = memo(
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onPreview(filePath)}
-          className="absolute top-1 left-1 z-10 rounded-full bg-black/50 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 backdrop-blur-sm"
+          className="absolute top-1 left-1 z-10 rounded-full p-1 opacity-0 group-hover:opacity-100 cursor-pointer"
+          style={{ background: 'rgba(0,0,0,0.6)', transition: 'opacity 150ms ease' }}
         >
           <ZoomIn className="h-3 w-3 text-white" strokeWidth={1.5} />
         </button>
@@ -58,7 +67,8 @@ export const ImageGridCard = memo(
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => onInfo(filePath)}
-            className="absolute top-1 left-7 z-10 rounded-full bg-black/50 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 backdrop-blur-sm"
+            className="absolute top-1 left-7 z-10 rounded-full p-1 opacity-0 group-hover:opacity-100 cursor-pointer"
+            style={{ background: 'rgba(0,0,0,0.6)', transition: 'opacity 150ms ease' }}
           >
             <Info className="h-3 w-3 text-white" strokeWidth={1.5} />
           </button>
@@ -77,9 +87,9 @@ export const ImageGridCard = memo(
         />
 
         {/* Info bar */}
-        <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/70 to-transparent px-1.5 py-1">
-          <p className="text-[9px] text-white/90 truncate font-medium leading-tight">{fileName}</p>
-          {ext && <span className="text-[8px] text-white/50 leading-tight">{ext}</span>}
+        <div className="absolute bottom-0 inset-x-0 px-1.5 py-1" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }}>
+          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.9)', fontWeight: 500, lineHeight: 1.2 }} className="truncate">{fileName}</p>
+          {ext && <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', lineHeight: 1.2 }}>{ext}</span>}
         </div>
       </div>
     );

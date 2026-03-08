@@ -125,7 +125,7 @@ export function ResizeTab() {
         </div>
 
         <div>
-          <label className="text-xs font-medium uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2 block">
+          <label className="forge-label">
             {t("label.presets")}
           </label>
           <div className="flex gap-1.5 flex-wrap">
@@ -137,7 +137,7 @@ export function ResizeTab() {
                   setWidth(preset.w);
                   setHeight(preset.h);
                 }}
-                className="rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-2.5 py-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white transition-all duration-200 cursor-pointer"
+                className="forge-chip"
               >
                 {t(preset.labelKey)} ({preset.w}x{preset.h})
               </button>
@@ -159,29 +159,29 @@ export function ResizeTab() {
 
         {(mode === "width" || mode === "exact") && (
           <div className="flex items-center gap-2">
-            <label className="text-xs text-neutral-400 w-12">{t("label.width")}</label>
+            <label className="forge-hint" style={{ width: 48 }}>{t("label.width")}</label>
             <input
               type="number"
               min={1}
               value={width}
               onChange={(e) => setWidth(Number(e.target.value))}
-              className="flex-1 rounded-md border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white focus:border-indigo-400/30 focus:outline-none"
+              className="forge-input"
             />
-            <span className="text-xs text-neutral-400 dark:text-neutral-500">{t("label.px")}</span>
+            <span className="forge-hint">{t("label.px")}</span>
           </div>
         )}
 
         {(mode === "height" || mode === "exact") && (
           <div className="flex items-center gap-2">
-            <label className="text-xs text-neutral-400 w-12">{t("label.height")}</label>
+            <label className="forge-hint" style={{ width: 48 }}>{t("label.height")}</label>
             <input
               type="number"
               min={1}
               value={height}
               onChange={(e) => setHeight(Number(e.target.value))}
-              className="flex-1 rounded-md border border-black/8 dark:border-white/8 bg-black/4 dark:bg-white/4 px-3 py-1.5 text-xs text-neutral-900 dark:text-white focus:border-indigo-400/30 focus:outline-none"
+              className="forge-input"
             />
-            <span className="text-xs text-neutral-400 dark:text-neutral-500">{t("label.px")}</span>
+            <span className="forge-hint">{t("label.px")}</span>
           </div>
         )}
       </div>

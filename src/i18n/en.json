@@ -232,6 +232,7 @@
   "onboarding.skip": "Skip",
 
   "sidebar.hint": "Drag & drop files or use Ctrl+O to browse.",
+  "sidebar.hint_short": "Ctrl+O · Drag & drop",
   "sidebar.workspace": "Workspace",
 
   "label.scale": "Scale",

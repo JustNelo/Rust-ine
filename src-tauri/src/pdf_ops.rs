@@ -720,8 +720,12 @@ pub fn protect_pdf(
     result
 }
 
-/// Unlock a password-protected PDF using pdfium-render.
-/// Opens the PDF with the given password, then saves it without encryption.
+/// Unlock a password-protected PDF using pdfium.
+/// 1. pdfium opens the encrypted PDF with the password (decrypts in memory).
+/// 2. We create a brand-new empty PDF document (no encryption metadata).
+/// 3. We import all pages from the decrypted source into the new document.
+/// 4. We save the new document — it contains the decrypted content without
+///    any /Encrypt dictionary, so readers will never prompt for a password.
 pub fn unlock_pdf(
     pdfium: &Pdfium,
     pdf_path: &str,
@@ -740,7 +744,8 @@ pub fn unlock_pdf(
         return result;
     }
 
-    let doc = match pdfium.load_pdf_from_file(pdf_path, Some(password)) {
+    // Step 1: pdfium opens and decrypts the PDF in memory
+    let encrypted_doc = match pdfium.load_pdf_from_file(pdf_path, Some(password)) {
         Ok(d) => d,
         Err(e) => {
             result
@@ -750,11 +755,30 @@ pub fn unlock_pdf(
         }
     };
 
+    // Step 2: create a brand-new empty PDF (no encryption metadata at all)
+    let mut new_doc = match pdfium.create_new_pdf() {
+        Ok(d) => d,
+        Err(e) => {
+            result
+                .errors
+                .push(format!("Cannot create new PDF document: {}", e));
+            return result;
+        }
+    };
+
+    // Step 3: import all decrypted pages into the clean document
+    if let Err(e) = new_doc.pages_mut().append(&encrypted_doc) {
+        result
+            .errors
+            .push(format!("Cannot import pages from encrypted PDF: {}", e));
+        return result;
+    }
+
+    // Step 4: save the clean, unencrypted PDF
     let pdf_stem = file_stem(pdf_path);
     let output_path = out_dir.join(format!("{}-unlocked.pdf", pdf_stem));
 
-    // Save without encryption — pdfium strips password on save
-    match doc.save_to_file(&output_path) {
+    match new_doc.save_to_file(&output_path) {
         Ok(_) => {
             result.output_path = output_path.to_string_lossy().to_string();
             result.success = true;

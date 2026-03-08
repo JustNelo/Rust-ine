@@ -96,11 +96,7 @@ export function FaviconTab() {
 
       <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
-      <button
-        onClick={handleGenerate}
-        disabled={loading || files.length === 0}
-        className="btn-primary w-full"
-      >
+      <button onClick={handleGenerate} disabled={loading || files.length === 0} className="btn-primary w-full">
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
         ) : (
@@ -113,21 +109,18 @@ export function FaviconTab() {
         <div className="mt-4 forge-card space-y-3">
           <div className="flex items-center gap-2">
             {result.errors.length === 0 ? (
-              <CheckCircle className="h-4 w-4" style={{ color: 'var(--success)' }} strokeWidth={1.5} />
+              <CheckCircle className="h-4 w-4" style={{ color: "var(--success)" }} strokeWidth={1.5} />
             ) : (
-              <XCircle className="h-4 w-4" style={{ color: 'var(--warning)' }} strokeWidth={1.5} />
+              <XCircle className="h-4 w-4" style={{ color: "var(--warning)" }} strokeWidth={1.5} />
             )}
-            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>
               {t("result.favicons_generated")}
             </span>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
             {result.generated_files.map((file) => (
-              <span
-                key={file}
-                className="forge-chip"
-              >
+              <span key={file} className="forge-chip">
                 {file}
               </span>
             ))}
@@ -136,7 +129,11 @@ export function FaviconTab() {
           {result.errors.length > 0 && (
             <div className="max-h-24 overflow-y-auto space-y-1">
               {result.errors.map((err, i) => (
-                <div key={i} className="flex items-start gap-2" style={{ fontSize: 'var(--text-sm)', color: 'rgba(239,68,68,0.8)' }}>
+                <div
+                  key={i}
+                  className="flex items-start gap-2"
+                  style={{ fontSize: "var(--text-sm)", color: "rgba(239,68,68,0.8)" }}
+                >
                   <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <span>{err}</span>
                 </div>

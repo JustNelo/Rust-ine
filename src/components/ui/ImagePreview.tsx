@@ -13,7 +13,7 @@ export const ImagePreview = memo(function ImagePreview({ path, className = "", o
   return (
     <div
       className={`relative overflow-hidden ${className}`}
-      style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)' }}
+      style={{ borderRadius: 12, border: "1px solid var(--bg-border)", background: "var(--bg-elevated)" }}
     >
       <img
         src={safeAssetUrl(path, true)}

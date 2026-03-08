@@ -72,9 +72,7 @@ export function QrCodeTab() {
     <div className="space-y-5">
       {/* Text input */}
       <div className="space-y-1.5">
-        <label className="forge-label">
-          {t("label.qr_content")}
-        </label>
+        <label className="forge-label">{t("label.qr_content")}</label>
         <textarea
           value={text}
           onChange={(e) => {
@@ -84,7 +82,7 @@ export function QrCodeTab() {
           placeholder={t("label.qr_placeholder")}
           rows={3}
           className="forge-textarea"
-          style={{ resize: 'none' }}
+          style={{ resize: "none" }}
         />
         <div className="flex justify-end">
           <span className="forge-hint">{t("label.chars_count", { n: text.length })}</span>
@@ -93,9 +91,7 @@ export function QrCodeTab() {
 
       {/* Size selector */}
       <div className="space-y-1.5">
-        <label className="forge-label">
-          {t("label.qr_size")}
-        </label>
+        <label className="forge-label">{t("label.qr_size")}</label>
         <div className="flex gap-2">
           {SIZE_OPTIONS.map((s) => (
             <button
@@ -121,10 +117,13 @@ export function QrCodeTab() {
       {/* QR preview */}
       {result && result.output_path && (
         <div className="mt-4 forge-card flex flex-col items-center gap-3">
-          <div className="overflow-hidden p-2" style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: '#ffffff' }}>
+          <div
+            className="overflow-hidden p-2"
+            style={{ borderRadius: 8, border: "1px solid var(--bg-border)", background: "#ffffff" }}
+          >
             <img src={safeAssetUrl(result.output_path, true)} alt="QR Code" className="w-40 h-40 object-contain" />
           </div>
-          <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}>
+          <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-tertiary)" }}>
             {result.size}×{result.size}px
           </span>
         </div>

@@ -21,8 +21,8 @@ export const PdfPageCard = memo(
       opacity: isDragging ? 0.5 : 1,
       zIndex: isDragging ? 50 : ("auto" as const),
       borderRadius: 12,
-      border: '1px solid var(--bg-border)',
-      background: 'var(--bg-overlay)',
+      border: "1px solid var(--bg-border)",
+      background: "var(--bg-overlay)",
     };
 
     return (
@@ -60,7 +60,10 @@ export const PdfPageCard = memo(
         </div>
 
         {/* Thumbnail — fixed area, image contained */}
-        <div className="absolute inset-0 bottom-7 flex items-center justify-center" style={{ background: 'var(--bg-elevated)' }}>
+        <div
+          className="absolute inset-0 bottom-7 flex items-center justify-center"
+          style={{ background: "var(--bg-elevated)" }}
+        >
           {page.thumbnailLoaded && page.thumbnailSrc ? (
             <img
               src={page.thumbnailSrc}

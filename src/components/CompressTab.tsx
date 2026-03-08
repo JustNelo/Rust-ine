@@ -94,7 +94,10 @@ export function CompressTab() {
       <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-2">
-        <label className="font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
+        <label
+          className="font-semibold uppercase"
+          style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--text-tertiary)" }}
+        >
           {t("label.output_format")}
         </label>
         <div className="flex gap-2">

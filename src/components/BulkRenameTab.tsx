@@ -130,9 +130,7 @@ export function BulkRenameTab() {
 
       {/* Pattern input */}
       <div className="space-y-2">
-        <label className="forge-label">
-          {t("label.rename_pattern")}
-        </label>
+        <label className="forge-label">{t("label.rename_pattern")}</label>
         <input
           type="text"
           value={pattern}
@@ -141,15 +139,12 @@ export function BulkRenameTab() {
             setResult(null);
           }}
           placeholder="{name}_{index}"
-          className="forge-input w-full" style={{ fontFamily: 'var(--font-mono)' }}
+          className="forge-input w-full"
+          style={{ fontFamily: "var(--font-mono)" }}
         />
         <div className="flex gap-1.5 flex-wrap">
           {TOKENS.map((token) => (
-            <button
-              key={token}
-              onClick={() => setPattern((prev) => prev + token)}
-              className="forge-chip"
-            >
+            <button key={token} onClick={() => setPattern((prev) => prev + token)} className="forge-chip">
               {token}
             </button>
           ))}
@@ -159,15 +154,14 @@ export function BulkRenameTab() {
 
       {/* Start index */}
       <div className="flex items-center gap-3">
-        <label className="forge-label">
-          {t("label.start_index")}
-        </label>
+        <label className="forge-label">{t("label.start_index")}</label>
         <input
           type="number"
           min={0}
           value={startIndex}
           onChange={(e) => setStartIndex(Number(e.target.value))}
-          className="forge-input" style={{ width: 80, flex: 'none', fontFamily: 'var(--font-mono)' }}
+          className="forge-input"
+          style={{ width: 80, flex: "none", fontFamily: "var(--font-mono)" }}
         />
       </div>
 
@@ -179,14 +173,21 @@ export function BulkRenameTab() {
           </span>
           {previewNames.map((p, i) => (
             <div key={i} className="flex items-center gap-2 text-[11px]">
-              <span className="truncate flex-1" style={{ color: 'var(--text-tertiary)' }}>{p.original}</span>
-              <span className="shrink-0" style={{ color: 'var(--text-tertiary)' }}>&rarr;</span>
-              <span className="truncate flex-1 text-right" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{p.preview}</span>
+              <span className="truncate flex-1" style={{ color: "var(--text-tertiary)" }}>
+                {p.original}
+              </span>
+              <span className="shrink-0" style={{ color: "var(--text-tertiary)" }}>
+                &rarr;
+              </span>
+              <span
+                className="truncate flex-1 text-right"
+                style={{ color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}
+              >
+                {p.preview}
+              </span>
             </div>
           ))}
-          {files.length > 5 && (
-            <span className="forge-hint">{t("label.more_files", { n: files.length - 5 })}</span>
-          )}
+          {files.length > 5 && <span className="forge-hint">{t("label.more_files", { n: files.length - 5 })}</span>}
         </div>
       )}
 
@@ -204,11 +205,11 @@ export function BulkRenameTab() {
         <div className="mt-4 forge-card space-y-2">
           <div className="flex items-center gap-2">
             {result.errors.length === 0 ? (
-              <CheckCircle className="h-4 w-4" style={{ color: 'var(--success)' }} strokeWidth={1.5} />
+              <CheckCircle className="h-4 w-4" style={{ color: "var(--success)" }} strokeWidth={1.5} />
             ) : (
-              <XCircle className="h-4 w-4" style={{ color: 'var(--warning)' }} strokeWidth={1.5} />
+              <XCircle className="h-4 w-4" style={{ color: "var(--warning)" }} strokeWidth={1.5} />
             )}
-            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>
               {t("result.renamed", { n: result.renamed_count })}
             </span>
           </div>
@@ -216,9 +217,16 @@ export function BulkRenameTab() {
             <div className="max-h-32 overflow-y-auto space-y-1">
               {result.results.slice(0, 10).map((entry, i) => (
                 <div key={i} className="flex items-center gap-2 text-[10px]">
-                  <span className="truncate flex-1" style={{ color: 'var(--text-tertiary)' }}>{entry.original_name}</span>
-                  <span className="shrink-0" style={{ color: 'var(--text-tertiary)' }}>&rarr;</span>
-                  <span className="truncate flex-1 text-right" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                  <span className="truncate flex-1" style={{ color: "var(--text-tertiary)" }}>
+                    {entry.original_name}
+                  </span>
+                  <span className="shrink-0" style={{ color: "var(--text-tertiary)" }}>
+                    &rarr;
+                  </span>
+                  <span
+                    className="truncate flex-1 text-right"
+                    style={{ color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}
+                  >
                     {entry.new_name}
                   </span>
                 </div>
@@ -228,7 +236,11 @@ export function BulkRenameTab() {
           {result.errors.length > 0 && (
             <div className="max-h-24 overflow-y-auto space-y-1">
               {result.errors.map((err, i) => (
-                <div key={i} className="flex items-start gap-2" style={{ fontSize: 'var(--text-sm)', color: 'rgba(239,68,68,0.8)' }}>
+                <div
+                  key={i}
+                  className="flex items-start gap-2"
+                  style={{ fontSize: "var(--text-sm)", color: "rgba(239,68,68,0.8)" }}
+                >
                   <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <span>{err}</span>
                 </div>

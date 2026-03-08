@@ -90,9 +90,7 @@ export function SvgRasterizeTab() {
       <ImageGrid files={files} onReorder={reorderFiles} onRemove={removeFile} onClear={handleClearFiles} />
 
       <div className="space-y-2">
-        <label className="forge-label">
-          {t("label.output_format")}
-        </label>
+        <label className="forge-label">{t("label.output_format")}</label>
         <div className="flex gap-2">
           {(["png", "webp"] as SvgOutputFormat[]).map((f) => (
             <button
@@ -128,14 +126,11 @@ export function SvgRasterizeTab() {
       {result && (
         <div className="forge-card space-y-2">
           <div className="flex items-center justify-between">
-            <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>
               {t("result.svg_rasterized", { w: result.width, h: result.height })}
             </p>
             {lastOutputDir && (
-              <button
-                onClick={() => revealItemInDir(lastOutputDir)}
-                className="btn-ghost"
-              >
+              <button onClick={() => revealItemInDir(lastOutputDir)} className="btn-ghost">
                 <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
                 {t("label.open_output_folder")}
               </button>

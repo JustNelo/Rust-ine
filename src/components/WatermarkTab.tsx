@@ -169,9 +169,7 @@ export function WatermarkTab() {
         {mode === "text" && (
           <>
             <div>
-              <label className="forge-label">
-                {t("label.watermark_text")}
-              </label>
+              <label className="forge-label">{t("label.watermark_text")}</label>
               <input
                 type="text"
                 value={text}
@@ -182,9 +180,7 @@ export function WatermarkTab() {
             </div>
             <Slider label={t("label.font_size")} value={fontSize} min={8} max={200} unit="px" onChange={setFontSize} />
             <div>
-              <label className="forge-label">
-                {t("label.watermark_color")}
-              </label>
+              <label className="forge-label">{t("label.watermark_color")}</label>
               <div className="flex items-center gap-2">
                 <label className="relative cursor-pointer">
                   <input
@@ -195,7 +191,12 @@ export function WatermarkTab() {
                   />
                   <div
                     className="h-8 w-8 cursor-pointer"
-                    style={{ borderRadius: 6, border: '1px solid var(--bg-border)', transition: 'border-color 150ms ease', backgroundColor: textColor }}
+                    style={{
+                      borderRadius: 6,
+                      border: "1px solid var(--bg-border)",
+                      transition: "border-color 150ms ease",
+                      backgroundColor: textColor,
+                    }}
                   />
                 </label>
                 <input
@@ -204,7 +205,7 @@ export function WatermarkTab() {
                   onChange={(e) => setTextColor(e.target.value)}
                   maxLength={7}
                   className="forge-input"
-                  style={{ width: 96, flex: 'none', fontFamily: 'var(--font-mono)' }}
+                  style={{ width: 96, flex: "none", fontFamily: "var(--font-mono)" }}
                 />
               </div>
             </div>
@@ -215,22 +216,32 @@ export function WatermarkTab() {
         {mode === "image" && (
           <>
             <div>
-              <label className="forge-label">
-                {t("label.watermark_logo")}
-              </label>
+              <label className="forge-label">{t("label.watermark_logo")}</label>
               <button
                 onClick={handleSelectLogo}
-                className="flex items-center gap-2 w-full px-3 py-3 cursor-pointer" style={{ borderRadius: 8, border: '1px dashed var(--bg-border)', background: 'var(--bg-overlay)', fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', transition: 'all 150ms ease' }}
+                className="flex items-center gap-2 w-full px-3 py-3 cursor-pointer"
+                style={{
+                  borderRadius: 8,
+                  border: "1px dashed var(--bg-border)",
+                  background: "var(--bg-overlay)",
+                  fontSize: "var(--text-sm)",
+                  color: "var(--text-secondary)",
+                  transition: "all 150ms ease",
+                }}
               >
                 <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
                 {logoPath ? logoPath.split(/[\\/]/).pop() : t("label.select_logo")}
               </button>
               {logoPath && (
-                <div className="mt-2 flex items-center gap-2 p-2" style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: 'var(--bg-overlay)' }}>
+                <div
+                  className="mt-2 flex items-center gap-2 p-2"
+                  style={{ borderRadius: 8, border: "1px solid var(--bg-border)", background: "var(--bg-overlay)" }}
+                >
                   <img
                     src={safeAssetUrl(logoPath)}
                     alt="Logo"
-                    className="h-8 w-8 rounded object-contain" style={{ background: 'var(--bg-elevated)' }}
+                    className="h-8 w-8 rounded object-contain"
+                    style={{ background: "var(--bg-elevated)" }}
                   />
                   <span className="truncate flex-1 forge-hint">{logoPath.split(/[\\/]/).pop()}</span>
                 </div>
@@ -249,9 +260,7 @@ export function WatermarkTab() {
 
         {/* Shared controls */}
         <div>
-          <label className="forge-label">
-            {t("label.position")}
-          </label>
+          <label className="forge-label">{t("label.position")}</label>
           <div className="flex gap-2 flex-wrap">
             {POSITION_KEYS.map((opt) => (
               <button

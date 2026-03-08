@@ -19,17 +19,21 @@ export function UpdateBanner({ status, version, onInstall, onDismiss }: UpdateBa
   return (
     <div
       className="relative z-20 flex items-center justify-between gap-3 px-4 py-2"
-      style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--bg-border)' }}
+      style={{ background: "var(--bg-surface)", borderBottom: "1px solid var(--bg-border)" }}
     >
       <div className="flex items-center gap-2.5">
         {status === "downloading" ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" style={{ color: 'var(--text-tertiary)' }} strokeWidth={1.5} />
+          <Loader2
+            className="h-3.5 w-3.5 animate-spin shrink-0"
+            style={{ color: "var(--text-tertiary)" }}
+            strokeWidth={1.5}
+          />
         ) : status === "error" ? (
-          <AlertCircle className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--danger)' }} strokeWidth={1.5} />
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--danger)" }} strokeWidth={1.5} />
         ) : (
-          <Download className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--text-tertiary)' }} strokeWidth={1.5} />
+          <Download className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--text-tertiary)" }} strokeWidth={1.5} />
         )}
-        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
+        <span style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)" }}>
           {status === "downloading"
             ? t("updater.downloading")
             : status === "error"

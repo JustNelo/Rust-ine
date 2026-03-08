@@ -61,16 +61,19 @@ export function ConvertTab() {
 
       <div className="space-y-3">
         <div className="space-y-2">
-          <label className="font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
+          <label
+            className="font-semibold uppercase"
+            style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--text-tertiary)" }}
+          >
             {t("label.output_format")}
           </label>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {FORMAT_OPTIONS.map((fmt) => (
               <button
                 key={fmt.value}
                 onClick={() => setOutputFormat(fmt.value)}
                 className={`btn-toggle ${outputFormat === fmt.value ? "btn-toggle-active" : ""}`}
-                style={{ flex: 'none' }}
+                style={{ flex: "none" }}
               >
                 {fmt.label}
               </button>
@@ -80,40 +83,46 @@ export function ConvertTab() {
 
         {/* Format info badges */}
         <div className="flex items-center gap-2">
-          <span style={{
-            borderRadius: 4,
-            padding: '2px 7px',
-            fontSize: 'var(--text-xs)',
-            fontFamily: 'var(--font-mono)',
-            background: 'rgba(99, 102, 241, 0.08)',
-            border: '1px solid rgba(99, 102, 241, 0.2)',
-            color: 'var(--indigo-glow)',
-          }}>
+          <span
+            style={{
+              borderRadius: 4,
+              padding: "2px 7px",
+              fontSize: "var(--text-xs)",
+              fontFamily: "var(--font-mono)",
+              background: "rgba(99, 102, 241, 0.08)",
+              border: "1px solid rgba(99, 102, 241, 0.2)",
+              color: "var(--indigo-glow)",
+            }}
+          >
             {t(FORMAT_INFO[outputFormat]?.typeKey)}
           </span>
           {FORMAT_INFO[outputFormat]?.alpha && (
-            <span style={{
-              borderRadius: 4,
-              padding: '2px 7px',
-              fontSize: 'var(--text-xs)',
-              fontFamily: 'var(--font-mono)',
-              background: 'rgba(34, 197, 94, 0.08)',
-              border: '1px solid rgba(34, 197, 94, 0.2)',
-              color: '#4ade80',
-            }}>
+            <span
+              style={{
+                borderRadius: 4,
+                padding: "2px 7px",
+                fontSize: "var(--text-xs)",
+                fontFamily: "var(--font-mono)",
+                background: "rgba(34, 197, 94, 0.08)",
+                border: "1px solid rgba(34, 197, 94, 0.2)",
+                color: "#4ade80",
+              }}
+            >
               {t("format.alpha_yes")}
             </span>
           )}
           {!FORMAT_INFO[outputFormat]?.alpha && (
-            <span style={{
-              borderRadius: 4,
-              padding: '2px 7px',
-              fontSize: 'var(--text-xs)',
-              fontFamily: 'var(--font-mono)',
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--bg-border)',
-              color: 'var(--text-tertiary)',
-            }}>
+            <span
+              style={{
+                borderRadius: 4,
+                padding: "2px 7px",
+                fontSize: "var(--text-xs)",
+                fontFamily: "var(--font-mono)",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--bg-border)",
+                color: "var(--text-tertiary)",
+              }}
+            >
               {t("format.alpha_no")}
             </span>
           )}

@@ -30,8 +30,8 @@ export const ImageGridCard = memo(
     const mergedStyle = {
       ...style,
       borderRadius: 8,
-      border: '1px solid var(--bg-border)',
-      background: 'var(--bg-overlay)',
+      border: "1px solid var(--bg-border)",
+      background: "var(--bg-overlay)",
     };
 
     return (
@@ -47,7 +47,7 @@ export const ImageGridCard = memo(
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onRemove(index)}
           className="absolute top-1 right-1 z-10 rounded-full p-0.5 opacity-0 group-hover:opacity-100 cursor-pointer"
-          style={{ background: 'var(--danger)', transition: 'opacity 150ms ease' }}
+          style={{ background: "var(--danger)", transition: "opacity 150ms ease" }}
         >
           <X className="h-3 w-3 text-white" strokeWidth={1.5} />
         </button>
@@ -57,7 +57,7 @@ export const ImageGridCard = memo(
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onPreview(filePath)}
           className="absolute top-1 left-1 z-10 rounded-full p-1 opacity-0 group-hover:opacity-100 cursor-pointer"
-          style={{ background: 'rgba(0,0,0,0.6)', transition: 'opacity 150ms ease' }}
+          style={{ background: "rgba(0,0,0,0.6)", transition: "opacity 150ms ease" }}
         >
           <ZoomIn className="h-3 w-3 text-white" strokeWidth={1.5} />
         </button>
@@ -68,7 +68,7 @@ export const ImageGridCard = memo(
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => onInfo(filePath)}
             className="absolute top-1 left-7 z-10 rounded-full p-1 opacity-0 group-hover:opacity-100 cursor-pointer"
-            style={{ background: 'rgba(0,0,0,0.6)', transition: 'opacity 150ms ease' }}
+            style={{ background: "rgba(0,0,0,0.6)", transition: "opacity 150ms ease" }}
           >
             <Info className="h-3 w-3 text-white" strokeWidth={1.5} />
           </button>
@@ -87,9 +87,17 @@ export const ImageGridCard = memo(
         />
 
         {/* Info bar */}
-        <div className="absolute bottom-0 inset-x-0 px-1.5 py-1" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }}>
-          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.9)', fontWeight: 500, lineHeight: 1.2 }} className="truncate">{fileName}</p>
-          {ext && <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', lineHeight: 1.2 }}>{ext}</span>}
+        <div
+          className="absolute bottom-0 inset-x-0 px-1.5 py-1"
+          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}
+        >
+          <p
+            style={{ fontSize: 9, color: "rgba(255,255,255,0.9)", fontWeight: 500, lineHeight: 1.2 }}
+            className="truncate"
+          >
+            {fileName}
+          </p>
+          {ext && <span style={{ fontSize: 8, color: "rgba(255,255,255,0.5)", lineHeight: 1.2 }}>{ext}</span>}
         </div>
       </div>
     );

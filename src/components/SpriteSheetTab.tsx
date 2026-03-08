@@ -101,9 +101,7 @@ export function SpriteSheetTab() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label className="forge-label">
-            {t("label.columns")}
-          </label>
+          <label className="forge-label">{t("label.columns")}</label>
           <input
             type="number"
             min={1}
@@ -114,9 +112,7 @@ export function SpriteSheetTab() {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="forge-label">
-            {t("label.padding")}
-          </label>
+          <label className="forge-label">{t("label.padding")}</label>
           <input
             type="number"
             min={0}
@@ -128,11 +124,7 @@ export function SpriteSheetTab() {
         </div>
       </div>
 
-      <button
-        onClick={handleGenerate}
-        disabled={loading || files.length < 2}
-        className="btn-primary w-full"
-      >
+      <button onClick={handleGenerate} disabled={loading || files.length < 2} className="btn-primary w-full">
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
         ) : (
@@ -145,11 +137,11 @@ export function SpriteSheetTab() {
         <div className="mt-4 forge-card space-y-3">
           <div className="flex items-center gap-2">
             {result.errors.length === 0 ? (
-              <CheckCircle className="h-4 w-4" style={{ color: 'var(--success)' }} strokeWidth={1.5} />
+              <CheckCircle className="h-4 w-4" style={{ color: "var(--success)" }} strokeWidth={1.5} />
             ) : (
-              <XCircle className="h-4 w-4" style={{ color: 'var(--warning)' }} strokeWidth={1.5} />
+              <XCircle className="h-4 w-4" style={{ color: "var(--warning)" }} strokeWidth={1.5} />
             )}
-            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>
               {t("result.spritesheet_created", {
                 n: result.sprite_count,
                 w: result.sheet_width,
@@ -159,18 +151,18 @@ export function SpriteSheetTab() {
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            <span className="forge-chip">
-              spritesheet.png
-            </span>
-            <span className="forge-chip">
-              spritesheet.json
-            </span>
+            <span className="forge-chip">spritesheet.png</span>
+            <span className="forge-chip">spritesheet.json</span>
           </div>
 
           {result.errors.length > 0 && (
             <div className="max-h-24 overflow-y-auto space-y-1">
               {result.errors.map((err, i) => (
-                <div key={i} className="flex items-start gap-2" style={{ fontSize: 'var(--text-sm)', color: 'rgba(239,68,68,0.8)' }}>
+                <div
+                  key={i}
+                  className="flex items-start gap-2"
+                  style={{ fontSize: "var(--text-sm)", color: "rgba(239,68,68,0.8)" }}
+                >
                   <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <span>{err}</span>
                 </div>

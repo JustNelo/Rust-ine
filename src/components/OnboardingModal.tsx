@@ -1,14 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import {
-  ChevronRight,
-  ChevronLeft,
-  FolderOpen,
-  ImageIcon,
-  FileText,
-  Code2,
-  Check,
-  Globe,
-} from "lucide-react";
+import { ChevronRight, ChevronLeft, FolderOpen, ImageIcon, FileText, Code2, Check, Globe } from "lucide-react";
 import { useT, type Lang } from "../i18n/i18n";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { GlassModal } from "./ui/GlassModal";
@@ -82,7 +73,7 @@ function OrbitRing() {
     <div className="absolute -inset-3" style={{ animation: "ob-orbit-spin 20s linear infinite" }}>
       {/* Ring */}
       <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
-        <circle cx="50" cy="50" r="48" style={{ stroke: 'var(--bg-border)' }} strokeWidth="0.5" />
+        <circle cx="50" cy="50" r="48" style={{ stroke: "var(--bg-border)" }} strokeWidth="0.5" />
       </svg>
     </div>
   );
@@ -129,9 +120,7 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
             />
             {i < total - 1 && (
               <div
-                className={`h-px w-6 transition-all duration-500 ${
-                  isCompleted ? "bg-indigo-400/30" : "bg-white/8"
-                }`}
+                className={`h-px w-6 transition-all duration-500 ${isCompleted ? "bg-indigo-400/30" : "bg-white/8"}`}
               />
             )}
           </div>
@@ -182,19 +171,26 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               />
             </div>
 
-            <h2 className="text-2xl font-light tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-2xl font-light tracking-tight" style={{ color: "var(--text-primary)" }}>
               <WordReveal text={t("onboarding.welcome")} baseDelay={100} />
             </h2>
             <p
               className="mt-2.5 max-w-xs"
-              style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)', animation: 'ob-word-reveal 500ms cubic-bezier(0.16,1,0.3,1) 500ms both' }}
+              style={{
+                fontSize: "var(--text-base)",
+                color: "var(--text-secondary)",
+                animation: "ob-word-reveal 500ms cubic-bezier(0.16,1,0.3,1) 500ms both",
+              }}
             >
               {t("onboarding.welcome_sub")}
             </p>
 
             {/* Language selector */}
             <div className="mt-8 w-full max-w-xs">
-              <p className="font-semibold uppercase mb-3" style={{ fontSize: '10px', letterSpacing: '0.2em', color: 'var(--text-tertiary)' }}>
+              <p
+                className="font-semibold uppercase mb-3"
+                style={{ fontSize: "10px", letterSpacing: "0.2em", color: "var(--text-tertiary)" }}
+              >
                 {t("onboarding.language")}
               </p>
               <div className="flex gap-2">
@@ -216,14 +212,17 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
         {/* ── Step 1: Workspace ── */}
         {step === 1 && (
           <div key={`s1-${animKey}`} className="ob-morph-in flex flex-col items-center text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl mb-5" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--bg-border)' }}>
+            <div
+              className="flex h-14 w-14 items-center justify-center rounded-2xl mb-5"
+              style={{ background: "var(--bg-overlay)", border: "1px solid var(--bg-border)" }}
+            >
               <FolderOpen className="h-7 w-7 text-indigo-400/70" strokeWidth={1.5} />
             </div>
 
-            <h2 className="text-2xl font-light tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-2xl font-light tracking-tight" style={{ color: "var(--text-primary)" }}>
               {t("onboarding.workspace_title")}
             </h2>
-            <p className="mt-2 max-w-sm" style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>
+            <p className="mt-2 max-w-sm" style={{ fontSize: "var(--text-base)", color: "var(--text-secondary)" }}>
               {t("onboarding.workspace_sub")}
             </p>
 
@@ -235,7 +234,10 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-500/15">
                       <Check className="h-3 w-3 text-indigo-400" strokeWidth={2.5} />
                     </div>
-                    <p className="truncate flex-1 text-left" style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    <p
+                      className="truncate flex-1 text-left"
+                      style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}
+                    >
                       {workspace}
                     </p>
                     <button onClick={selectWorkspace} className="btn-pill shrink-0">
@@ -246,7 +248,8 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               ) : (
                 <button
                   onClick={selectWorkspace}
-                  className="group relative w-full overflow-hidden rounded-xl px-4 py-5 transition-all duration-300 cursor-pointer hover:border-indigo-400/25" style={{ border: '2px dashed var(--bg-border)', background: 'var(--bg-overlay)' }}
+                  className="group relative w-full overflow-hidden rounded-xl px-4 py-5 transition-all duration-300 cursor-pointer hover:border-indigo-400/25"
+                  style={{ border: "2px dashed var(--bg-border)", background: "var(--bg-overlay)" }}
                 >
                   <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/10 to-transparent" />
                   <div
@@ -254,26 +257,28 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                     style={{ backgroundImage: NOISE_SVG }}
                   />
                   <FolderOpen
-                    className="relative h-6 w-6 mx-auto mb-2 group-hover:text-indigo-400/70 transition-colors duration-300" style={{ color: 'var(--text-tertiary)' }}
+                    className="relative h-6 w-6 mx-auto mb-2 group-hover:text-indigo-400/70 transition-colors duration-300"
+                    style={{ color: "var(--text-tertiary)" }}
                     strokeWidth={1.5}
                   />
-                  <span className="relative transition-colors duration-300" style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>
+                  <span
+                    className="relative transition-colors duration-300"
+                    style={{ fontSize: "var(--text-base)", color: "var(--text-secondary)" }}
+                  >
                     {t("onboarding.choose_folder")}
                   </span>
                 </button>
               )}
             </div>
 
-            <p className="mt-4 max-w-xs forge-hint">
-              {t("onboarding.workspace_auto")}
-            </p>
+            <p className="mt-4 max-w-xs forge-hint">{t("onboarding.workspace_auto")}</p>
           </div>
         )}
 
         {/* ── Step 2: Discover — 3 monochrome glass cards ── */}
         {step === 2 && (
           <div key={`s2-${animKey}`} className="ob-morph-in flex flex-col items-center text-center">
-            <h2 className="text-2xl font-light tracking-tight mb-5" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-2xl font-light tracking-tight mb-5" style={{ color: "var(--text-primary)" }}>
               {t("onboarding.discover")}
             </h2>
 
@@ -284,19 +289,26 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                   <div
                     key={cat.titleKey}
                     className={`ob-stagger-${i + 1} relative flex items-center gap-4 rounded-xl px-4 py-3.5 transition-all duration-300`}
-                    style={{ border: '1px solid var(--bg-border)', background: 'var(--bg-overlay)' }}
+                    style={{ border: "1px solid var(--bg-border)", background: "var(--bg-overlay)" }}
                   >
                     <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-indigo-400/10 to-transparent" />
                     <div
                       className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay rounded-xl"
                       style={{ backgroundImage: NOISE_SVG }}
                     />
-                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--bg-border)' }}>
+                    <div
+                      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: "var(--bg-elevated)", border: "1px solid var(--bg-border)" }}
+                    >
                       <Icon className="h-5 w-5 text-indigo-400/60" strokeWidth={1.5} />
                     </div>
                     <div className="relative text-left min-w-0">
-                      <p style={{ fontSize: 'var(--text-base)', fontWeight: 500, color: 'var(--text-primary)' }}>{t(cat.titleKey)}</p>
-                      <p className="truncate" style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{t(cat.subKey)}</p>
+                      <p style={{ fontSize: "var(--text-base)", fontWeight: 500, color: "var(--text-primary)" }}>
+                        {t(cat.titleKey)}
+                      </p>
+                      <p className="truncate" style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                        {t(cat.subKey)}
+                      </p>
                     </div>
                   </div>
                 );
@@ -313,20 +325,27 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             {/* Logo callback — full circle */}
             <div className="ob-scale-in relative mb-6 h-24 w-24 flex items-center justify-center">
               <div className="absolute inset-0 m-auto h-16 w-16 rounded-full bg-indigo-500/15 blur-2xl ob-glow-pulse" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full" style={{ background: 'var(--bg-overlay)', border: '1px solid var(--bg-border)', boxShadow: '0 4px 24px rgba(99,102,241,0.15)' }}>
+              <div
+                className="relative flex h-20 w-20 items-center justify-center rounded-full"
+                style={{
+                  background: "var(--bg-overlay)",
+                  border: "1px solid var(--bg-border)",
+                  boxShadow: "0 4px 24px rgba(99,102,241,0.15)",
+                }}
+              >
                 <img src={appIcon} alt="Rust-ine" className="h-11 w-11" />
               </div>
             </div>
 
             <h2
               className="ob-scale-in text-2xl font-light tracking-tight"
-              style={{ color: 'var(--text-primary)', animationDelay: '120ms' }}
+              style={{ color: "var(--text-primary)", animationDelay: "120ms" }}
             >
               {t("onboarding.ready_title")}
             </h2>
             <p
               className="ob-scale-in mt-2"
-              style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)', animationDelay: '220ms' }}
+              style={{ fontSize: "var(--text-base)", color: "var(--text-secondary)", animationDelay: "220ms" }}
             >
               {t("onboarding.ready_sub")}
             </p>

@@ -61,14 +61,29 @@ function ColorCard({
   return (
     <button
       onClick={() => onCopy(color.hex, index)}
-      className="flex items-center gap-3 p-2.5 cursor-pointer group" style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-overlay)', transition: 'background 150ms ease' }}
+      className="flex items-center gap-3 p-2.5 cursor-pointer group"
+      style={{
+        borderRadius: 12,
+        border: "1px solid var(--bg-border)",
+        background: "var(--bg-overlay)",
+        transition: "background 150ms ease",
+      }}
     >
       <div
         className="h-8 w-8 shrink-0"
-        style={{ borderRadius: 8, border: '1px solid var(--bg-border)', backgroundColor: color.hex }}
+        style={{ borderRadius: 8, border: "1px solid var(--bg-border)", backgroundColor: color.hex }}
       />
       <div className="flex-1 text-left min-w-0">
-        <p style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)' }}>{color.hex}</p>
+        <p
+          style={{
+            fontSize: "var(--text-sm)",
+            fontFamily: "var(--font-mono)",
+            fontWeight: 500,
+            color: "var(--text-primary)",
+          }}
+        >
+          {color.hex}
+        </p>
         <p className="text-[10px] text-neutral-500 truncate">
           rgb({color.r}, {color.g}, {color.b})
         </p>
@@ -255,9 +270,7 @@ export function PaletteTab() {
 
       {/* Mode toggle */}
       <div className="space-y-2">
-        <label className="forge-label">
-          {t("label.palette_mode")}
-        </label>
+        <label className="forge-label">{t("label.palette_mode")}</label>
         <div className="flex gap-2">
           <button
             onClick={() => setMode("palette")}
@@ -280,9 +293,7 @@ export function PaletteTab() {
       {mode === "palette" && (
         <>
           <div className="space-y-2">
-            <label className="forge-label">
-              {t("label.num_colors")}
-            </label>
+            <label className="forge-label">{t("label.num_colors")}</label>
             <div className="flex items-center gap-3">
               <input
                 type="range"
@@ -295,15 +306,21 @@ export function PaletteTab() {
                   background: `linear-gradient(to right, var(--indigo-core) 0%, var(--indigo-core) ${((numColors - 3) / (12 - 3)) * 100}%, var(--bg-overlay) ${((numColors - 3) / (12 - 3)) * 100}%, var(--bg-overlay) 100%)`,
                 }}
               />
-              <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', width: 24, textAlign: 'right' as const }}>{numColors}</span>
+              <span
+                style={{
+                  fontSize: "var(--text-sm)",
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--text-tertiary)",
+                  width: 24,
+                  textAlign: "right" as const,
+                }}
+              >
+                {numColors}
+              </span>
             </div>
           </div>
 
-          <button
-            onClick={handleExtract}
-            disabled={loading || files.length === 0}
-            className="btn-primary w-full"
-          >
+          <button onClick={handleExtract} disabled={loading || files.length === 0} className="btn-primary w-full">
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
             ) : (
@@ -327,10 +344,19 @@ export function PaletteTab() {
               <div className="flex items-center gap-4">
                 <div
                   className="h-14 w-14 shrink-0"
-                  style={{ borderRadius: 12, border: '1px solid var(--bg-border)', backgroundColor: pickedColor.hex }}
+                  style={{ borderRadius: 12, border: "1px solid var(--bg-border)", backgroundColor: pickedColor.hex }}
                 />
                 <div className="flex-1 space-y-1">
-                  <p style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)' }}>{pickedColor.hex}</p>
+                  <p
+                    style={{
+                      fontSize: "var(--text-base)",
+                      fontFamily: "var(--font-mono)",
+                      fontWeight: 500,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    {pickedColor.hex}
+                  </p>
                   <p className="text-xs font-mono text-neutral-400">
                     rgb({pickedColor.r}, {pickedColor.g}, {pickedColor.b})
                   </p>
@@ -338,10 +364,7 @@ export function PaletteTab() {
                     {formatHsl(pickedColor.r, pickedColor.g, pickedColor.b)}
                   </p>
                 </div>
-                <button
-                  onClick={copyPickedColor}
-                  className="btn-icon"
-                >
+                <button onClick={copyPickedColor} className="btn-icon">
                   <Copy className="h-4 w-4" strokeWidth={1.5} />
                 </button>
               </div>
@@ -354,7 +377,7 @@ export function PaletteTab() {
       {palette.length > 0 && mode === "palette" && (
         <div className="mt-4 space-y-3">
           <div className="forge-card p-4 space-y-3">
-            <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>
               {t("result.colors_extracted", { n: palette.length })}
             </p>
 
@@ -365,7 +388,7 @@ export function PaletteTab() {
             </div>
 
             {/* Color bar preview */}
-            <div className="flex h-8 overflow-hidden" style={{ borderRadius: 8, border: '1px solid var(--bg-border)' }}>
+            <div className="flex h-8 overflow-hidden" style={{ borderRadius: 8, border: "1px solid var(--bg-border)" }}>
               {palette.map((color, index) => (
                 <div key={index} className="flex-1" style={{ backgroundColor: color.hex }} />
               ))}
@@ -373,17 +396,11 @@ export function PaletteTab() {
           </div>
 
           <div className="flex gap-2">
-            <button
-              onClick={exportJson}
-              className="btn-ghost"
-            >
+            <button onClick={exportJson} className="btn-ghost">
               <FileJson className="h-3.5 w-3.5" strokeWidth={1.5} />
               {t("label.export_json")}
             </button>
-            <button
-              onClick={exportCss}
-              className="btn-ghost"
-            >
+            <button onClick={exportCss} className="btn-ghost">
               <FileCode className="h-3.5 w-3.5" strokeWidth={1.5} />
               {t("label.export_css")}
             </button>

@@ -125,9 +125,7 @@ export function ResizeTab() {
         </div>
 
         <div>
-          <label className="forge-label">
-            {t("label.presets")}
-          </label>
+          <label className="forge-label">{t("label.presets")}</label>
           <div className="flex gap-1.5 flex-wrap">
             {PRESETS.map((preset) => (
               <button
@@ -159,7 +157,9 @@ export function ResizeTab() {
 
         {(mode === "width" || mode === "exact") && (
           <div className="flex items-center gap-2">
-            <label className="forge-hint" style={{ width: 48 }}>{t("label.width")}</label>
+            <label className="forge-hint" style={{ width: 48 }}>
+              {t("label.width")}
+            </label>
             <input
               type="number"
               min={1}
@@ -173,7 +173,9 @@ export function ResizeTab() {
 
         {(mode === "height" || mode === "exact") && (
           <div className="flex items-center gap-2">
-            <label className="forge-hint" style={{ width: 48 }}>{t("label.height")}</label>
+            <label className="forge-hint" style={{ width: 48 }}>
+              {t("label.height")}
+            </label>
             <input
               type="number"
               min={1}

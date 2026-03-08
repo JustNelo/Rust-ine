@@ -24,10 +24,20 @@ export const Slider = memo(function Slider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
+        <label
+          className="font-semibold uppercase"
+          style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--text-tertiary)" }}
+        >
           {label}
         </label>
-        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 400, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+        <span
+          style={{
+            fontSize: "var(--text-sm)",
+            fontWeight: 400,
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
           {value}
           {unit}
         </span>
@@ -44,7 +54,7 @@ export const Slider = memo(function Slider({
         }}
       />
       {(leftHint || rightHint) && (
-        <div className="flex justify-between" style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
+        <div className="flex justify-between" style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
           <span>{leftHint}</span>
           <span>{rightHint}</span>
         </div>

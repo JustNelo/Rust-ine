@@ -380,13 +380,24 @@ export function PdfWorkbenchTab() {
           {/* Drop zone for unlock */}
           <div
             onClick={handleSelectUnlockFile}
-            className="relative flex flex-col items-center justify-center gap-3 p-8 cursor-pointer" style={{ borderRadius: 16, border: '2px dashed var(--bg-border)', background: 'var(--bg-overlay)', transition: 'all 200ms ease' }}
+            className="relative flex flex-col items-center justify-center gap-3 p-8 cursor-pointer"
+            style={{
+              borderRadius: 16,
+              border: "2px dashed var(--bg-border)",
+              background: "var(--bg-overlay)",
+              transition: "all 200ms ease",
+            }}
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: 'var(--bg-elevated)', color: 'var(--text-tertiary)' }}>
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-full"
+              style={{ background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}
+            >
               <Lock className="h-6 w-6" strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <p style={{ fontSize: 'var(--text-base)', fontWeight: 500, color: 'var(--text-primary)' }}>{t("pdf_tool.drop_locked_pdf")}</p>
+              <p style={{ fontSize: "var(--text-base)", fontWeight: 500, color: "var(--text-primary)" }}>
+                {t("pdf_tool.drop_locked_pdf")}
+              </p>
               <p className="mt-1 text-xs text-neutral-500">{t("pdf_tool.drop_locked_pdf_hint")}</p>
             </div>
           </div>
@@ -394,8 +405,11 @@ export function PdfWorkbenchTab() {
           {unlockFile && (
             <div className="forge-card p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} strokeWidth={1.5} />
-                <span className="truncate" style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+                <Lock className="h-4 w-4" style={{ color: "var(--text-tertiary)" }} strokeWidth={1.5} />
+                <span
+                  className="truncate"
+                  style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}
+                >
                   {unlockFile.split(/[\\/]/).pop()}
                 </span>
               </div>
@@ -433,22 +447,30 @@ export function PdfWorkbenchTab() {
           {pages.length === 0 ? (
             <div
               onClick={handleAddMore}
-              className="relative flex flex-col items-center justify-center gap-3 p-8 cursor-pointer" style={{ borderRadius: 16, border: '2px dashed var(--bg-border)', background: 'var(--bg-overlay)', transition: 'all 200ms ease' }}
+              className="relative flex flex-col items-center justify-center gap-3 p-8 cursor-pointer"
+              style={{
+                borderRadius: 16,
+                border: "2px dashed var(--bg-border)",
+                background: "var(--bg-overlay)",
+                transition: "all 200ms ease",
+              }}
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: 'var(--bg-elevated)', color: 'var(--text-tertiary)' }}>
+              <div
+                className="flex h-12 w-12 items-center justify-center rounded-full"
+                style={{ background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}
+              >
                 <Upload className="h-6 w-6" strokeWidth={1.5} />
               </div>
               <div className="text-center">
-                <p style={{ fontSize: 'var(--text-base)', fontWeight: 500, color: 'var(--text-primary)' }}>{t("dropzone.pdf_workbench")}</p>
+                <p style={{ fontSize: "var(--text-base)", fontWeight: 500, color: "var(--text-primary)" }}>
+                  {t("dropzone.pdf_workbench")}
+                </p>
                 <p className="mt-1 text-xs text-neutral-500">{t("dropzone.sublabel_pdf_workbench")}</p>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleAddMore}
-                className="btn-ghost"
-              >
+              <button onClick={handleAddMore} className="btn-ghost">
                 <Plus className="h-4 w-4" strokeWidth={1.5} />
                 {t("label.add_files")}
               </button>
@@ -462,10 +484,7 @@ export function PdfWorkbenchTab() {
               <span className="text-[10px] text-neutral-500 ml-auto">
                 {pages.length} {t("pdf_tool.pages_count")}
               </span>
-              <button
-                onClick={clearAll}
-                className="btn-ghost"
-              >
+              <button onClick={clearAll} className="btn-ghost">
                 <Trash2 className="h-3 w-3" strokeWidth={1.5} />
                 {t("label.clear_all")}
               </button>
@@ -640,7 +659,12 @@ export function PdfWorkbenchTab() {
                               />
                               <div
                                 className="h-8 w-8 cursor-pointer"
-                                style={{ borderRadius: 6, border: '1px solid var(--bg-border)', transition: 'border-color 150ms ease', backgroundColor: wm.color }}
+                                style={{
+                                  borderRadius: 6,
+                                  border: "1px solid var(--bg-border)",
+                                  transition: "border-color 150ms ease",
+                                  backgroundColor: wm.color,
+                                }}
                               />
                             </label>
                             <input
@@ -649,7 +673,7 @@ export function PdfWorkbenchTab() {
                               onChange={(e) => updateWm("color", e.target.value)}
                               maxLength={7}
                               className="forge-input"
-                              style={{ width: 96, flex: 'none', fontFamily: 'var(--font-mono)' }}
+                              style={{ width: 96, flex: "none", fontFamily: "var(--font-mono)" }}
                             />
                           </div>
                         </div>
@@ -665,17 +689,33 @@ export function PdfWorkbenchTab() {
                           </label>
                           <button
                             onClick={handleSelectWmLogo}
-                            className="flex items-center gap-2 w-full px-3 py-3 cursor-pointer" style={{ borderRadius: 8, border: '1px dashed var(--bg-border)', background: 'var(--bg-overlay)', fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', transition: 'all 150ms ease' }}
+                            className="flex items-center gap-2 w-full px-3 py-3 cursor-pointer"
+                            style={{
+                              borderRadius: 8,
+                              border: "1px dashed var(--bg-border)",
+                              background: "var(--bg-overlay)",
+                              fontSize: "var(--text-sm)",
+                              color: "var(--text-secondary)",
+                              transition: "all 150ms ease",
+                            }}
                           >
                             <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
                             {wm.logoPath ? wm.logoPath.split(/[\\/]/).pop() : t("label.select_logo")}
                           </button>
                           {wm.logoPath && (
-                            <div className="mt-2 flex items-center gap-2 p-2" style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: 'var(--bg-overlay)' }}>
+                            <div
+                              className="mt-2 flex items-center gap-2 p-2"
+                              style={{
+                                borderRadius: 8,
+                                border: "1px solid var(--bg-border)",
+                                background: "var(--bg-overlay)",
+                              }}
+                            >
                               <img
                                 src={safeAssetUrl(wm.logoPath)}
                                 alt="Logo"
-                                className="h-8 w-8 rounded object-contain" style={{ background: 'var(--bg-elevated)' }}
+                                className="h-8 w-8 rounded object-contain"
+                                style={{ background: "var(--bg-elevated)" }}
                               />
                               <span className="text-[10px] text-neutral-500 truncate flex-1">
                                 {wm.logoPath.split(/[\\/]/).pop()}
@@ -725,7 +765,7 @@ export function PdfWorkbenchTab() {
 
                 {/* Post-processing toggles (only for PDF output actions) */}
                 {showPostProcessing && (
-                  <div className="pt-3 space-y-3" style={{ borderTop: '1px solid var(--bg-border)' }}>
+                  <div className="pt-3 space-y-3" style={{ borderTop: "1px solid var(--bg-border)" }}>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
                       {t("pdf_tool.post_processing")}
                     </p>
@@ -806,9 +846,7 @@ export function PdfWorkbenchTab() {
                                     key={i}
                                     className={cn(
                                       "h-1 flex-1 rounded-full transition-all",
-                                      i <= ppPasswordStrength.level
-                                        ? ppPasswordStrength.color
-                                        : "",
+                                      i <= ppPasswordStrength.level ? ppPasswordStrength.color : "",
                                     )}
                                   />
                                 ))}
@@ -840,7 +878,7 @@ export function PdfWorkbenchTab() {
                     {pipelineSummary.map((step, i) => (
                       <span key={i} className="flex items-center gap-1.5">
                         {i > 0 && <span className="text-neutral-600">→</span>}
-                        <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{step}</span>
+                        <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>{step}</span>
                       </span>
                     ))}
                   </div>
@@ -848,7 +886,10 @@ export function PdfWorkbenchTab() {
 
                 {/* Pipeline progress indicator */}
                 {pipelineStep && (
-                  <div className="flex items-center gap-2" style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div
+                    className="flex items-center gap-2"
+                    style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}
+                  >
                     <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
                     <span>{t(PIPELINE_STEP_LABELS[pipelineStep])}</span>
                   </div>
@@ -926,11 +967,11 @@ function ResultPanel({ result, t }: ResultPanelProps) {
       if (d.original_size > 0 && d.output_path) {
         extraContent = (
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-border)' }}>
+            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-border)" }}>
               <div
                 className="h-full rounded-full transition-all"
                 style={{
-                  background: 'var(--text-primary)',
+                  background: "var(--text-primary)",
                   width: `${Math.max(5, (d.compressed_size / d.original_size) * 100)}%`,
                 }}
               />
@@ -974,17 +1015,14 @@ function ResultPanel({ result, t }: ResultPanelProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {successIcon ? (
-            <CheckCircle className="h-4 w-4" style={{ color: 'var(--success)' }} strokeWidth={1.5} />
+            <CheckCircle className="h-4 w-4" style={{ color: "var(--success)" }} strokeWidth={1.5} />
           ) : (
-            <XCircle className="h-4 w-4" style={{ color: 'var(--warning)' }} strokeWidth={1.5} />
+            <XCircle className="h-4 w-4" style={{ color: "var(--warning)" }} strokeWidth={1.5} />
           )}
-          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>{mainText}</span>
+          <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>{mainText}</span>
         </div>
         {result.outputDir && (
-          <button
-            onClick={() => revealItemInDir(result.outputDir)}
-            className="btn-ghost"
-          >
+          <button onClick={() => revealItemInDir(result.outputDir)} className="btn-ghost">
             <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
             {t("label.open_output_folder")}
           </button>
@@ -996,7 +1034,11 @@ function ResultPanel({ result, t }: ResultPanelProps) {
       {errors.length > 0 && (
         <div className="max-h-24 overflow-y-auto space-y-1">
           {errors.map((err, i) => (
-            <div key={i} className="flex items-start gap-2" style={{ fontSize: 'var(--text-sm)', color: 'rgba(239,68,68,0.8)' }}>
+            <div
+              key={i}
+              className="flex items-start gap-2"
+              style={{ fontSize: "var(--text-sm)", color: "rgba(239,68,68,0.8)" }}
+            >
               <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
               <span>{err}</span>
             </div>

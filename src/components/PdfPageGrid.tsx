@@ -74,7 +74,7 @@ export function PdfPageGrid({ pages, loadingThumbnails, onReorder, onRemove }: P
   return (
     <div className="forge-card p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-secondary)" }}>
           {pages.length} {t("pdf_tool.pages_count")}
           {sourcesSummary && <span className="text-neutral-500"> — {sourcesSummary}</span>}
           {" — "}

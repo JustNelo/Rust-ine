@@ -62,12 +62,20 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
         <X className="h-4 w-4" strokeWidth={1.5} />
       </button>
 
-      <h2 className="relative font-semibold" style={{ fontSize: 'var(--text-xl)', color: 'var(--text-primary)', letterSpacing: '-0.01em', marginBottom: 28 }}>{t("settings.title")}</h2>
+      <h2
+        className="relative font-semibold"
+        style={{ fontSize: "var(--text-xl)", color: "var(--text-primary)", letterSpacing: "-0.01em", marginBottom: 28 }}
+      >
+        {t("settings.title")}
+      </h2>
 
-      <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="relative" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         {/* Language */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <label className="flex items-center gap-2 font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <label
+            className="flex items-center gap-2 font-semibold uppercase"
+            style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--text-tertiary)" }}
+          >
             <Globe className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t("settings.language")}
           </label>
@@ -85,14 +93,29 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
         </div>
 
         {/* Workspace */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <label className="flex items-center gap-2 font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <label
+            className="flex items-center gap-2 font-semibold uppercase"
+            style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--text-tertiary)" }}
+          >
             <FolderOpen className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t("settings.workspace")}
           </label>
           {workspace ? (
-            <div style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)', padding: '10px 14px' }}>
-              <p className="truncate" style={{ fontSize: 12, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{workspace}</p>
+            <div
+              style={{
+                borderRadius: 8,
+                border: "1px solid var(--bg-border)",
+                background: "var(--bg-elevated)",
+                padding: "10px 14px",
+              }}
+            >
+              <p
+                className="truncate"
+                style={{ fontSize: 12, color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}
+              >
+                {workspace}
+              </p>
               <div className="flex gap-2" style={{ marginTop: 10 }}>
                 <button onClick={selectWorkspace} className="btn-pill">
                   {t("settings.change")}
@@ -110,11 +133,11 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
         </div>
 
         {/* Divider */}
-        <div style={{ height: 1, background: 'var(--bg-border)' }} />
+        <div style={{ height: 1, background: "var(--bg-border)" }} />
 
         {/* Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <button onClick={onResetOnboarding} className="btn-ghost" style={{ justifyContent: 'flex-start' }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <button onClick={onResetOnboarding} className="btn-ghost" style={{ justifyContent: "flex-start" }}>
             <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t("settings.reset_onboarding")}
           </button>
@@ -123,7 +146,7 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
             onClick={handleCheckUpdate}
             disabled={updateStatus === "checking" || updateStatus === "downloading"}
             className="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ justifyContent: 'flex-start' }}
+            style={{ justifyContent: "flex-start" }}
           >
             {updateStatus === "checking" || updateStatus === "downloading" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
@@ -147,8 +170,16 @@ export function SettingsPanel({ onClose, onResetOnboarding }: SettingsPanelProps
         </div>
 
         {updateStatus === "available" && (
-          <div className="flex items-center justify-between" style={{ borderRadius: 8, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)', padding: '10px 14px' }}>
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
+          <div
+            className="flex items-center justify-between"
+            style={{
+              borderRadius: 8,
+              border: "1px solid var(--bg-border)",
+              background: "var(--bg-elevated)",
+              padding: "10px 14px",
+            }}
+          >
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)" }}>
               {t("updater.new_version").replace("{version}", foundVersion)}
             </span>
             <button onClick={handleInstallUpdate} className="btn-primary-sm">

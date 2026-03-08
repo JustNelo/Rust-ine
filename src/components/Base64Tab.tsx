@@ -87,7 +87,10 @@ export function Base64Tab() {
 
       {/* Image preview */}
       {files.length > 0 && (
-        <div className="overflow-hidden flex items-center justify-center max-h-40" style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-base)' }}>
+        <div
+          className="overflow-hidden flex items-center justify-center max-h-40"
+          style={{ borderRadius: 12, border: "1px solid var(--bg-border)", background: "var(--bg-base)" }}
+        >
           <img src={safeAssetUrl(files[0])} alt="" className="max-h-40 object-contain" />
         </div>
       )}
@@ -105,17 +108,16 @@ export function Base64Tab() {
         <div className="mt-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>{t("result.base64_ready")}</span>
+              <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>
+                {t("result.base64_ready")}
+              </span>
               <span className="forge-chip">
                 {charCount.toLocaleString()} chars · {sizeKb} KB
               </span>
             </div>
-            <button
-              onClick={handleCopy}
-              className="btn-ghost"
-            >
+            <button onClick={handleCopy} className="btn-ghost">
               {copied ? (
-                <Check className="h-3.5 w-3.5" style={{ color: 'var(--success)' }} strokeWidth={1.5} />
+                <Check className="h-3.5 w-3.5" style={{ color: "var(--success)" }} strokeWidth={1.5} />
               ) : (
                 <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />
               )}
@@ -124,7 +126,15 @@ export function Base64Tab() {
           </div>
 
           <div className="forge-card p-3 max-h-32 overflow-y-auto">
-            <code style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', wordBreak: 'break-all', lineHeight: 1.6 }}>
+            <code
+              style={{
+                fontSize: 10,
+                fontFamily: "var(--font-mono)",
+                color: "var(--text-secondary)",
+                wordBreak: "break-all",
+                lineHeight: 1.6,
+              }}
+            >
               {dataUri.slice(0, 500)}
               {dataUri.length > 500 ? "…" : ""}
             </code>

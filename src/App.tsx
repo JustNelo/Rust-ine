@@ -190,7 +190,7 @@ function App() {
   });
 
   return (
-    <div className="relative flex h-screen w-screen flex-col overflow-hidden" style={{ background: 'var(--bg-base)' }}>
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden" style={{ background: "var(--bg-base)" }}>
       <TitleBar onShowHistory={() => setShowHistory(true)} onShowSettings={() => setShowSettings(true)} />
       <UpdateBanner status={updateStatus} version={updateVersion} onInstall={installUpdate} onDismiss={dismissUpdate} />
 
@@ -198,7 +198,7 @@ function App() {
         {/* Sidebar */}
         <aside
           className="flex shrink-0 flex-col"
-          style={{ width: 200, background: 'var(--bg-surface)', borderRight: '1px solid var(--bg-border)' }}
+          style={{ width: 200, background: "var(--bg-surface)", borderRight: "1px solid var(--bg-border)" }}
         >
           <nav className="flex flex-col gap-0.5 px-2 mt-1 flex-1 overflow-y-auto">
             {SIDEBAR_SECTIONS.map((section) => (
@@ -206,7 +206,7 @@ function App() {
                 <div className="px-3 pt-4 pb-1.5">
                   <span
                     className="font-semibold uppercase select-none"
-                    style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}
+                    style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--text-tertiary)" }}
                   >
                     {t(section.titleKey)}
                   </span>
@@ -221,27 +221,27 @@ function App() {
                       className="relative flex items-center w-full cursor-pointer"
                       style={{
                         height: 32,
-                        padding: '0 12px',
+                        padding: "0 12px",
                         borderRadius: 6,
                         gap: 8,
-                        fontSize: 'var(--text-sm)',
+                        fontSize: "var(--text-sm)",
                         fontWeight: 500,
-                        fontFamily: 'var(--font-sans)',
-                        transition: 'all 150ms ease',
-                        background: isActive ? 'var(--glass-bg)' : 'transparent',
-                        color: isActive ? 'var(--indigo-glow)' : 'var(--text-secondary)',
-                        border: 'none',
+                        fontFamily: "var(--font-sans)",
+                        transition: "all 150ms ease",
+                        background: isActive ? "var(--glass-bg)" : "transparent",
+                        color: isActive ? "var(--indigo-glow)" : "var(--text-secondary)",
+                        border: "none",
                       }}
                       onMouseEnter={(e) => {
                         if (!isActive) {
-                          e.currentTarget.style.background = 'var(--bg-overlay)';
-                          e.currentTarget.style.color = 'var(--text-primary)';
+                          e.currentTarget.style.background = "var(--bg-overlay)";
+                          e.currentTarget.style.color = "var(--text-primary)";
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (!isActive) {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color = 'var(--text-secondary)';
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--text-secondary)";
                         }
                       }}
                     >
@@ -252,18 +252,18 @@ function App() {
                           width: 2,
                           height: 16,
                           borderRadius: 1,
-                          background: isActive ? 'var(--indigo-core)' : 'transparent',
-                          transition: 'transform 150ms ease, background 150ms ease',
-                          transform: isActive ? 'scaleX(1)' : 'scaleX(0)',
-                          transformOrigin: 'left',
+                          background: isActive ? "var(--indigo-core)" : "transparent",
+                          transition: "transform 150ms ease, background 150ms ease",
+                          transform: isActive ? "scaleX(1)" : "scaleX(0)",
+                          transformOrigin: "left",
                         }}
                       />
                       <Icon
                         style={{
                           width: 14,
                           height: 14,
-                          color: isActive ? 'var(--indigo-core)' : 'var(--text-tertiary)',
-                          transition: 'color 150ms ease',
+                          color: isActive ? "var(--indigo-core)" : "var(--text-tertiary)",
+                          transition: "color 150ms ease",
                           flexShrink: 0,
                         }}
                         strokeWidth={1.5}
@@ -277,18 +277,35 @@ function App() {
           </nav>
 
           {appVersion && (
-            <div className="px-3 py-3 flex items-center justify-center" style={{ borderTop: '1px solid var(--bg-border)' }}>
-              <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>v{appVersion}</span>
+            <div
+              className="px-3 py-3 flex items-center justify-center"
+              style={{ borderTop: "1px solid var(--bg-border)" }}
+            >
+              <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+                v{appVersion}
+              </span>
             </div>
           )}
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto" style={{ padding: '32px 40px' }}>
+        <main className="flex-1 overflow-y-auto" style={{ padding: "32px 40px" }}>
           <div className="mx-auto" style={{ maxWidth: 680 }}>
             <div style={{ marginBottom: 24 }}>
-              <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em', lineHeight: 1.3 }}>{t(TAB_LABEL_KEYS[activeTab])}</h2>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{t(TAB_DESC_KEYS[activeTab])}</p>
+              <h2
+                style={{
+                  fontSize: "var(--text-xl)",
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.3,
+                }}
+              >
+                {t(TAB_LABEL_KEYS[activeTab])}
+              </h2>
+              <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", marginTop: 4, lineHeight: 1.5 }}>
+                {t(TAB_DESC_KEYS[activeTab])}
+              </p>
             </div>
 
             {activeTab === "compress" && <CompressTab />}
@@ -340,13 +357,13 @@ function App() {
         theme="dark"
         toastOptions={{
           style: {
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: '8px',
-            color: 'var(--text-primary)',
-            fontFamily: 'var(--font-sans)',
-            fontSize: 'var(--text-sm)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--glass-border)",
+            borderRadius: "8px",
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+            fontSize: "var(--text-sm)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
           },
         }}
       />

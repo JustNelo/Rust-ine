@@ -89,20 +89,33 @@ export const ImageGrid = memo(function ImageGrid({ files, onReorder, onRemove, o
 
   return (
     <>
-      <div className="overflow-hidden p-3 space-y-3" style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)' }}>
+      <div
+        className="overflow-hidden p-3 space-y-3"
+        style={{ borderRadius: 12, border: "1px solid var(--bg-border)", background: "var(--bg-elevated)" }}
+      >
         <div className="flex items-center justify-between">
-          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-secondary)" }}>
             {t("label.n_files_selected", { n: files.length })}
-            <span style={{ color: 'var(--text-tertiary)' }}> — {t("pdf_tool.drag_hint")}</span>
+            <span style={{ color: "var(--text-tertiary)" }}> — {t("pdf_tool.drag_hint")}</span>
           </span>
           <button
             onClick={onClear}
             data-clear-button
             title={`${t("label.clear_all")} (Ctrl+L)`}
             className="cursor-pointer"
-            style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)', background: 'none', border: 'none', transition: 'color 150ms ease' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+            style={{
+              fontSize: "var(--text-sm)",
+              color: "var(--text-tertiary)",
+              background: "none",
+              border: "none",
+              transition: "color 150ms ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--text-primary)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--text-tertiary)";
+            }}
           >
             {t("label.clear_all")}
           </button>
@@ -143,16 +156,19 @@ export const ImageGrid = memo(function ImageGrid({ files, onReorder, onRemove, o
       {infoMetadata && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
-          style={{ background: 'rgba(0,0,0,0.6)' }}
+          style={{ background: "rgba(0,0,0,0.6)" }}
           onClick={closeInfo}
         >
           <div
             className="relative w-full max-w-md overflow-hidden p-4"
-            style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)' }}
+            style={{ borderRadius: 12, border: "1px solid var(--bg-border)", background: "var(--bg-elevated)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold uppercase" style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
+              <span
+                className="font-semibold uppercase"
+                style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--text-tertiary)" }}
+              >
                 {t("info.image_details")}
               </span>
               <button onClick={closeInfo} className="btn-icon">
@@ -168,24 +184,35 @@ export const ImageGrid = memo(function ImageGrid({ files, onReorder, onRemove, o
       {previewSrc && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
-          style={{ background: 'rgba(0,0,0,0.6)' }}
+          style={{ background: "rgba(0,0,0,0.6)" }}
           onClick={closePreview}
         >
           <div
             className="relative max-w-[85vw] max-h-[85vh] overflow-hidden"
-            style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)' }}
+            style={{ borderRadius: 12, border: "1px solid var(--bg-border)", background: "var(--bg-elevated)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid var(--bg-border)' }}>
-              <span className="truncate max-w-md" style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <div
+              className="flex items-center justify-between px-4 py-2.5"
+              style={{ borderBottom: "1px solid var(--bg-border)" }}
+            >
+              <span
+                className="truncate max-w-md"
+                style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-secondary)" }}
+              >
                 {previewName}
               </span>
               <button onClick={closePreview} className="btn-icon">
                 <X className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
-            <div className="flex items-center justify-center p-4" style={{ background: 'var(--bg-base)' }}>
-              <img src={previewSrc} alt={previewName} className="max-w-full max-h-[75vh] object-contain" style={{ borderRadius: 4 }} />
+            <div className="flex items-center justify-center p-4" style={{ background: "var(--bg-base)" }}>
+              <img
+                src={previewSrc}
+                alt={previewName}
+                className="max-w-full max-h-[75vh] object-contain"
+                style={{ borderRadius: 4 }}
+              />
             </div>
           </div>
         </div>

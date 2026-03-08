@@ -26,7 +26,7 @@ export const ActionButton = memo(function ActionButton({
       title={`${text} (Ctrl+Enter)`}
       className="btn-primary w-full"
     >
-      <span className="btn-primary-icon" style={{ display: 'inline-flex', transition: 'transform 150ms ease' }}>
+      <span className="btn-primary-icon" style={{ display: "inline-flex", transition: "transform 150ms ease" }}>
         {loading ? <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" strokeWidth={1.5} /> : icon}
       </span>
       {loading ? loadingText : text}

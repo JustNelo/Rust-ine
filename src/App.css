@@ -39,8 +39,8 @@
   --text-xl: 20px;
 
   /* Fonts */
-  --font-sans: 'DM Sans', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-sans: "DM Sans", sans-serif;
+  --font-mono: "DM Mono", monospace;
 }
 
 /* ─── Button Design System ─── */
@@ -364,8 +364,12 @@ body {
   animation: spin 3s linear infinite;
 }
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .animate-loading {
   animation: loading 1.4s ease-in-out infinite;

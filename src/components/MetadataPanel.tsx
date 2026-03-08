@@ -36,11 +36,17 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
     <div className="forge-card overflow-hidden p-0">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between px-3 py-2 cursor-pointer" style={{ transition: 'background 150ms ease' }}
+        className="flex w-full items-center justify-between px-3 py-2 cursor-pointer"
+        style={{ transition: "background 150ms ease" }}
       >
         <div className="flex items-center gap-2 min-w-0">
           <Eye className="h-3.5 w-3.5 text-neutral-400 shrink-0" strokeWidth={1.5} />
-          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }} className="truncate">{fileName}</span>
+          <span
+            style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}
+            className="truncate"
+          >
+            {fileName}
+          </span>
           <span className="text-[10px] text-neutral-500 shrink-0">
             {metadata.width}×{metadata.height} · {metadata.format} · {formatSize(metadata.file_size)}
           </span>
@@ -61,7 +67,7 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
       </button>
 
       {expanded && (
-        <div className="px-3 py-2 space-y-3" style={{ borderTop: '1px solid var(--bg-border)' }}>
+        <div className="px-3 py-2 space-y-3" style={{ borderTop: "1px solid var(--bg-border)" }}>
           {/* Image details: bit depth, color type, DPI */}
           {hasDetails && (
             <div>
@@ -75,7 +81,10 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {metadata.color_type && (
                   <div className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{t("info.color_type")}</span>
-                    <span className="text-[10px] font-mono text-right truncate" style={{ color: 'var(--text-primary)' }}>
+                    <span
+                      className="text-[10px] font-mono text-right truncate"
+                      style={{ color: "var(--text-primary)" }}
+                    >
                       {metadata.color_type}
                     </span>
                   </div>
@@ -83,7 +92,10 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {metadata.bit_depth && (
                   <div className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{t("info.bit_depth")}</span>
-                    <span className="text-[10px] font-mono text-right truncate" style={{ color: 'var(--text-primary)' }}>
+                    <span
+                      className="text-[10px] font-mono text-right truncate"
+                      style={{ color: "var(--text-primary)" }}
+                    >
                       {metadata.bit_depth} bit
                     </span>
                   </div>
@@ -91,7 +103,10 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {metadata.dpi && (
                   <div className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{t("info.dpi")}</span>
-                    <span className="text-[10px] font-mono text-right truncate" style={{ color: 'var(--text-primary)' }}>
+                    <span
+                      className="text-[10px] font-mono text-right truncate"
+                      style={{ color: "var(--text-primary)" }}
+                    >
                       {metadata.dpi[0]}×{metadata.dpi[1]}
                     </span>
                   </div>
@@ -112,7 +127,10 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {cameraEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{e.tag}</span>
-                    <span className="text-[10px] font-mono text-right truncate" style={{ color: 'var(--text-primary)' }}>
+                    <span
+                      className="text-[10px] font-mono text-right truncate"
+                      style={{ color: "var(--text-primary)" }}
+                    >
                       {e.value}
                     </span>
                   </div>
@@ -133,7 +151,10 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {shootingEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{e.tag}</span>
-                    <span className="text-[10px] font-mono text-right truncate" style={{ color: 'var(--text-primary)' }}>
+                    <span
+                      className="text-[10px] font-mono text-right truncate"
+                      style={{ color: "var(--text-primary)" }}
+                    >
                       {e.value}
                     </span>
                   </div>
@@ -154,7 +175,10 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {gpsEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{e.tag}</span>
-                    <span className="text-[10px] font-mono text-right truncate" style={{ color: 'var(--text-secondary)' }}>
+                    <span
+                      className="text-[10px] font-mono text-right truncate"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
                       {e.value}
                     </span>
                   </div>
@@ -175,7 +199,10 @@ export function MetadataPanel({ metadata }: { metadata: ImageMetadata }) {
                 {otherEntries.map((e) => (
                   <div key={e.tag} className="flex justify-between gap-2">
                     <span className="text-[10px] text-neutral-500">{e.tag}</span>
-                    <span className="text-[10px] font-mono text-right truncate" style={{ color: 'var(--text-primary)' }}>
+                    <span
+                      className="text-[10px] font-mono text-right truncate"
+                      style={{ color: "var(--text-primary)" }}
+                    >
                       {e.value}
                     </span>
                   </div>

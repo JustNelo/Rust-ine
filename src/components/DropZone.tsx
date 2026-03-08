@@ -72,24 +72,22 @@ export function DropZone({ accept, multiple = true, label, sublabel, onFilesSele
       style={{
         height: 180,
         borderRadius: 12,
-        border: isDragging
-          ? '1px solid var(--indigo-glow)'
-          : '1px dashed var(--glass-border)',
-        background: isDragging ? 'var(--glass-bg)' : 'var(--bg-elevated)',
-        boxShadow: isDragging ? '0 0 0 4px rgba(99,102,241,0.08)' : 'none',
-        transform: isDragging ? 'scale(1.01)' : 'scale(1)',
-        transition: 'all 150ms ease',
+        border: isDragging ? "1px solid var(--indigo-glow)" : "1px dashed var(--glass-border)",
+        background: isDragging ? "var(--glass-bg)" : "var(--bg-elevated)",
+        boxShadow: isDragging ? "0 0 0 4px rgba(99,102,241,0.08)" : "none",
+        transform: isDragging ? "scale(1.01)" : "scale(1)",
+        transition: "all 150ms ease",
       }}
       onMouseEnter={(e) => {
         if (!isDragging) {
-          e.currentTarget.style.border = '1px solid var(--indigo-core)';
-          e.currentTarget.style.background = 'var(--glass-bg)';
+          e.currentTarget.style.border = "1px solid var(--indigo-core)";
+          e.currentTarget.style.background = "var(--glass-bg)";
         }
       }}
       onMouseLeave={(e) => {
         if (!isDragging) {
-          e.currentTarget.style.border = '1px dashed var(--glass-border)';
-          e.currentTarget.style.background = 'var(--bg-elevated)';
+          e.currentTarget.style.border = "1px dashed var(--glass-border)";
+          e.currentTarget.style.background = "var(--bg-elevated)";
         }
       }}
     >
@@ -105,24 +103,28 @@ export function DropZone({ accept, multiple = true, label, sublabel, onFilesSele
         style={{
           width: 28,
           height: 28,
-          color: isDragging ? 'var(--indigo-bright)' : 'var(--indigo-muted)',
-          transition: 'color 150ms ease',
+          color: isDragging ? "var(--indigo-bright)" : "var(--indigo-muted)",
+          transition: "color 150ms ease",
         }}
         strokeWidth={1.5}
       />
       <div className="text-center">
-        <p style={{ fontSize: 'var(--text-md)', fontWeight: 500, color: 'var(--text-primary)' }}>{label}</p>
-        {sublabel && <p style={{ marginTop: 4, fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>{sublabel}</p>}
+        <p style={{ fontSize: "var(--text-md)", fontWeight: 500, color: "var(--text-primary)" }}>{label}</p>
+        {sublabel && (
+          <p style={{ marginTop: 4, fontSize: "var(--text-xs)", color: "var(--text-tertiary)" }}>{sublabel}</p>
+        )}
         <p style={{ marginTop: 6 }}>
-          <kbd style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            padding: '2px 6px',
-            borderRadius: 4,
-            background: 'var(--bg-border)',
-            color: 'var(--text-tertiary)',
-            border: 'none',
-          }}>
+          <kbd
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              padding: "2px 6px",
+              borderRadius: 4,
+              background: "var(--bg-border)",
+              color: "var(--text-tertiary)",
+              border: "none",
+            }}
+          >
             Ctrl+O
           </kbd>
         </p>

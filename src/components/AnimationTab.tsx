@@ -114,7 +114,7 @@ export function AnimationTab() {
       {frames.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <p style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-secondary)" }}>
               {t("result.files_selected", { n: frames.length })}
             </p>
             <button
@@ -128,13 +128,32 @@ export function AnimationTab() {
             {frames.map((path, index) => (
               <div
                 key={`${path}-${index}`}
-                className="flex items-center gap-2 px-2 py-1.5 group" style={{ borderRadius: 8, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', background: 'var(--bg-overlay)', transition: 'background 150ms ease' }}
+                className="flex items-center gap-2 px-2 py-1.5 group"
+                style={{
+                  borderRadius: 8,
+                  fontSize: "var(--text-sm)",
+                  color: "var(--text-secondary)",
+                  background: "var(--bg-overlay)",
+                  transition: "background 150ms ease",
+                }}
               >
-                <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', width: 20, textAlign: 'right', flexShrink: 0 }}>{index + 1}</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontFamily: "var(--font-mono)",
+                    color: "var(--text-tertiary)",
+                    width: 20,
+                    textAlign: "right",
+                    flexShrink: 0,
+                  }}
+                >
+                  {index + 1}
+                </span>
                 <img
                   src={safeAssetUrl(path)}
                   alt=""
-                  className="h-7 w-7 rounded object-cover shrink-0" style={{ border: '1px solid var(--bg-border)' }}
+                  className="h-7 w-7 rounded object-cover shrink-0"
+                  style={{ border: "1px solid var(--bg-border)" }}
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
                   }}
@@ -155,10 +174,7 @@ export function AnimationTab() {
                   >
                     <ArrowDown className="h-3 w-3" strokeWidth={1.5} />
                   </button>
-                  <button
-                    onClick={() => removeFrame(index)}
-                    className="btn-icon p-0.5"
-                  >
+                  <button onClick={() => removeFrame(index)} className="btn-icon p-0.5">
                     <Trash2 className="h-3 w-3" strokeWidth={1.5} />
                   </button>
                 </div>
@@ -170,9 +186,7 @@ export function AnimationTab() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label className="forge-label">
-            {t("label.frame_delay")}
-          </label>
+          <label className="forge-label">{t("label.frame_delay")}</label>
           <input
             type="number"
             min={10}
@@ -183,9 +197,7 @@ export function AnimationTab() {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="forge-label">
-            {t("label.loop_count")}
-          </label>
+          <label className="forge-label">{t("label.loop_count")}</label>
           <input
             type="number"
             min={0}
@@ -210,17 +222,20 @@ export function AnimationTab() {
         <div className="mt-4 forge-card space-y-2">
           <div className="flex items-center gap-2">
             {result.errors.length === 0 ? (
-              <CheckCircle className="h-4 w-4" style={{ color: 'var(--success)' }} strokeWidth={1.5} />
+              <CheckCircle className="h-4 w-4" style={{ color: "var(--success)" }} strokeWidth={1.5} />
             ) : (
-              <XCircle className="h-4 w-4" style={{ color: 'var(--warning)' }} strokeWidth={1.5} />
+              <XCircle className="h-4 w-4" style={{ color: "var(--warning)" }} strokeWidth={1.5} />
             )}
-            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>
               {t("result.animation_created", { frames: result.frame_count, format: "GIF" })}
             </span>
           </div>
           {/* GIF preview */}
           {result.output_path && (
-            <div className="overflow-hidden flex items-center justify-center max-h-48" style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-base)' }}>
+            <div
+              className="overflow-hidden flex items-center justify-center max-h-48"
+              style={{ borderRadius: 12, border: "1px solid var(--bg-border)", background: "var(--bg-base)" }}
+            >
               <img
                 src={safeAssetUrl(result.output_path, true)}
                 alt="Generated GIF"
@@ -231,7 +246,11 @@ export function AnimationTab() {
           {result.errors.length > 0 && (
             <div className="max-h-24 overflow-y-auto space-y-1">
               {result.errors.map((err, i) => (
-                <div key={i} className="flex items-start gap-2" style={{ fontSize: 'var(--text-sm)', color: 'rgba(239,68,68,0.8)' }}>
+                <div
+                  key={i}
+                  className="flex items-start gap-2"
+                  style={{ fontSize: "var(--text-sm)", color: "rgba(239,68,68,0.8)" }}
+                >
                   <XCircle className="h-3 w-3 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <span>{err}</span>
                 </div>

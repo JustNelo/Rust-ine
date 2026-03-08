@@ -56,30 +56,42 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({ result, onClo
   const afterSrc = useMemo(() => safeAssetUrl(result.output_path, true), [result.output_path]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+      style={{ background: "rgba(0,0,0,0.6)" }}
+      onClick={onClose}
+    >
       <div
         className="relative max-w-[90vw] max-h-[85vh] overflow-hidden"
-        style={{ borderRadius: 12, border: '1px solid var(--bg-border)', background: 'var(--bg-elevated)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+        style={{
+          borderRadius: 12,
+          border: "1px solid var(--bg-border)",
+          background: "var(--bg-elevated)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid var(--bg-border)' }}>
-          <div className="flex items-center gap-3" style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+        <div
+          className="flex items-center justify-between px-4 py-2.5"
+          style={{ borderBottom: "1px solid var(--bg-border)" }}
+        >
+          <div
+            className="flex items-center gap-3"
+            style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}
+          >
             <span className="font-medium">{t("preview.before_after")}</span>
-            <span style={{ color: 'var(--text-tertiary)' }}>{formatSize(result.input_size)}</span>
-            <ArrowRight className="h-3 w-3" style={{ color: 'var(--text-tertiary)' }} strokeWidth={1.5} />
-            <span style={{ color: 'var(--text-tertiary)' }}>{formatSize(result.output_size)}</span>
+            <span style={{ color: "var(--text-tertiary)" }}>{formatSize(result.input_size)}</span>
+            <ArrowRight className="h-3 w-3" style={{ color: "var(--text-tertiary)" }} strokeWidth={1.5} />
+            <span style={{ color: "var(--text-tertiary)" }}>{formatSize(result.output_size)}</span>
             {sizeDiff !== 0 && (
-              <span className="font-medium" style={{ color: sizeDiff > 0 ? 'var(--success)' : 'var(--warning)' }}>
+              <span className="font-medium" style={{ color: sizeDiff > 0 ? "var(--success)" : "var(--warning)" }}>
                 {sizeDiff > 0 ? "-" : "+"}
                 {Math.abs(sizeDiff).toFixed(1)}%
               </span>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="btn-icon"
-          >
+          <button onClick={onClose} className="btn-icon">
             <X className="h-4 w-4" strokeWidth={1.5} />
           </button>
         </div>
@@ -88,7 +100,7 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({ result, onClo
         <div
           ref={containerRef}
           className="relative select-none touch-none"
-          style={{ background: 'var(--bg-base)', cursor: "ew-resize" }}
+          style={{ background: "var(--bg-base)", cursor: "ew-resize" }}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
           onPointerMove={handlePointerMove}

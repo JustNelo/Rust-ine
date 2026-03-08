@@ -79,7 +79,7 @@ export function FaviconTab() {
         toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`${t("status.generating_favicons")} ${err}`);
+      toast.error(t("toast.operation_failed"));
     } finally {
       setLoading(false);
     }

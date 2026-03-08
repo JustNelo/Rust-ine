@@ -71,7 +71,7 @@ export function SvgRasterizeTab() {
       addEntry({ tabId: "svg-rasterize", filesCount: 1, successCount: 1, failCount: 0, outputDir });
       toast.success(t("toast.svg_rasterize_success", { w: res.width, h: res.height }));
     } catch (err) {
-      toast.error(`${t("status.rasterizing")} ${err}`);
+      toast.error(t("toast.operation_failed"));
     } finally {
       setLoading(false);
     }

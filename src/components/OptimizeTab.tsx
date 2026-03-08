@@ -24,7 +24,6 @@ export function OptimizeTab() {
   const handleOptimize = useCallback(async () => {
     await process({
       successMessage: t("toast.optimize_success", { n: files.length }),
-      errorPrefix: t("status.optimizing"),
     });
   }, [process, files.length, t]);
 

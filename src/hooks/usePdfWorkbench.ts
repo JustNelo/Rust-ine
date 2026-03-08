@@ -283,7 +283,12 @@ export function usePdfWorkbench() {
             }
           }
         } catch (err) {
-          toast.error(`Failed to load PDF: ${err}`);
+          const msg = String(err).toLowerCase();
+          if (msg.includes("password")) {
+            toast.error(t("toast.pdf_password_protected"));
+          } else {
+            toast.error(t("toast.pdf_load_failed"));
+          }
         }
       }
       setLoadingThumbnails(false);
@@ -367,7 +372,7 @@ export function usePdfWorkbench() {
 
       const res = await invoke<MergePdfResult>("merge_to_pdf", { items, options });
       if (res.page_count === 0) {
-        throw new Error(res.errors[0] || "Failed to materialize grid");
+        throw new Error(res.errors[0] || "materialize_failed");
       }
       return tempPath;
     },
@@ -460,7 +465,7 @@ export function usePdfWorkbench() {
 
           const buildRes = await invoke<MergePdfResult>("merge_to_pdf", { items, options });
           if (buildRes.page_count === 0) {
-            toast.error(buildRes.errors[0] || t("toast.all_failed"));
+            toast.error(t("toast.pdf_build_failed"));
             setLoading(false);
             return;
           }
@@ -625,7 +630,7 @@ export function usePdfWorkbench() {
             const { rename } = await import("@tauri-apps/plugin-fs");
             await rename(currentPdfPath, desiredPath);
           } catch (renameErr) {
-            pipelineErrors.push(`Rename failed: ${renameErr}`);
+            pipelineErrors.push(t("toast.rename_failed"));
           }
         }
 
@@ -653,7 +658,14 @@ export function usePdfWorkbench() {
           );
         }
       } catch (err) {
-        toast.error(`${err}`);
+        const msg = String(err).toLowerCase();
+        if (msg.includes("password")) {
+          toast.error(t("toast.pdf_password_protected"));
+        } else if (msg.includes("materialize_failed")) {
+          toast.error(t("toast.pdf_materialize_failed"));
+        } else {
+          toast.error(t("toast.unexpected_error"));
+        }
         // Cleanup any temp files
         if (materializedPath) {
           await cleanupTemp(materializedPath);
@@ -740,13 +752,11 @@ export function usePdfWorkbench() {
 
         if (res.page_count > 0 && res.errors.length === 0) {
           toast.success(t("toast.pdf_watermark_success", { n: res.page_count }));
-        } else if (res.errors.length > 0) {
-          toast.error(res.errors[0]);
         } else {
-          toast.error(t("toast.all_failed"));
+          toast.error(t("toast.pdf_watermark_failed"));
         }
       } catch (err) {
-        toast.error(`${err}`);
+        toast.error(t("toast.pdf_watermark_failed"));
         if (materializedPath) {
           await cleanupTemp(materializedPath);
         }
@@ -792,10 +802,10 @@ export function usePdfWorkbench() {
         if (res.success) {
           toast.success(t("toast.pdf_unlock_success"));
         } else {
-          toast.error(res.errors[0] || t("toast.all_failed"));
+          toast.error(t("toast.pdf_unlock_failed"));
         }
       } catch (err) {
-        toast.error(`${err}`);
+        toast.error(t("toast.pdf_unlock_failed"));
       } finally {
         setLoading(false);
       }

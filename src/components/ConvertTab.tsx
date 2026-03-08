@@ -45,7 +45,6 @@ export function ConvertTab() {
     await process({
       extraParams: { outputFormat },
       successMessage: t("toast.convert_success", { n: files.length, format: outputFormat.toUpperCase() }),
-      errorPrefix: t("status.converting"),
     });
   }, [process, outputFormat, files.length, t]);
 

@@ -181,7 +181,7 @@ export function PaletteTab() {
       setPalette(result.colors);
       toast.success(t("toast.palette_success", { n: result.colors.length }));
     } catch (err) {
-      toast.error(`${t("status.extracting_colors")} ${err}`);
+      toast.error(t("toast.operation_failed"));
     } finally {
       setLoading(false);
     }

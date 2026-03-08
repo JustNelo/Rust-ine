@@ -53,7 +53,7 @@ export function Base64Tab() {
       setDataUri(result);
       toast.success(t("toast.base64_success"));
     } catch (err) {
-      toast.error(`${err}`);
+      toast.error(t("toast.operation_failed"));
     } finally {
       setLoading(false);
     }

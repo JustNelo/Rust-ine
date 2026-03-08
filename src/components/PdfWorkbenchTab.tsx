@@ -210,7 +210,7 @@ export function PdfWorkbenchTab() {
       const paths = Array.isArray(selected) ? selected : [selected];
       if (paths.length > 0) addFiles(paths);
     } catch (err) {
-      toast.error(`${t("toast.error_prefix")} ${err}`);
+      toast.error(t("toast.file_open_failed"));
     }
   }, [addFiles, t]);
 
@@ -222,7 +222,7 @@ export function PdfWorkbenchTab() {
       });
       if (selected && typeof selected === "string") setUnlockFile(selected);
     } catch (err) {
-      toast.error(`${t("toast.error_prefix")} ${err}`);
+      toast.error(t("toast.file_open_failed"));
     }
   }, [t]);
 
@@ -234,7 +234,7 @@ export function PdfWorkbenchTab() {
       });
       if (typeof selected === "string") updateWm("logoPath", selected);
     } catch (err) {
-      toast.error(`${t("toast.error_prefix")} ${err}`);
+      toast.error(t("toast.file_open_failed"));
     }
   }, [t]);
 

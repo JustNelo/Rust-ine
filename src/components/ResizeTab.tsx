@@ -94,7 +94,7 @@ export function ResizeTab() {
         toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`${t("status.resizing")} ${err}`);
+      toast.error(t("toast.operation_failed"));
     } finally {
       setLoading(false);
     }

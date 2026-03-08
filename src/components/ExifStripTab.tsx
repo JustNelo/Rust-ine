@@ -70,7 +70,6 @@ export function ExifStripTab() {
   const handleStrip = useCallback(async () => {
     await process({
       successMessage: t("toast.strip_success", { n: files.length }),
-      errorPrefix: t("status.stripping"),
     });
   }, [process, files.length, t]);
 

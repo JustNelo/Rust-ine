@@ -76,7 +76,7 @@ export function CompressTab() {
         toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`${t("status.compressing")} ${err}`);
+      toast.error(t("toast.operation_failed"));
     } finally {
       setLoading(false);
     }

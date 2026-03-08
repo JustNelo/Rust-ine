@@ -16,7 +16,6 @@ interface UseTabProcessorOptions {
 interface ProcessCallOptions {
   extraParams?: Record<string, unknown>;
   successMessage: string;
-  errorPrefix: string;
 }
 
 export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessorOptions) {
@@ -42,7 +41,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
   }, [fileSelection.clearFiles]);
 
   const process = useCallback(
-    async ({ extraParams, successMessage, errorPrefix }: ProcessCallOptions) => {
+    async ({ extraParams, successMessage }: ProcessCallOptions) => {
       if (fileSelection.files.length === 0) {
         toast.error(acceptToast || t("toast.select_images"));
         return;
@@ -83,7 +82,7 @@ export function useTabProcessor({ tabId, command, acceptToast }: UseTabProcessor
           toast.error(t("toast.all_failed"));
         }
       } catch (err) {
-        toast.error(`${errorPrefix} ${err}`);
+        toast.error(t("toast.operation_failed"));
       } finally {
         setLoading(false);
       }

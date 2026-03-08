@@ -59,10 +59,10 @@ export function QrCodeTab() {
       if (res.output_path && res.errors.length === 0) {
         toast.success(t("toast.qr_success"));
       } else {
-        toast.error(res.errors[0] || t("toast.all_failed"));
+        toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`${err}`);
+      toast.error(t("toast.operation_failed"));
     } finally {
       setLoading(false);
     }

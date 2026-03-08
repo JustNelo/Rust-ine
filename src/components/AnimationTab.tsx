@@ -91,7 +91,7 @@ export function AnimationTab() {
         toast.error(t("toast.all_failed"));
       }
     } catch (err) {
-      toast.error(`${err}`);
+      toast.error(t("toast.operation_failed"));
     } finally {
       setLoading(false);
     }
